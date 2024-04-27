@@ -1,6 +1,6 @@
-# modarith - Python Scripts for generation of code for multi-precision modular arithmetic
+# Modarith - python scripts for generation of code for multi-precision modular arithmetic
 
-** Script generated finite field arithmetic for elliptic curve cryptography **
+Script generated finite field arithmetic for elliptic curve cryptography
 
 This repository contains Python 3 scripts for the automatic generation of efficent code for multi-precision modular arithmetic, for both 32 and 64-bit architectures, in C and in Rust. 
 
@@ -10,9 +10,9 @@ For both languages there are two scripts, one specialised for pseudo-Mersenne mo
 
 The code generated includes functions for modular addition, subtraction, multiplication, inversion, quadratic residuosity and square roots. In other words all of the requirements to implement field arithmetic in the context of elliptic curve cryptography.
 
-# dependencies
+# Dependencies
 
-As dependencies it is required that an appropriate C compiler (*gcc/clang/icx*) and/or the Rust compiler (*rustc*) is included in the path. For the C code also ensure that the *clang-format* and *cppcheck* utilities are in the path.
+As dependencies it is required that an appropriate C compiler (*gcc/clang/icx*) and/or the Rust compiler (*rustc*) is included in the path. For the C code also ensure that the *clang-format* and *cppcheck* utilities are installed.
 
 Also in the path must be the very useful utility addchain 
 	
@@ -20,7 +20,7 @@ Also in the path must be the very useful utility addchain
 
 For accurate timings across a range of architectures for the C code, install Dan Bernstein's libcpucycles utility from https://cpucycles.cr.yp.to/ . It may be necessary to run *ldconfig*.
 
-# quick start
+# Quick start
 
 For a quick start copy the files from here into a working directory, and try
 
@@ -53,8 +53,8 @@ Assume the modulus is $p$. The provided functions are
 *modsub()* -- Modular subtraction, result <$2p$  
 *modmul()* -- Modular multiplication, result <$2p$  
 *modsqr()* -- Modular squaring, result <$2p$  
-*modmli()* -- Modular multiplication by a small integer, result <$2p$ (this function only available for pseudo-Mersenne primes and C448)
-*modcpy()* -- Copy  
+*modmli()* -- Modular multiplication by a small integer, result <$2p$
+*modcpy()* -- Copy a big number
 *modpro()* -- Calculate progenitor, for subsequent use for modular inverses and square roots  
 *modinv()* -- Modular inversion  
 *modsqrt()* -- Modular square root 

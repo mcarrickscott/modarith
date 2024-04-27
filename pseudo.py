@@ -13,14 +13,14 @@
 # Execute this program as: python pseudo.py 64 C25519
 # Production code is output to file code.c
 # 
-# Mike Scott 8th October 2023
+# Mike Scott 22nd April 2024
 # TII
 #
 
 # Some default settings
 
 embedded=False  # If True then functions to start and stop a performance counter (cycles or micro-seconds) must be made available
-                # If True timing code is output to file time.c, otherwise executable is created
+                # If True no timing executable is created
 cyclesorsecs=True     # if embedded, count cycles otherwise seconds
 arduino=False   # set True if embedded and using arduino for timings
 if arduino :    # If arduino, count microseconds

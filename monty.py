@@ -1,6 +1,5 @@
 # Python program to generate reasonably efficient C/C++ modular arithmetic code for any prime, on a 32 or 64-bit processor
-# IMPORTANT:- Uses Montgomery representation
-# uses unsaturated radix
+# IMPORTANT:- Uses Montgomery representation. Uses unsaturated radix
 # 
 # In particular this script generates code for the NIST primes
 #
@@ -26,14 +25,14 @@
 #
 # and now the majority of the multiplications in the Montgomery reduction are by 0, and can be eliminated.
 #
-# Mike Scott 8th October 2023
+# Mike Scott 22nd April 2024
 # TII
 #
 
 # Some default settings
 
 embedded=False  # If True then functions to start and stop a performance counter (cycles or micro-seconds) must be made available
-                # If True timing code is output to file time.c, otherwise executable is created
+                # If True no timing executable is created
 cyclesorsecs=True     # if embedded, count cycles otherwise seconds
 arduino=False   # set True if embedded and using arduino for timings
 if arduino :    # If arduino, count microseconds
