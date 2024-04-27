@@ -6,7 +6,7 @@ This repository contains Python 3 scripts for the automatic generation of effice
 
 The code uses a multi-limb unsaturated-radix representation for big numbers.
 
-For both languages there are two scripts, one specialised for pseudo-Mersenne moduli of the form $2^m-c$ (*pseudo.py* and *pseudo_rust.py*), and one that generates efficient and tailored code for other prime shapes, in particular generalised Mersennes like those required for the standardised NIST256, NIST384, and X448 curves, and Montgomery friendly moduli, as sometimes recommended for use with isogenies (*monty.py* and *monty_rust.py*).
+For both languages there are two scripts, one specialised for pseudo-Mersenne moduli of the form $2^m-c$ (*pseudo.py* and *pseudo_rust.py*), and one that generates efficient and tailored code for other prime shapes, in particular generalised Mersennes like those required for the standardised NIST256, NIST384, and C448 curves, and Montgomery friendly moduli, as sometimes recommended for use with isogenies (*monty.py* and *monty_rust.py*).
 
 The code generated includes functions for modular addition, subtraction, multiplication, inversion, quadratic residuosity and square roots. In other words all of the requirements to implement field arithmetic in the context of elliptic curve cryptography.
 
@@ -54,6 +54,7 @@ Assume the modulus is $p$. The provided functions are
 *modmul()* -- Modular multiplication, result <$2p$  
 *modsqr()* -- Modular squaring, result <$2p$  
 *modmli()* -- Modular multiplication by a small integer, result <$2p$
+
 *modcpy()* -- Copy a big number
 *modpro()* -- Calculate progenitor, for subsequent use for modular inverses and square roots  
 *modinv()* -- Modular inversion  
