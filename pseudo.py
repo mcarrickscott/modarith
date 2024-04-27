@@ -1587,8 +1587,7 @@ if formatted :
     subprocess.call("clang-format -i code.c", shell=True)  # tidy up the format
 
 if check:
-    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert --addon=misra.json  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True)  
-#    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True) 
+    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True) 
 
 print("Production code is in code.c")
 

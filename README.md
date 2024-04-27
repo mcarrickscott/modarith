@@ -69,7 +69,7 @@ Assume the modulus is $p$. The provided functions are
 *modshl()* -- shift left by bits  \
 *modshr()* -- shift right by bits  \
 *modexp()* -- export from internal format to byte array \
-*modimp()* -- import to internal format from byte array  \
+*modimp()* -- import to internal format from byte array  
 
 # Using the scripts
 
