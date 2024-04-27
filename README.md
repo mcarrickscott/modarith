@@ -46,30 +46,30 @@ Read comments in these files for simple build instructions.
 
 Assume the modulus is $p$. The provided functions are
 
-*nres()*   -- Convert a big number to internal format  
-*redc()*   -- Convert back from internal format, result $\lt p$  
-*modfsb()* -- Perform final subtraction to reduce from $\lt 2p$ to $\lt p$  
-*modadd()* -- Modular addition, result $\lt 2p$  
-*modsub()* -- Modular subtraction, result $\lt 2p$  
-*modmul()* -- Modular multiplication, result $\lt 2p$  
-*modsqr()* -- Modular squaring, result $\lt 2p$  
-*modmli()* -- Modular multiplication by a small integer, result $\lt 2p$
-*modcpy()* -- Copy a big number
-*modpro()* -- Calculate progenitor, for subsequent use for modular inverses and square roots  
-*modinv()* -- Modular inversion  
-*modsqrt()* -- Modular square root 
-*modis1()* -- Test for equal to unity  
-*modis0()* -- Test for equal to zero  
-*modone()* -- Set equal to unity  
-*modzer()* -- Set equal to zero  
-*modint()* -- Convert an integer to internal format  
-*modqr()*  -- Test for quadratic residue  
-*modcmv()* -- Conditional constant time move  
-*modcsw()* -- Conditional constant time swap  
-*modshl()* -- shift left by bits  
-*modshr()* -- shift right by bits  
-*modexp()* -- export from internal format to byte array 
-*modimp()* -- import to internal format from byte array  
+*nres()*   -- Convert a big number to internal format  \
+*redc()*   -- Convert back from internal format, result $\lt p$  \
+*modfsb()* -- Perform final subtraction to reduce from $\lt 2p$ to $\lt p$  \
+*modadd()* -- Modular addition, result $\lt 2p$  \
+*modsub()* -- Modular subtraction, result $\lt 2p$  \
+*modmul()* -- Modular multiplication, result $\lt 2p$  \
+*modsqr()* -- Modular squaring, result $\lt 2p$  \
+*modmli()* -- Modular multiplication by a small integer, result $\lt 2p$ \
+*modcpy()* -- Copy a big number \
+*modpro()* -- Calculate progenitor, for subsequent use for modular inverses and square roots  \
+*modinv()* -- Modular inversion  \
+*modsqrt()* -- Modular square root \
+*modis1()* -- Test for equal to unity  \
+*modis0()* -- Test for equal to zero  \
+*modone()* -- Set equal to unity  \
+*modzer()* -- Set equal to zero  \
+*modint()* -- Convert an integer to internal format  \
+*modqr()*  -- Test for quadratic residue  \
+*modcmv()* -- Conditional constant time move  \
+*modcsw()* -- Conditional constant time swap  \
+*modshl()* -- shift left by bits  \
+*modshr()* -- shift right by bits  \
+*modexp()* -- export from internal format to byte array \
+*modimp()* -- import to internal format from byte array  \
 
 # Using the scripts
 
