@@ -47,13 +47,13 @@ Read comments in these files for simple build instructions.
 Assume the modulus is $p$. The provided functions are
 
 *nres()*   -- Convert a big number to internal format  
-*redc()*   -- Convert back from internal format, result $<p$  
-*modfsb()* -- Perform final subtraction to reduce from $<2p$ to $<p$  
-*modadd()* -- Modular addition, result $<2p$  
-*modsub()* -- Modular subtraction, result $<2p$  
-*modmul()* -- Modular multiplication, result $<2p$  
-*modsqr()* -- Modular squaring, result $<2p$  
-*modmli()* -- Modular multiplication by a small integer, result $<2p$
+*redc()*   -- Convert back from internal format, result $\lt p$  
+*modfsb()* -- Perform final subtraction to reduce from $\lt 2p$ to $\lt p$  
+*modadd()* -- Modular addition, result $\lt 2p$  
+*modsub()* -- Modular subtraction, result $\lt 2p$  
+*modmul()* -- Modular multiplication, result $\lt 2p$  
+*modsqr()* -- Modular squaring, result $\lt 2p$  
+*modmli()* -- Modular multiplication by a small integer, result $\lt 2p$
 *modcpy()* -- Copy a big number
 *modpro()* -- Calculate progenitor, for subsequent use for modular inverses and square roots  
 *modinv()* -- Modular inversion  
