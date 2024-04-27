@@ -53,7 +53,7 @@ Assume the modulus is $p$. The provided functions are
 *modsub()* -- Modular subtraction, result &lt;$2p$  
 *modmul()* -- Modular multiplication, result &lt;$2p$  
 *modsqr()* -- Modular squaring, result &lt;$2p$  
-*modmli()* -- Modular multiplication by a small integer, result &lt; $2p$
+*modmli()* -- Modular multiplication by a small integer, result &lt;$2p$
 *modcpy()* -- Copy a big number
 *modpro()* -- Calculate progenitor, for subsequent use for modular inverses and square roots  
 *modinv()* -- Modular inversion  
