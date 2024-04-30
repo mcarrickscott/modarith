@@ -1384,6 +1384,7 @@ with open('test.c', 'w') as f:
         functions()
 f.close()
 
+#maybe -march=rv64gc for RISC-V
 subprocess.call(compiler + " -march=native -mtune=native -O3 -shared -o test.so test.c", shell=True)
 
 import ctypes
