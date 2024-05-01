@@ -92,8 +92,7 @@ static void reverse(char *w)
 static void output(spint *x) {
     char b[Nbytes+1];
     char buff[(2*Nbytes)+1];
-    spint c[Nlimbs];
-    modexp(c,b);
+    modexp(x,b);
     toHex(b,buff);
     printf("%s\n",buff);
 }
