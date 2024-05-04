@@ -1263,9 +1263,8 @@ def modred(n) :
     str+="\t\tt[i]=n[i+{}];\n".format(N)
     str+="\t}\n"
     str+="\tnres(t,t);\n"
-    str+="\tnres(t,t);\n"
-    str+="\tnres(b,b);\n"
     str+="\tmodadd(b,t,b);\n"
+    str+="\tnres(b,b);\n"
     str+="}\n"
     return str 
 
