@@ -343,6 +343,29 @@ def modsub(n,base) :
     str+="\treturn;\n}\n"
     return str
 
+#modular negation
+def modneg(n,base) :
+    str="//Modular negation\n"
+    str+="#[allow(unused_variables)]\n"
+    if inline :
+        str+="#[inline]\n"
+    str+="pub fn modneg(n: &mut [SPINT]) {\n"
+    if not algorithm :
+        if E:
+            str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
+    else :
+        str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
+    for i in range(0,N) :
+        str+="\tn[{}]=(0 as SPINT)-n[{}];\n".format(i,i)
+    if not algorithm :
+        str+="\tlet carry=prop(n);\n"
+        str+=caddp(2)
+    else :
+        str+=addp(mp)
+    str+="\tprop(n);\n"    
+    str+="\treturn;\n}\n"
+    return str
+
 # add column of partial products from multiplication on way up
 def getZMU(str,i) :
     first=True
@@ -1704,6 +1727,7 @@ with open('code.rs', 'w') as f:
         print(modfsb(n,base))
         print(modadd(n,base))
         print(modsub(n,base))
+        print(modneg(n,base))
         if trin>0 :
             print(modmli(n,base))
         print(modmul(n,base))

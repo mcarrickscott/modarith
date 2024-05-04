@@ -51,6 +51,7 @@ Assume the modulus is $p$. The provided functions are
 *modfsb()* -- Perform final subtraction to reduce from $\lt 2p$ to $\lt p$  \
 *modadd()* -- Modular addition, result $\lt 2p$  \
 *modsub()* -- Modular subtraction, result $\lt 2p$  \
+*modneg()* -- Modular negation, result $\lt 2p$  \
 *modmul()* -- Modular multiplication, result $\lt 2p$  \
 *modsqr()* -- Modular squaring, result $\lt 2p$  \
 *modmli()* -- Modular multiplication by a small integer, result $\lt 2p$ \

@@ -375,6 +375,32 @@ def modsub(n) :
     str+="}\n"
     return str
 
+#modular negation
+def modneg(n) :
+    str="//Modular negation\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic:
+        str+="void inline modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
+    else :
+        str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
+    if not algorithm :
+        if E: 
+            str+="\tspint q=((spint)1<<{}u);\n".format(base)
+        str+="\tspint carry;\n"
+    else :
+        str+="\tspint q=((spint)1<<{}u);\n".format(base)
+    for i in range(0,N) :
+        str+="\tn[{}]=(spint)0-b[{}];\n".format(i,i)
+    if not algorithm :
+        str+="\tcarry=prop(n);\n"
+        str+=caddp(2)
+    else :
+        str+=addp(mp)
+    str+="\t(void)prop(n);\n" 
+    str+="}\n"
+    return str
+
 # add column of partial products from multiplication on way up
 def getZMU(str,i) :
     first=True
@@ -1225,6 +1251,24 @@ def redc(n) :
     str+="}\n"
     return str 
 
+#Reduce double length mod p
+def modred(n) :
+    str="//reduce double length input to n-residue \n"
+    if makestatic :
+        str+="static "
+    str+="void modred{}(const spint *n,spint *b) {{\n".format(DECOR)
+    str+="\tspint t[{}];\n".format(N)
+    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\t\tb[i]=n[i];\n"
+    str+="\t\tt[i]=n[i+{}];\n".format(N)
+    str+="\t}\n"
+    str+="\tnres(t,t);\n"
+    str+="\tnres(t,t);\n"
+    str+="\tnres(b,b);\n"
+    str+="\tmodadd(b,t,b);\n"
+    str+="}\n"
+    return str 
+
 #conditional swap
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
@@ -1321,7 +1365,6 @@ def modimp() :
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="}\n"
     return str 
-
 
 # for timings
 def time_modmul(n,ra,rb) :
@@ -1546,6 +1589,7 @@ def functions() :
     print(modfsb(n))
     print(modadd(n))
     print(modsub(n))
+    print(modneg(n))
     if trin>0 :
         print(modmli(n))
     print(modmul(n))
@@ -1556,6 +1600,7 @@ def functions() :
     print(modinv())
     print(nres(n))
     print(redc(n))
+    print(modred(n))
     print(modis1(n))
     print(modis0(n))
     print(modzer())

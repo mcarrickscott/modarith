@@ -242,6 +242,28 @@ def modsub(n,m) :
     str+="}\n"
     return str
 
+#modular negation
+def modneg(n,m) :
+    str="//Modular negation\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic:
+        str+="void inline modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
+    else :
+        str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
+    if not algorithm :
+        str+="\tspint carry;\n"
+    for i in range(0,N) :
+        str+="\tn[{}]=(spint)0-b[{}];\n".format(i,i)
+    if not algorithm :
+        str+="\tcarry=prop(n);\n"
+        str+=caddp(2)
+    else :
+        str+=addp(mp)
+    str+="\t(void)prop(n);\n" 
+    str+="}\n"
+    return str
+
 #multiplication macro
 def getZM(str,row,n,m) :
     N=getN(n)
@@ -1153,6 +1175,7 @@ def functions() :
     print(modfsb(n))
     print(modadd(n,m))
     print(modsub(n,m))
+    print(modneg(n,m))
     print(modmli(n,m))
     print(modmul(n,m))
     print(modsqr(n,m))

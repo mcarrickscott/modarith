@@ -176,6 +176,24 @@ def modsub(n,m,base) :
     str+="\treturn;\n}\n"
     return str
 
+#modular negation
+def modneg(n,m,base) :
+    str="//Modular negation\n"
+    str+="#[allow(unused_variables)]\n"
+    if inline :
+        str+="#[inline]\n"
+    str+="pub fn modneg(n: &mut [SPINT]) {\n"
+    for i in range(0,N) :
+        str+="\tn[{}]=(0 as SPINT)-n[{}];\n".format(i,i)
+    if not algorithm :
+        str+="\tlet carry=prop(n);\n"
+        str+=caddp(2)
+    else :
+        str+=addp(mp)
+    str+="\tprop(n);\n"    
+    str+="\treturn;\n}\n"
+    return str
+
 #multiplication macro
 def getZM(str,row,n,m,base) :
     N=getN(n,base)
@@ -1211,6 +1229,7 @@ with open('code.rs', 'w') as f:
         print(modmli(n,m,base))
         print(modadd(n,m,base))
         print(modsub(n,m,base))
+        print(modneg(n,m,base))
         print(modmul(n,m,base))
         print(modsqr(n,m,base))
         print(modcpy())
