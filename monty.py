@@ -1257,14 +1257,26 @@ def modred(n) :
     if makestatic :
         str+="static "
     str+="void modred{}(const spint *n,spint *b) {{\n".format(DECOR)
+    if E :
+        str+="\tspint h[{}]={{".format(N)
+        for i in range(0,N-1) :
+            str+=hex(twopn[i])
+            str+="u,"
+        str+=hex(twopn[N-1])
+        str+="u};\n"
     str+="\tspint t[{}];\n".format(N)
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tfor (int i=0;i<{};i++) {{\n".format (N)
     str+="\t\tb[i]=n[i];\n"
     str+="\t\tt[i]=n[i+{}];\n".format(N)
     str+="\t}\n"
     str+="\tnres(t,t);\n"
-    str+="\tmodadd(b,t,b);\n"
-    str+="\tnres(b,b);\n"
+    if E:
+        str+="\tmodmul(t,h,t);\n"
+        str+="\tnres(b,b);\n"
+        str+="\tmodadd(b,t,b);\n"
+    else :
+        str+="\tmodadd(b,t,b);\n"
+        str+="\tnres(b,b);\n"
     str+="}\n"
     return str 
 
@@ -1883,6 +1895,10 @@ if E :
     R=getR(n+base) # add extra "virtual" limb
 else :
     R=getR(n)
+
+twopn=makebig(((1<<n)*R)%p,base,N)  # nres(2^n)
+
+#print("twppn= ",twopn)
 
 # should only be an issue for bad user choice of radix
 if xcess<2 and (not E) :
