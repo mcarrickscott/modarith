@@ -1270,7 +1270,7 @@ if prime=="PM336" :
 if prime=="PM383" :
     p=2**383-187
 
-if prime=="C414" :
+if prime=="C41417" :
     p=2**414-17
 
 if prime=="PM512" :

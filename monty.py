@@ -1746,7 +1746,7 @@ if prime=="GM512" :
     if WL==64:
         base=58
 
-if prime=="C414" :
+if prime=="C41417" :
     p=2**414-17
     #if WL==64 :
     #    base=58
