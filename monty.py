@@ -1269,14 +1269,14 @@ def modred(n) :
     str+="\t\tb[i]=n[i];\n"
     str+="\t\tt[i]=n[i+{}];\n".format(N)
     str+="\t}\n"
-    str+="\tnres(t,t);\n"
+    str+="\tnres{}(t,t);\n".format(DECOR)
     if E:
-        str+="\tmodmul(t,h,t);\n"
-        str+="\tnres(b,b);\n"
-        str+="\tmodadd(b,t,b);\n"
+        str+="\tmodmul{}(t,h,t);\n".format(DECOR)
+        str+="\tnres{}(b,b);\n".format(DECOR)
+        str+="\tmodadd{}(b,t,b);\n".format(DECOR)
     else :
-        str+="\tmodadd(b,t,b);\n"
-        str+="\tnres(b,b);\n"
+        str+="\tmodadd{}(b,t,b);\n".format(DECOR)
+        str+="\tnres{}(b,b);\n".format(DECOR)
     str+="}\n"
     return str 
 
