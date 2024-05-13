@@ -1697,15 +1697,6 @@ if prime=="NIST521" :
 
 if prime=="GM270" :
     p=2**270-2**162-1
-    if WL==32 :
-        base=29
-
-if prime=="PM266" :
-    p=2**266-2**168-1
-    if WL==32 :
-        base=28
-    else :
-        base=56
 
 if prime=="GM240" :
     p=2**240-2**183-1
@@ -1730,6 +1721,9 @@ if prime=="GM480" :
         base=60
     else :
         base=29
+
+if prime=="GM378" :
+    p=2**378-2**324-1
 
 if prime=="GM384" :
     p=2**384-2**186-1
@@ -2053,8 +2047,8 @@ subprocess.call("rm time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
-        print("#include <stdio.h>")
-        print("#include <stdint.h>\n")
+        #print("#include <stdio.h>")
+        #print("#include <stdint.h>\n")
         header()
         if not embedded :
             if cyclescounter :
