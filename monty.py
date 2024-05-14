@@ -1225,7 +1225,7 @@ def nres(n) :
     if makestatic :
         str+="static "
     str+="void nres{}(const spint *m,spint *n) {{\n".format(DECOR)
-    str+="\tspint c[{}]={{".format(N)
+    str+="\tconst spint c[{}]={{".format(N)
     for i in range(0,N-1) :
         str+=hex(cw[i])
         str+="u,"
@@ -1258,7 +1258,7 @@ def modred(n) :
         str+="static "
     str+="void modred{}(const spint *n,spint *b) {{\n".format(DECOR)
     if E :
-        str+="\tspint h[{}]={{".format(N)
+        str+="\tconst spint h[{}]={{".format(N)
         for i in range(0,N-1) :
             str+=hex(twopn[i])
             str+="u,"
