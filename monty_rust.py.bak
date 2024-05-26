@@ -1385,8 +1385,8 @@ if len(sys.argv)!=3 :
     exit(0);
 
 WL=int(sys.argv[1])
-if WL !=16 and WL != 32 and WL !=64 :
-    print("Only 16, 32 and 64-bit word lengths supported")
+if WL != 32 and WL !=64 :
+    print("Only 32 and 64-bit word lengths supported")
     exit(0)
 
 prime=sys.argv[2]
@@ -1408,7 +1408,7 @@ mp=0
 ### Start of user editable area
 
 
-if WL!=64 :
+if WL==32 :
     inline=False
 
 if prime=="NIST256" :

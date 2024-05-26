@@ -1219,8 +1219,8 @@ if len(sys.argv)!=3 :
     exit(0);
 
 WL=int(sys.argv[1])
-if WL != 32 and WL !=64 :
-    print("Only 32 and 64-bit word lengths supported")
+if WL!=16 and WL != 32 and WL !=64 :
+    print("Only 16, 32 and 64-bit word lengths supported")
     exit(0)
 
 prime=sys.argv[2]
@@ -1239,7 +1239,7 @@ m=0
 ### Start of user editable area
 
 
-if WL==32 :
+if WL!=64 :
     inline=False
 
 # More named primes can be added here
@@ -1414,6 +1414,18 @@ import ctypes
 from ctypes import *
 lib = ctypes.CDLL('./test.so')
 
+if WL==16 :
+    lib.modadd.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modsub.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modmul.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modsqr.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modpro.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modinv.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modsqrt.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modcpy.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
+    lib.nres.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
+    lib.redc.argtypes =  [POINTER(c_uint16),POINTER(c_uint16)]
+
 if WL==32 :
     lib.modadd.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
     lib.modsub.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
@@ -1425,7 +1437,7 @@ if WL==32 :
     lib.modcpy.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
     lib.nres.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
     lib.redc.argtypes =  [POINTER(c_uint32),POINTER(c_uint32)]
-else :
+if WL==64 :
     lib.modadd.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
     lib.modsub.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
     lib.modmul.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
@@ -1462,6 +1474,27 @@ for i in range(0,1000) :
     xa[N-1]=x
     ya[N-1]=y
 
+    if WL==16 :
+        arr_x = (c_uint16 * N)(*xa)
+        arr_y = (c_uint16 * N)(*ya)
+        arr_t = (c_uint16 * N)(*ta)
+        arr_z = (c_uint16 * N)(*za)
+        #arr_n = (c_uint16 * N)None
+        lib.nres(arr_x,arr_x)
+        lib.nres(arr_y,arr_y)
+        lib.modadd(arr_x,arr_y,arr_t)
+        lib.modsub(arr_x,arr_y,arr_z)
+        lib.modmul(arr_t,arr_z,arr_x)
+        lib.modsqr(arr_x,arr_z)
+        lib.modinv(arr_z,None,arr_z)
+        lib.modsqrt(arr_z,None,arr_z)   # get square root, and square it again
+        lib.modsqr(arr_z,arr_z)
+        lib.redc(arr_z,arr_z)
+        z=0
+        for j in range(N-1,-1,-1) :
+            z*=b
+            z+=arr_z[j]
+
     if WL==32 :
         arr_x = (c_uint32 * N)(*xa)
         arr_y = (c_uint32 * N)(*ya)
@@ -1482,7 +1515,7 @@ for i in range(0,1000) :
         for j in range(N-1,-1,-1) :
             z*=b
             z+=arr_z[j]
-    else :
+    if WL==64 :
         arr_x = (c_uint64 * N)(*xa)
         arr_y = (c_uint64 * N)(*ya)
         arr_t = (c_uint64 * N)(*ta)

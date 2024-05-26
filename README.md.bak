@@ -2,7 +2,7 @@
 
 Script generated finite field arithmetic for elliptic curve cryptography
 
-This repository contains Python 3 scripts for the automatic generation of efficent code for multi-precision modular arithmetic, for 16, 32 and 64-bit architectures, in C and in Rust. 
+This repository contains Python 3 scripts for the automatic generation of efficent code for multi-precision modular arithmetic, for both 32 and 64-bit architectures, in C and in Rust. 
 
 The code uses a multi-limb unsaturated-radix representation for big numbers.
 
