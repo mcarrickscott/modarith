@@ -1880,9 +1880,16 @@ M=0;
 if PM :
     M=-ppw[0]
 
+minus_ones=0
 print("Displaying prime limbs (we like 0, -1, 1 and powers of 2)")
 for i in range(0,len(ppw)) :
+    if i>0 and ppw[i]==-1 :
+        minus_ones+=1
     print(hex(ppw[i]))      
+
+if minus_ones>1 :
+    print("Sorry - too many -1s for this script to handle")
+    exit(0)
 
 # get Montgomery modulus R
 if E :
