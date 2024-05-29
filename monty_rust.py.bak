@@ -1,4 +1,4 @@
-# Python program to generate reasonably efficient C/C++ modular arithmetic code for any prime, on a 16, 32 or 64-bit processor
+# Python program to generate reasonably efficient C/C++ modular arithmetic code for any prime, on a 32 or 64-bit processor
 # IMPORTANT:- Uses Montgomery representation
 # uses unsaturated radix
 #
@@ -1397,9 +1397,8 @@ algorithm=False
 mp=0
 
 # Note that number base MUST be less than wordlength WL (unsaturated).
-# The radix for an n-bit prime is 2^base where base is usually in the range 51-60 for a 64-bit processor, 26-30 for 
-# 32-bit and 12-13 for 16 bit
-# The radix must be low enough so that the sum of L 2^(2*base) double length integers does not encroach on the sign bit, 
+# The radix for an n-bit prime is 2^base where base is usually in the range 51-60 for a 64-bit processor, and 26-30 for 32-bit
+# Radix must be low enough so that the sum of L 2^(2*base) double length integers does not encroach on the sign bit, 
 # that is bits(L)+2*base<2*WL, where L=n/base (rounded up) is the number of limbs in the number representation. But 
 # at the same time radix should be high enough to minimize L. An underused top digit allows for lazy reduction.
 
@@ -1421,7 +1420,7 @@ if prime=="NIST384" :
     p=2**384-2**128-2**96+2**32-1
     if WL==64:
         base=60
-    if WL==32 :
+    else :
         base=29
 
 if prime=="C25519" :
@@ -1463,7 +1462,7 @@ if prime=="GM266" :
     p=2**266-2**168-1
     if WL==32 :
         base=28
-    if WL==64 :
+    else :
         base=56
 
 if prime=="GM240" :
@@ -1484,7 +1483,7 @@ if prime=="GM480" :
     p=2**480-2**240-1
     if WL==64 :
         base=60
-    if WL==32 :
+    else :
         base=29
 
 if prime=="GM384" :

@@ -1315,7 +1315,7 @@ PE=(p-1-e)//(2*e)                # exponent for use in inversion, QR check, and 
 
 if m>=b :
     print("Not an exploitable pseudo-Mersenne - Use Montgomery method instead")
-    exit(0)
+	exit(0)
 
 # get number of limbs
 N=getN(n)

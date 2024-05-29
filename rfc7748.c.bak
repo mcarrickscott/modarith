@@ -7,15 +7,15 @@
 // Mike Scott 23rd November 2023
 // TII
 //
-// code for 16/32/64-bit processor for C25519 curve can be generated  by 
+// code for 32/64-bit processor for C25519 curve can be generated  by 
 //
-// python pseudo.py 16/32/64 C25519
+// python pseudo.py 32/64 C25519
 // or
-// python monty.py 16/32/64 C25519
+// python monty.py 32/64 C25519
 //
-// code for 16/32/64-bit processor for X448 curve can be generated  by
+// code for 32/64-bit processor for X448 curve can be generated  by
 //
-// python monty.py 16/32/64 C448
+// python monty.py 32/64 C448
 
 // make sure decoration and generic are both set to False
 // Seems to prefer clang compiler and karatsuba set to False for C25519 and True for C448

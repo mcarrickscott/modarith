@@ -6,15 +6,15 @@
 //
 // Mike Scott 23rd November 2023
 // TII
-// code for 16/32/64-bit processor for C25519 curve can be generated  by 
+// code for 32/64-bit processor for C25519 curve can be generated  by 
 //
-// python pseudo_rust.py 16/32/64 C25519
+// python pseudo_rust.py 32/64 C25519
 // or
-// python monty_rust.py 16/32/64 C25519
+// python monty_rust.py 32/64 C25519
 //
-// code for 16/32/64-bit processor for C448 curve can be generated  by
+// code for 32/64-bit processor for C448 curve can be generated  by
 //
-// python monty_rust.py 16/32/64 C448
+// python monty_rust.py 32/64 C448
 
 // rustc -O rfc7748.rs
 
