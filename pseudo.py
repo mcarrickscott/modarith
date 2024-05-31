@@ -485,13 +485,25 @@ def second_pass(str,n,m) :
         smask=(1<<(base-xcess))-1
         str+= "\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
+    k=0
     if m>1 :
         str+= "\tut*=0x{:x};\n".format(m)
     str+= "\ts=v0+((spint)ut & mask);\n"
-    str+= "\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
     str+= "\tc[0]=(spint)(s&mask);\n"
-    str+= "\tc[1]=v1+carry;\n"
-    for i in range(2,N) :
+
+    if carry_on :
+        str+="\tut=(udpint)(s>>{})+(ut>>{});\n".format(base,base)
+        str+="\ts=v1+((spint)ut & mask);\n"
+        str+= "\tc[1]=(spint)(s&mask);\n"
+        k+=1
+
+    str+= "\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
+    k=k+1
+
+
+    str+= "\tc[{}]=v{}+carry;\n".format(k,k)
+
+    for i in range(k+1,N) :
         str+= "\tc[{}]=v{};\n".format(i,i)
     str+="}\n"
     return str
@@ -1276,6 +1288,8 @@ if prime=="C41417" :
 
 if prime=="PM512" :
     p=2**512-569
+    if WL==16 :
+        base=12
 
 if prime=="SECP256K1" and WL==64:
     p=2**256-2**32-977
@@ -1295,9 +1309,9 @@ n=p.bit_length()
 if n<120 or pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
     exit(0)
-if n>360 and WL==16 :
-	print("Modulus probably too big for 16-bit processor")
-	exit(0)
+#if n>360 and WL==16 :
+#	print("Modulus probably too big for 16-bit processor")
+#	exit(0)
 
 if base==0 :
     base=getbase(n)   # use default radix
@@ -1327,7 +1341,7 @@ if N>9 :
 
 # check for excess too large
 if mm >= 2**(WL-1) : #or m*((N+2)*2**(2*WL)) >= 2**(2*base+WL-1-xcess) :
-    print("Unfortunate choice of radix - excess",xcess,"too large - please try another radix")
+    print("Unfortunate choice of radix - excess",xcess,"too large - try using smaller radix")
     exit(0)
 
 if (n%base)==0 :
@@ -1391,6 +1405,12 @@ if not overflow :
     if mm*(b-1)<2**WL : 
         EPM=True
         print("Fully Exploitable Pseudo-Mersenne detected")
+
+# Do we need to propagate carries a bit further?
+carry_on=False
+if m*(2**(2*WL-base+xcess)+2**(base-xcess)) >= 2**(2*base) :
+    print("Must propagate carries one limb further in second pass ")
+    carry_on=True
 
 # generate WL bit modular multiplication and squaring code for Mersenne prime 2^n-m
 # where the unsaturated radix is 2^base and base<WL 
