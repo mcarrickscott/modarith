@@ -78,9 +78,15 @@ The scripts can be used out-of-the-box using simple command-line arguments, as i
 
 The scripts can also be tailored in various ways at the top of the script, and in the ``user editable area''.
 
-There are default settings for the choice of compiler, choice of using a clock cycle counter, encouragement for inlining functions, code formatting, the use of Karatsuba for (maybe) faster multiplication, and, for the C code,  an option to ``decorate'' function names to avoid name clashes.
+There are default settings for the choice of compiler, choice of using a clock cycle counter, encouragement for inlining certain functions, code formatting, the use of Karatsuba for (maybe) faster multiplication, and, for the C code,  an option to ``decorate'' function names to avoid name clashes.
 
 New named moduli can also be provided in the user editable area, and some settings (like radix choice) adapted individually.
 
 Function name decoration is required to avoid name clashes in C. If using C++ namespaces can be used to avoid this necessity. It is not an issue for Rust.
+
+# Constant time
+
+All generated functions are written with the expectation that they will execute in constant time. But high level code is nevertheless at the mercy of both the compiler and the architecture.
+
+It is strongly recommended that the generated assembly language be closely studied to ensure that there are no compiler introduced timing leaks. In particular code generated for the functions *modcmv* and *modcsw* should be checked, bearing in mind that they may be inlined by the compiler. If necessary compiler-specific measures should be taken to prevent inlining, and/or place these functions into a separately compiled module.   
 
