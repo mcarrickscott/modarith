@@ -54,13 +54,28 @@ static int char2int(char input)
     return 0;
 }
 
+static void byte2hex(char *ptr,unsigned char ch)
+{
+    int t=ch/16;
+    int b=ch%16;
+    if (t<10)
+    	ptr[0]='0'+t;
+    else
+    	ptr[0]='a'+(t-10);
+    if (b<10)
+    	ptr[1]='0'+b;
+    else
+    	ptr[1]='a'+(b-10);    	
+}
+
 // Convert a byte array to a hex string 
 static void toHex(const char *src, char *dst)
 {
-    for (int i = 0; i < Nbytes; i++)
+    int i;
+    for (i = 0; i < Nbytes; i++)
     {
         unsigned char ch = src[i];
-        sprintf(&dst[i * 2], "%02x", ch);
+        byte2hex(&dst[i * 2],ch);
     }
     dst[2*Nbytes]='\0';
 }
@@ -81,7 +96,8 @@ static int fromHex(const char *src, char *dst)
 // reverse bytes. Useful when dealing with little-endian formats
 static void reverse(char *w)
 {
-    for (int i = 0; i < (Nbytes/2); i++) {
+    int i;
+    for (i = 0; i < (Nbytes/2); i++) {
         unsigned char ch = w[i];
         w[i] = w[Nbytes - i - 1]; 
         w[Nbytes - i - 1] = ch; 
@@ -94,7 +110,7 @@ static void output(spint *x) {
     char buff[(2*Nbytes)+1];
     modexp(x,b);
     toHex(b,buff);
-    printf("%s\n",buff);
+    puts(buff);
 }
 
 // Describe Montgomery Curve parameters
@@ -226,7 +242,7 @@ int main()
 #endif
     uint64_t start,fin;
     clock_t begin;
-    int elapsed;
+    int i,elapsed;
     char sv[(Nbytes*2)+1];
     char bk[Nbytes],bu[Nbytes],bv[Nbytes];
 // convert to byte arrays
@@ -238,8 +254,8 @@ int main()
 // convert to Hex
     toHex(bv,sv);
 
-    printf("%s\n",sk);
-    printf("%s\n",sv);
+    puts(sk); 
+    puts(sv); 
 
 #ifdef COUNT_CLOCKS
 #ifdef USE_RDTSC
@@ -249,7 +265,7 @@ int main()
 #endif    
 #endif
     begin=clock();
-    for (int i=0;i<5000;i++) {
+    for (i=0;i<5000;i++) {
         rfc7748(bk,bu,bv);
         rfc7748(bk,bv,bu);
     }
@@ -265,6 +281,5 @@ int main()
 
     printf("Microseconds= %d\n",elapsed);
     toHex(bu,sv);
-    printf("%s\n",sv);
-
+    puts(sv);
 }

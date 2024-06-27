@@ -147,6 +147,7 @@ def subp(x) :
 def prop(n) :
     str="//propagate carries\n"
     str+="static spint inline prop(spint *n) {\n"
+    str+="\tint i;\n"
     str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
     if not allow_asr :
         str+="\tspint cst=0x{:x}u;\n".format(((1<<base)-1)<<(WL-base))
@@ -158,7 +159,7 @@ def prop(n) :
         str+="\tcarry>>={}u;\n".format(base)
 
     str+="\tn[0]&=mask;\n"
-    str+="\tfor (int i=1;i<{};i++) {{\n".format(N-1)
+    str+="\tfor (i=1;i<{};i++) {{\n".format(N-1)
     if not allow_asr :
         str+="\t\tcarry += n[i];\n"
         str+="\t\tn[i] = carry & mask;\n"
@@ -633,7 +634,8 @@ def modcpy() :
         str+="void inline modcpy{}(const spint *a,spint *c) {{\n".format(DECOR)
     else :
         str+="void modcpy{}(const spint *a,spint *c) {{\n".format(DECOR)
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tint i;\n"
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tc[i]=a[i];\n"
     str+="\t}\n"
     str+="}\n"
@@ -644,7 +646,8 @@ def modnsqr() :
     if makestatic :
         str+="static "
     str+="void modnsqr{}(spint *a,int n) {{\n".format(DECOR)
-    str+="\tfor (int i=0;i<n;i++) {\n"
+    str+="\tint i;\n"
+    str+="\tfor (i=0;i<n;i++) {\n"
     str+="\t\tmodsqr{}(a,a);\n".format(DECOR)
     str+="\t}\n"
     str+="}\n"
@@ -691,6 +694,8 @@ def modinv() :
     if makestatic :
         str+="static "
     str+="void modinv{}(const spint *x,const spint *h,spint *z) {{\n".format(DECOR)
+    if PM1D2>1 :
+        str+="\tint i;\n"
     str+="\tspint s[{}];\n".format(N)
     str+="\tspint t[{}];\n".format(N)
     str+="\tif (h==NULL) {\n"
@@ -700,7 +705,7 @@ def modinv() :
     str+="\t}\n"
     str+="\tmodcpy{}(x,s);\n".format(DECOR)
     if PM1D2>1 :
-        str+="\tfor (int i=0;i<{};i++) {{\n".format(PM1D2-1)
+        str+="\tfor (i=0;i<{};i++) {{\n".format(PM1D2-1)
         str+="\t\tmodsqr{}(s,s);\n".format(DECOR)
         str+="\t\tmodmul{}(s,x,s);\n".format(DECOR)
         str+="\t}\n"
@@ -736,7 +741,7 @@ def modsqrt() :
         str+="static "
     str+="void modsqrt{}(const spint *x,const spint *h,spint *r) {{\n".format(DECOR)
     if PM1D2>1 :
-
+        str+="\tint k;\n"
         str+="\tspint t[{}];\n".format(N)
         str+="\tspint b[{}];\n".format(N)
         str+="\tspint v[{}];\n".format(N)
@@ -757,7 +762,7 @@ def modsqrt() :
     if PM1D2>1 :
         str+="\tmodmul{}(s,y,t);\n".format(DECOR)
         str+="\tnres{}(z,z);\n".format(DECOR)
-        str+="\tfor (int k={};k>1;k--) {{\n".format(PM1D2)
+        str+="\tfor (k={};k>1;k--) {{\n".format(PM1D2)
         str+="\t\tmodcpy{}(t,b);\n".format(DECOR)
 
         str+="\t\tmodnsqr{}(b,k-2);\n".format(DECOR)
@@ -778,11 +783,12 @@ def modis1(n) :
     if makestatic :
         str+="static "
     str+="int modis1{}(const spint *a) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
     str+="\tspint c0;\n"
     str+="\tspint d=0;\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
-    str+="\tfor (int i=1;i<{};i++) {{\n".format(N)
+    str+="\tfor (i=1;i<{};i++) {{\n".format(N)
     str+="\t\td|=c[i];\n\t}\n"
     str+="\tc0=(spint)c[0];\n"
     str+="\treturn ((spint)1 & ((d-(spint)1)>>{}u) & (((c0^(spint)1)-(spint)1)>>{}u));\n}}\n".format(base,base)
@@ -794,8 +800,9 @@ def modis0(n) :
     if makestatic :
         str+="static "
     str+="int modis0{}(const spint *a) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\tspint d=0;\n"
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\td|=a[i];\n\t}\n"
     str+="\treturn ((spint)1 & ((d-(spint)1)>>{}u));\n}}\n".format(base)
     return str
@@ -806,7 +813,8 @@ def modzer() :
     if makestatic :
         str+="static "
     str+="void modzer{}(spint *a) {{\n".format(DECOR)
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tint i;\n"
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ta[i]=0;\n"
     str+="\t}\n"
     str+="}\n"
@@ -818,8 +826,9 @@ def modone() :
     if makestatic :
         str+="static "
     str+="void modone{}(spint *a) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\ta[0]=1;\n"
-    str+="\tfor (int i=1;i<{};i++) {{\n".format(N)
+    str+="\tfor (i=1;i<{};i++) {{\n".format(N)
     str+="\t\ta[i]=0;\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
@@ -832,8 +841,9 @@ def modint() :
     if makestatic :
         str+="static "
     str+="void modint{}(int x,spint *a) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\ta[0]=(spint)x;\n"
-    str+="\tfor (int i=1;i<{};i++) {{\n".format(N)
+    str+="\tfor (i=1;i<{};i++) {{\n".format(N)
     str+="\t\ta[i]=0;\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
@@ -846,7 +856,8 @@ def nres(n) :
     if makestatic :
         str+="static "
     str+="void nres{}(const spint *m,spint *n) {{\n".format(DECOR)
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tint i;\n"
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tn[i]=m[i];\n"
     str+="\t}\n"
     str+="}\n"
@@ -858,7 +869,8 @@ def redc(n) :
     if makestatic :
         str+="static "
     str+="void redc{}(const spint *n,spint *m) {{\n".format(DECOR)
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tint i;\n"
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tm[i]=n[i];\n"
     str+="\t}\n"
     str+="\tmodfsb{}(m);\n".format(DECOR)
@@ -871,11 +883,12 @@ def modcsw() :
     if makestatic :
         str+="static "
     str+="int modcsw{}(int d,spint *g,spint *f) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\tspint c=(-d);\n"
     str+="\tspint w=0;\n"
     str+="\tspint r=f[0]^g[1];\n"
     str+="\tspint ra=r+r; ra>>=1;\n"
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tspint t=(f[i]^g[i])&c;\n"
     str+="\t\tt^=r;\n"
     str+="\t\tspint e=f[i]^t; w^=e;\n"
@@ -891,11 +904,12 @@ def modcmv() :
     if makestatic :
         str+="static "
     str+="int modcmv{}(int d,const spint *g,spint *f) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\tspint c=(-d);\n"
     str+="\tspint w=0;\n"
     str+="\tspint r=f[0]^g[1];\n"
     str+="\tspint ra=r+r; ra>>=1;\n"
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tspint t=(f[i]^g[i])&c;\n"
     str+="\t\tt^=r;\n"
     str+="\t\tspint e=f[i]^t; w^=e;\n"
@@ -911,8 +925,9 @@ def modshl(n) :
     if makestatic :
         str+="static "
     str+="void modshl{}(unsigned int n,spint *a) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\ta[{}]=((a[{}]<<n)) | (a[{}]>>({}u-n));\n".format(N-1,N-1,N-2,base)
-    str+="\tfor (int i={};i>0;i--) {{\n".format(N-2)
+    str+="\tfor (i={};i>0;i--) {{\n".format(N-2)
     str+="\t\ta[i]=((a[i]<<n)&(spint)0x{:x}) | (a[i-1]>>({}u-n));\n\t}}\n".format(mask,base)
     str+="\ta[0]=(a[0]<<n)&(spint)0x{:x};\n".format(mask)
     str+="}\n"
@@ -926,8 +941,9 @@ def modshr(n) :
     if makestatic :
         str+="static "
     str+="int modshr{}(unsigned int n,spint *a) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\tspint r=a[0]&(((spint)1<<n)-(spint)1);\n"
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N-1)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N-1)
     str+="\t\ta[i]=(a[i]>>n) | ((a[i+1]<<({}u-n))&(spint)0x{:x});\n\t}}\n".format(base,mask)
     str+="\ta[{}]=a[{}]>>n;\n".format(N-1,N-1)
     str+="\treturn r;\n}\n"
@@ -939,9 +955,10 @@ def modexp() :
     if makestatic :
         str+="static "
     str+="void modexp{}(const spint *a,char *b) {{\n".format(DECOR)
+    str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
     str+="\tredc{}(a,c);\n".format(DECOR)
-    str+="\tfor (int i={};i>=0;i--) {{\n".format(Nbytes-1)
+    str+="\tfor (i={};i>=0;i--) {{\n".format(Nbytes-1)
     str+="\t\tb[i]=c[0]&(spint)0xff;\n"
     str+="\t\t(void)modshr{}(8,c);\n\t}}\n".format(DECOR)
     str+="}\n"
@@ -953,9 +970,10 @@ def modimp() :
     if makestatic :
         str+="static "
     str+="void modimp{}(const char *b, spint *a) {{\n".format(DECOR)
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(N)
+    str+="\tint i;\n"
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ta[i]=0;\n\t}\n"
-    str+="\tfor (int i=0;i<{};i++) {{\n".format(Nbytes)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
     str+="\t\ta[0]+=(spint)(unsigned char)b[i];\n\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
