@@ -1087,9 +1087,12 @@ def modis1(n,base) :
 def modis0(n,base) :
     str="//is zero?\n"
     str+="pub fn modis0(a: &[SPINT]) -> bool {\n"
+    str+="\tlet mut c: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tlet mut d=0 as SSPINT;\n"
+    str+="\tmodcpy(a,&mut c);\n"
+    str+="\tredc(&mut c);\n"
     str+="\tfor i in 0..{} {{\n".format(N)
-    str+="\t\td|=a[i] as SSPINT;\n\t}\n"
+    str+="\t\td|=c[i] as SSPINT;\n\t}\n"
     str+="\treturn (1 & ((d-1)>>{})) != 0;\n}}\n".format(base)
     return str    
 
@@ -1230,6 +1233,31 @@ def modimp() :
     str+="\t\ta[0]+=b[i] as SPINT;\n\t}\n"
     str+="\tnres(a);\n"
     str+="\treturn;\n}\n"
+    return str 
+
+#get sign (parity)
+def modsign() :
+    str="//determine sign\n"
+    str+="pub fn modsign(a: &[SPINT]) -> usize {\n"
+    str+="\tlet mut c:[SPINT;{}]=[0;{}];\n".format(N,N)
+    str+="\tmodcpy(a,&mut c);\n"
+    str+="\tredc(&mut c);\n"
+    str+="\treturn (c[0]%2) as usize;\n}\n"
+    return str 
+
+#compare for equality
+def modcmp() :
+    str="//return true if equal\n"
+    str+="pub fn modcmp(a: &[SPINT],b: &[SPINT]) -> bool {\n"
+    str+="\tlet mut c:[SPINT;{}]=[0;{}];\n".format(N,N)
+    str+="\tlet mut d:[SPINT;{}]=[0;{}];\n".format(N,N)
+    str+="\tlet mut eq=1;\n"
+    str+="\tmodcpy(a,&mut c);\n"
+    str+="\tmodcpy(b,&mut d);\n"
+    str+="\tfor i in 0..{} {{\n".format(N)
+    str+="\t\teq&=(((c[i]^d[i])-1)>>{})&1;\n\t}}\n".format(base)
+    str+="\treturn eq==1;\n"
+    str+="}\n"
     return str 
 
 # for timings
@@ -1544,6 +1572,10 @@ if prime=="MFP1973" :
 	if WL==64:
 		base=52
 
+if prime=="CSIDH512" :
+    p=5326738796327623094747867617954605554069371494832722337612446642054009560026576537626892113026381253624626941643949444792662881241621373288942880288065659
+
+
 ### End of user editable area
 
 
@@ -1759,6 +1791,8 @@ with open('code.rs', 'w') as f:
         print(modshr(n,base))
         print(modexp())
         print(modimp())
+        print(modsign())
+        print(modcmp())
         print("pub const NLIMBS: usize = {};".format(N))
         print("pub const NBITS: usize = {};".format(n))
         print("pub const NBYTES: usize = {};".format(Nbytes))

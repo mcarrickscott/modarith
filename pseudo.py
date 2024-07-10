@@ -801,9 +801,11 @@ def modis0(n) :
         str+="static "
     str+="int modis0{}(const spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
+    str+="\tspint c[{}];\n".format(N)
     str+="\tspint d=0;\n"
+    str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\td|=a[i];\n\t}\n"
+    str+="\t\td|=c[i];\n\t}\n"
     str+="\treturn ((spint)1 & ((d-(spint)1)>>{}u));\n}}\n".format(base)
     return str
 
@@ -979,6 +981,34 @@ def modimp() :
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="}\n"
     return str 
+
+#get sign (parity of value)
+def modsign() :
+    str="//determine sign\n"
+    if makestatic :
+        str+="static "
+    str+="int modsign{}(const spint *a) {{\n".format(DECOR)
+    str+="\tspint c[{}];\n".format(N)
+    str+="\tredc{}(a,c);\n".format(DECOR)
+    str+="\treturn c[0]%2;\n"
+    str+="}\n"
+    return str
+
+#compare for equality
+def modcmp() :
+    str="//return true if equal\n"
+    if makestatic :
+        str+="static "
+    str+="int modcmp{}(const spint *a,const spint *b) {{\n".format(DECOR)
+    str+="\tspint c[{}],d[{}];\n".format(N,N)
+    str+="\tint i,eq=1;\n"
+    str+="\tredc{}(a,c);\n".format(DECOR)
+    str+="\tredc{}(b,d);\n".format(DECOR)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+    str+="\t\teq&=(((c[i]^d[i])-1)>>{})&1;\n\t}}\n".format(base)
+    str+="\treturn eq;\n"
+    str+="}\n"
+    return str
 
 # for timings
 def time_modmul(n,ra,rb) :
@@ -1228,6 +1258,9 @@ def functions() :
     print(modshr(n))
     print(modexp())
     print(modimp())
+    print(modsign())
+    print(modcmp())
+
 
 def main() :
     str="int main() {\n"

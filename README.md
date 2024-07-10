@@ -71,6 +71,8 @@ Assume the modulus is $p$. The provided functions are
 *modshr()* -- shift right by bits  \
 *modexp()* -- export from internal format to byte array \
 *modimp()* -- import to internal format from byte array  
+*modsign()* -- Extract sign (parity bit)
+*modcmp()* -- Test for equality
 
 # Using the scripts
 

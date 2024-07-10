@@ -75,11 +75,13 @@ fn output(x: &[SPINT]) {
 //X25519
 const A24: usize = 121665;
 const COF: usize = 3;
+const GENERATOR: u8=9;
 const TWIST_SECURE: bool = true;
 
 //X448
 //const A24: usize = 39081;
 //const COF: usize = 2;
+//const GENERATOR: u8=5;
 //const TWIST_SECURE: bool = true;
 
 // clamp input - see RFC7748
@@ -201,17 +203,15 @@ fn main() {
 // ******
 //C25519
     const SK:&str="77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
-    const SU:&str="0000000000000000000000000000000000000000000000000000000000000009";
 //C448
 //    const SK:&str="9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
-//    const SU:&str="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005";
 
     let mut bk:[u8;NBYTES]=[0;NBYTES];
     let mut bu:[u8;NBYTES]=[0;NBYTES];
     let mut bv:[u8;NBYTES]=[0;NBYTES];
+    bu[NBYTES-1]=GENERATOR;
 
-// convert to byte arrays
-    from_hex(&SU,&mut bu);
+// convert to byte array
     from_hex(&SK,&mut bk);
 
     rfc7748(&bk,&bu,&mut bv);

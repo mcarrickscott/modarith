@@ -118,12 +118,14 @@ static void output(spint *x) {
 #ifdef C25519
 #define A24 121665  // Montgomery curve constant (A-2)/4
 #define COF 3       // Montgomery curve cofactor = 2^cof (2 or 3)
+#define GENERATOR 9
 #define TWIST_SECURE // If it is a twist secure curve
 #endif
 
 #ifdef C448
 #define A24 39081   // Montgomery curve constant (A-2)/4
 #define COF 2       // Montgomery curve cofactor = 2^cof (2 or 3)
+#define GENERATOR 5
 #define TWIST_SECURE // If it is a twist secure curve
 #endif
 
@@ -234,19 +236,19 @@ int main()
 {
 #ifdef C25519
     const char *sk=(const char *)"77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
-    const char *su=(const char *)"0000000000000000000000000000000000000000000000000000000000000009";
 #endif
 #ifdef C448
     const char *sk=(const char *)"9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
-    const char *su=(const char *)"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005";
 #endif
     uint64_t start,fin;
     clock_t begin;
     int i,elapsed;
     char sv[(Nbytes*2)+1];
-    char bk[Nbytes],bu[Nbytes],bv[Nbytes];
-// convert to byte arrays
-    fromHex(su,bu);
+    char bk[Nbytes],bv[Nbytes];
+    char bu[Nbytes]={};
+
+    bu[Nbytes-1]=GENERATOR;
+// convert to byte array
     fromHex(sk,bk);
 
     rfc7748(bk,bu,bv);
