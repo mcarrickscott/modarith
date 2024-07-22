@@ -40,17 +40,22 @@ fn char2int(inp: u8) -> u8 {
 }
 
 // string s better have even number of characters!
-fn from_hex(s: &str,x: &mut[u8]) -> usize {
+fn from_hex(s: &str,x: &mut[u8]) {
+    let mut pad:[u8;2*NBYTES]=[0;2*NBYTES];
     let c=s.as_bytes();
-    let mut i=0;
-    let mut j=0;
-
-    while j<c.len() {
-        x[i]=char2int(c[j])*16+char2int(c[j+1]);
-        i+=1;
-        j+=2;
+    let len=c.len();
+    let mut lz=2*NBYTES-len;
+    if 2*NBYTES<len {lz=0;}
+    for i in 0..lz {
+        pad[i]='0' as u8;
     }
-    return i;
+    for i in lz..2*NBYTES {
+        pad[i]=c[i-lz];
+    }
+
+    for i in 0..NBYTES {
+        x[i]=char2int(pad[2*i])*16+char2int(pad[2*i+1]);
+    }
 }
 
 fn printhex(array: &[u8]) {

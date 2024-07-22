@@ -81,16 +81,20 @@ static void toHex(const char *src, char *dst)
 }
 
 // Convert from a hex string to byte array 
-static int fromHex(const char *src, char *dst)
+static void fromHex(const char *src, char *dst)
 {
-    int i = 0;
-    int j = 0;
-    while (src[j] != 0)
+    int i,lz,len=0;
+    char pad[2*Nbytes];
+    while (src[len]!=0) len++;
+    lz=2*Nbytes-len;
+    if (lz<0) lz=0;
+    for (i=0;i<lz;i++) pad[i]='0';  // pad with leading zeros
+    for (i=lz;i<2*Nbytes;i++) pad[i]=src[i-lz];
+
+    for (i=0;i<Nbytes;i++)
     {
-        dst[i] = (char2int(src[j]) * 16) + char2int(src[j + 1]);
-        i +=1; j += 2;
+        dst[i] = (char2int(pad[2*i]) * 16) + char2int(pad[2*i + 1]);
     }
-    return j;
 }
 
 // reverse bytes. Useful when dealing with little-endian formats

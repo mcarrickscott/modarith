@@ -25,12 +25,14 @@ For accurate timings across a range of architectures for the C code, install Dan
 For a quick start copy the files from here into a working directory, and try
 
 	python3 pseudo.py 64 2**255-19
+	./time
 
-Then 64-bit code for the suggested modulus is generated and tested. An executable that times important functions will be created if the platform allows it. The standalone C timing code is output to *time.c*, and code for production use is output to *code.c*
+Then 64-bit code for the suggested modulus is generated and tested. An executable that times important functions will be created if the platform allows it. The standalone C timing code is output to *time.c*, and code for production use is output to *code.c* and *header.h*
 
 For Rust 
 
 	python3 pseudo_rust.py 64 2**255-19
+	./time
 
 In this case the output is directed to files *time.rs* and *code.rs*
 
@@ -70,11 +72,11 @@ Assume the modulus is $p$. The provided functions are
 *modshl()* -- shift left by bits  \
 *modshr()* -- shift right by bits  \
 *modexp()* -- export from internal format to byte array \
-*modimp()* -- import to internal format from byte array  
-*modsign()* -- Extract sign (parity bit)
-*modcmp()* -- Test for equality
+*modimp()* -- import to internal format from byte array  \
+*modsign()* -- Extract sign (parity bit) \
+*modcmp()* -- Test for equality \
 
-# Using the scripts
+## Using the scripts
 
 The scripts can be used out-of-the-box using simple command-line arguments, as in the examples above.
 
@@ -84,11 +86,46 @@ There are default settings for the choice of compiler, choice of using a clock c
 
 New named moduli can also be provided in the user editable area, and some settings (like radix choice) adapted individually.
 
-Function name decoration is required to avoid name clashes in C. If using C++ namespaces can be used to avoid this necessity. It is not an issue for Rust.
+Function name decoration may be required to avoid name clashes in C. If using C++ namespaces can be used to avoid this necessity. It is not an issue for Rust.
 
-# Constant time
+## Constant time
 
 All generated functions are written with the expectation that they will execute in constant time. But high level code is nevertheless at the mercy of both the compiler and the architecture.
 
 It is strongly recommended that the generated assembly language be closely studied to ensure that there are no compiler introduced timing leaks. In particular code generated for the functions *modcmv* and *modcsw* should be checked, bearing in mind that they may be inlined by the compiler. If necessary compiler-specific measures should be taken to prevent inlining, and/or place these functions into a separately compiled module.   
 
+
+# New - automatic generation of Edwards or Weierstrass curve API code in C
+
+1. Decide on wordlength (32 or 64 bit)
+2. Choose the field prime.
+3. Automatically generate field code to files *code.c* and *header.h*. If (pseudo)-Mersenne prime, use script *pseudo.py*, else use *monty.py*
+4. Decide on Edwards or Weierstrass curve. The number of points on the curve is assumed to be a prime for Weierstrass, or 4 or 8 times a prime for Edwards. This prime is the order of the group.
+5. Drop *code.c* into *edwards.c* or *weierstrass.c* and provide some curve constants (a constant *B* or *d* and a group generator point *x, y*) where indicated (some are provided already). If larger constants are required, a tool *make.py* is provided to generate them
+6. Insert the prime group order into *testcurve.c* where indicated (several examples are there already)
+7. Make sure fixed API header file *curve.h* is in the path. Note that this API is independent of the curve, its associated field and its parameters.
+8. Compile and link *testcurve.c* with *edwards.c* or *weierstrass.c*
+9. Run testcurve to test the arithmetic and perform some timings.
+
+The API interface is as indicated in *curve.h*. The API is completely implemented in *edwards.c* or *weierstrass.c*
+
+## Quickstart 1:-
+
+	python pseudo.py 64 Ed25519
+Drop code.c into edwards.c where indicated
+
+	gcc -O2 testcurve.c edwards.c -lcpucycles -o testcurve
+	./testcurve
+
+Note that this intermediate API only provides the elliptic curve functionality. A higher level algorithm API (like that provided for Ed448 signature) would use this API while itself providing additional algorithm specific random number and hashing functionality. It may also use the *monty.py* script to generate code to perform arithmetic modulo the prime group order, if so required by the algorithm.
+
+## Quickstart 2:-
+
+	python monty.py 64 0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
+Drop code.c into Ed448.c where indicated
+
+	python monty.py 64 Ed448
+Drop code.c into edwards.c where indicated
+
+	gcc -O2 Ed448.c edwards.c -o Ed448
+	./Ed448

@@ -1306,6 +1306,7 @@ with open('code.rs', 'w') as f:
         print(modsign())
         print(modcmp())
         print("pub const NLIMBS: usize = {};".format(N))
+        print("pub const RADIX: usize = {};".format(base))
         print("pub const NBITS: usize = {};".format(n))
         print("pub const NBYTES: usize = {};".format(Nbytes))
         print("pub const MERSENNE: bool = true;")

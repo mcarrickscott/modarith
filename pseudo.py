@@ -1228,6 +1228,15 @@ def header() :
             print("#define dpint __uint{}_t\n".format(2*WL))
         else:
             print("#define dpint uint{}_t\n".format(2*WL))
+    print("#define Wordlength{} {}".format(DECOR,WL))
+    print("#define Nlimbs{} {}".format(DECOR,N))
+    print("#define Radix{} {}".format(DECOR,base))
+    print("#define Nbits{} {}".format(DECOR,n))
+    print("#define Nbytes{} {}".format(DECOR,Nbytes))
+    print("#define MERSENNE\n")
+    print("#define MULBYINT\n")
+    if prime[0].isalpha() :
+        print("#define",prime,"\n\n")
 
 def functions() :
     print(prop(n))
@@ -1314,12 +1323,21 @@ mp=0
 if prime=="PM266" :
     p=2**266-3
 
+if prime=="NUMS256W" :
+    p=2**256-189
+
+if prime=="NUMS256E" :
+    p=2**256-189
+
 if prime=="NIST521" :
     p=2**521-1
     if WL==32 :
         base=29
     if WL==64 :
         base=58
+
+if prime=="Ed25519" :
+    p=2**255-19
 
 if prime=="C25519" :
     p=2**255-19
@@ -1475,10 +1493,17 @@ from contextlib import redirect_stdout
 makestatic=False
 DECOR=""
 modulus=p
+
+with open('header.h', 'w') as f:
+    with redirect_stdout(f):
+        header()
+f.close()
+
+
 import random
 with open('test.c', 'w') as f:
     with redirect_stdout(f):
-        header()
+        print('#include "header.h"\n')
         functions()
 f.close()
 
@@ -1630,7 +1655,7 @@ subprocess.call("rm time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
-        header()
+        print('#include "header.h"\n')
         if not embedded :
             if cyclescounter :
                 print("#include <cpucycles.h>\n")
@@ -1672,7 +1697,7 @@ else :
 makestatic=False
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        header()
+        print('#include "header.h"\n')
         functions()
 f.close()
 
@@ -1701,18 +1726,17 @@ if decoration :
         DECOR="_"+str(n)+str(m)+"_ct"
     else :
         DECOR="_"+prime+"_ct"
+#re-write it
+with open('header.h', 'w') as f:
+    with redirect_stdout(f):
+        header()
+f.close()
 
 makestatic=True
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        header()
+        print('#include "header.h"\n')
         functions()
-        print("#define Nlimbs{} {}".format(DECOR,N))
-        print("#define Nbits{} {}".format(DECOR,n))
-        print("#define Nbytes{} {}".format(DECOR,Nbytes))
-        print("#define MERSENNE\n")
-        if prime[0].isalpha() :
-            print("#define",prime,"\n\n")
 f.close()
 
 if formatted :
@@ -1721,6 +1745,6 @@ if formatted :
 if check:
     subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True) 
 
-print("Production code is in code.c")
+print("Production code is in code.c and header.h")
 
 

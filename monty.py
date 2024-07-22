@@ -1644,6 +1644,17 @@ def header() :
             print("#define dpint __uint{}_t\n".format(2*WL))
         else:
             print("#define dpint uint{}_t\n".format(2*WL))
+    print("#define Wordlength{} {}".format(DECOR,WL))
+    print("#define Nlimbs{} {}".format(DECOR,N))
+    print("#define Radix{} {}".format(DECOR,base))
+    print("#define Nbits{} {}".format(DECOR,n))
+    print("#define Nbytes{} {}".format(DECOR,Nbytes))
+    print("#define MONTGOMERY\n")
+    if prime[0].isalpha() :
+        print("#define",prime,"\n\n")
+    if trin>0 :
+        print("#define MULBYINT\n")
+
 
 def functions() :
     print(prop(n))
@@ -1738,6 +1749,9 @@ if prime=="NIST384" :
 
 if prime=="C25519" :
     p=2**255-19
+
+if prime=="Ed448" :
+    p=2**448-2**224-1
 
 if prime=="C448" :
     p=2**448-2**224-1
@@ -1991,10 +2005,16 @@ from contextlib import redirect_stdout
 makestatic=False
 DECOR=""
 modulus=p
+
+with open('header.h', 'w') as f:
+    with redirect_stdout(f):
+        header()
+f.close()
+
 import random
 with open('test.c', 'w') as f:
     with redirect_stdout(f):
-        header()
+        print('#include "header.h"\n')
         functions()
 f.close()
 
@@ -2143,7 +2163,7 @@ with open('time.c', 'w') as f:
     with redirect_stdout(f):
         #print("#include <stdio.h>")
         #print("#include <stdint.h>\n")
-        header()
+        print('#include "header.h"\n')
         if not embedded :
             if cyclescounter :
                 print("#include <cpucycles.h>\n")
@@ -2187,7 +2207,7 @@ else :
 makestatic=False
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        header()
+        print('#include "header.h"\n')
         functions()
 f.close()
 
@@ -2223,18 +2243,18 @@ if decoration :
             exit(0);
         DECOR="_"+prime+"_ct"
 
+#re-write it
+with open('header.h', 'w') as f:
+    with redirect_stdout(f):
+        header()
+f.close()
 
 makestatic=True
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        header()
+        print('#include "header.h"\n')
         functions()
-        print("#define Nlimbs{} {}".format(DECOR,N))
-        print("#define Nbits{} {}".format(DECOR,n))
-        print("#define Nbytes{} {}".format(DECOR,Nbytes))
-        print("#define MONTGOMERY\n")
-        if prime[0].isalpha() :
-            print("#define",prime,"\n\n")
+
 f.close()
 
 if formatted :
@@ -2243,5 +2263,5 @@ if formatted :
 if check: 
     subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True)  # tidy up the format
 
-print("Production code is in code.c")
+print("Production code is in code.c and header.h")
 
