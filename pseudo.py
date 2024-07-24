@@ -1232,11 +1232,11 @@ def header() :
     print("#define Nlimbs{} {}".format(DECOR,N))
     print("#define Radix{} {}".format(DECOR,base))
     print("#define Nbits{} {}".format(DECOR,n))
-    print("#define Nbytes{} {}".format(DECOR,Nbytes))
-    print("#define MERSENNE\n")
-    print("#define MULBYINT\n")
+    print("#define Nbytes{} {}\n".format(DECOR,Nbytes))
+    print("#define MERSENNE")
+    print("#define MULBYINT")
     if prime[0].isalpha() :
-        print("#define",prime,"\n\n")
+        print("#define",prime,"\n")
 
 def functions() :
     print(prop(n))
@@ -1346,6 +1346,9 @@ if prime=="C25519" :
         mp=2            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm  RFC7748. 
                         # Now no reduction required after modular additions/subtractions.
     
+if prime=="C2065" :
+    p=2**206-5
+
 if prime=="PM336" :
     p=2**336-3
 

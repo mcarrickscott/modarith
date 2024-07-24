@@ -1,18 +1,18 @@
 // Edwards curve support 
-// Use python scripts to generate code for C25519 or C448, or your own curve
+// Use python scripts to generate code for Ed25519 or Ed448, or your own curve
 //
 // Mike Scott 16th July 2024
 // TII
 //
 // code for 16/32/64-bit processor for C25519 curve can be generated  by 
 //
-// python pseudo.py 16/32/64 C25519
+// python pseudo.py 16/32/64 Ed25519
 // or
-// python monty.py 16/32/64 C25519
+// python monty.py 16/32/64 Ed25519
 //
 // code for 16/32/64-bit processor for X448 curve can be generated  by
 //
-// python monty.py 16/32/64 C448
+// python monty.py 16/32/64 Ed448
 
 // make sure decoration and generic are both set to False in monty.py or pseudo.py
 
@@ -26,7 +26,7 @@
 
 // define edwards curve here ax^2+y^2 = 1+dx^2y^2, that is d, cofactor and prime order generator (x,y)
 
-#ifdef NUMS256E  // the way it should have been done...
+#ifdef NUMS256E  // the way it should have been done... see https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session4-costello-craig.pdf
 #ifdef MULBYINT
 #define CONSTANT_D -15342   
 #define CONSTANT_X 34
@@ -100,6 +100,7 @@ void ecnneg(point *P)
 }
 
 // add Q to P
+// standard projective method from EFD - https://www.hyperelliptic.org/EFD/
 void ecnadd(point *Q,point *P)
 {
     spint A[Nlimbs],B[Nlimbs],C[Nlimbs],D[Nlimbs],E[Nlimbs],F[Nlimbs],G[Nlimbs];
@@ -149,6 +150,7 @@ void ecnsub(point *Q,point *P)
 }
 
 // double P
+// standard projective method from EFD - https://www.hyperelliptic.org/EFD/
 void ecndbl(point *P)
 {
     spint B[Nlimbs],C[Nlimbs],D[Nlimbs],E[Nlimbs],F[Nlimbs],H[Nlimbs],J[Nlimbs];
@@ -517,11 +519,6 @@ void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
     ecncpy(Q,&W[4]); ecnadd(P,&W[4]);  // Q+P
 
     dnaf(e,f,w);
-
-//    printf("w= ");
-//    for (i=0;i<8*Nbytes+8;i++) printf(" %d",(int)w[i]);
-//    printf("\n");
-
 
     i=8*Nbytes+7;
     while (w[i]==0) i--; // ignore leading zeros

@@ -1,5 +1,5 @@
 
-// api header file for Edwards and Weierstrass curves 
+// API header file for Edwards and Weierstrass curves 
 
 #ifndef CURVE_H
 #define CURVE_H
@@ -22,7 +22,7 @@ struct xyz
 
 typedef struct xyz point;
 
-// api functions. char parameters are big-endian integers of length Nbytes
+// api functions. char* parameters are big-endian integers of fixed length
 extern int ecnget(point *P,char *x, char *y);  // extract from point
 extern void ecnset(int s,const char *x,const char *y,point *P); // set point
 extern void ecninf(point *P);  // set point-at-infinity 

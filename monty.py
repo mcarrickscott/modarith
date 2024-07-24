@@ -1648,12 +1648,12 @@ def header() :
     print("#define Nlimbs{} {}".format(DECOR,N))
     print("#define Radix{} {}".format(DECOR,base))
     print("#define Nbits{} {}".format(DECOR,n))
-    print("#define Nbytes{} {}".format(DECOR,Nbytes))
-    print("#define MONTGOMERY\n")
+    print("#define Nbytes{} {}\n".format(DECOR,Nbytes))
+    print("#define MONTGOMERY")
     if prime[0].isalpha() :
-        print("#define",prime,"\n\n")
+        print("#define",prime,"\n")
     if trin>0 :
-        print("#define MULBYINT\n")
+        print("#define MULBYINT")
 
 
 def functions() :

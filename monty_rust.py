@@ -1796,9 +1796,13 @@ with open('code.rs', 'w') as f:
         print("pub const NLIMBS: usize = {};".format(N))
         print("pub const RADIX: usize = {};".format(base))
         print("pub const NBITS: usize = {};".format(n))
-        print("pub const NBYTES: usize = {};".format(Nbytes))
+        print("pub const NBYTES: usize = {};\n".format(Nbytes))
         print("pub const MERSENNE: bool = false;")
         print("pub const MONTGOMERY: bool = true;\n")
+        if trin>0 :
+            print("pub const MULBYINT: bool = true;\n")
+        else :
+            print("pub const MULBYINT: bool = false;\n")
 
 f.close()
 

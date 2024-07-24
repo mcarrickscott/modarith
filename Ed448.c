@@ -410,7 +410,7 @@ void ED448_KEY_GEN(char *prv,char *pub)
     s[55]!=0x80;
 
     reverse(s);  // little endian to big endian
-    ecnmul(s,&P);
+    ecnmul(s,&P); 
 
     sign=ecnget(&P,NULL,pub);  // get y coordinate and sign
     reverse(pub);              // big endian to little endian
@@ -480,7 +480,7 @@ int ED448_VERIFY(char *pub,char *m,char *sig)
     int i;
     char buff[BYTES];
     point G,R,Q;
-    spint t[LIMBS],u[LIMBS];
+    spint u[LIMBS];
     int sign;
     sha3 SHA3;
     char h[2*BYTES+2];

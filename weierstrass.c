@@ -21,7 +21,7 @@
 
 // define weierstrass curve here y^2=x^3-3x+B, that is B and prime order generator (x,y)
 // define ZEROA if curve is y^2=x^3+B, and constant_B = 3B
-#ifdef NUMS256W  // the way it should have been done...
+#ifdef NUMS256W  // the way it should have been done... see https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session4-costello-craig.pdf
 #ifdef MULBYINT
 #define CONSTANT_B 152961
 #define CONSTANT_X 2
@@ -93,6 +93,7 @@ void ecnneg(point *P)
 }
 
 // add Q to P
+// complete formuale from https://eprint.iacr.org/2015/1060
 void ecnadd(point *Q,point *P)
 {
     spint B[Nlimbs],T0[Nlimbs],T1[Nlimbs],T2[Nlimbs],T3[Nlimbs],T4[Nlimbs];
@@ -120,8 +121,6 @@ void ecnadd(point *Q,point *P)
     modmul(P->x,P->y,P->x); // 16
     modadd(T0,T2,P->y);     // 17
     modsub(P->x,P->y,P->y); // 18
-
-
 
 #ifdef ZEROA
     modadd(T0,T0,P->x);   // 19
@@ -176,7 +175,6 @@ void ecnadd(point *Q,point *P)
     modsub(T1,P->x,P->z);   // 23
     modadd(P->x,T1,P->x);   // 24
 
-
     modadd(T2,T2,T1);       // 26
     modadd(T2,T1,T2);       // 27
 
@@ -213,6 +211,7 @@ void ecnsub(point *Q,point *P)
 }
 
 // double P
+// complete formuale from https://eprint.iacr.org/2015/1060
 void ecndbl(point *P)
 {
     spint B[Nlimbs],T0[Nlimbs],T1[Nlimbs],T2[Nlimbs],T3[Nlimbs],T4[Nlimbs];
@@ -284,7 +283,6 @@ void ecndbl(point *P)
 
     modadd(T2,T2,T3); // 16
     modadd(T2,T3,T2); // 17
-
 
     modsub(P->z,T2,P->z); // 19
     modsub(P->z,T0,P->z); // 20
@@ -592,11 +590,6 @@ void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
     ecncpy(Q,&W[4]); ecnadd(P,&W[4]);  // Q+P
 
     dnaf(e,f,w);
-
-//    printf("w= ");
-//    for (i=0;i<8*Nbytes+8;i++) printf(" %d",(int)w[i]);
-//    printf("\n");
-
 
     i=8*Nbytes+7;
     while (w[i]==0) i--; // ignore leading zeros

@@ -1076,6 +1076,8 @@ if prime=="C25519" :
         algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
         mp=2            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm. Now no reduction required after modular additions/subtractions.
 
+if prime=="C2065" :
+    p=2**206-5
 
 if prime=="PM336" :
     p=2**336-3
@@ -1308,9 +1310,10 @@ with open('code.rs', 'w') as f:
         print("pub const NLIMBS: usize = {};".format(N))
         print("pub const RADIX: usize = {};".format(base))
         print("pub const NBITS: usize = {};".format(n))
-        print("pub const NBYTES: usize = {};".format(Nbytes))
+        print("pub const NBYTES: usize = {};\n".format(Nbytes))
         print("pub const MERSENNE: bool = true;")
         print("pub const MONTGOMERY: bool = false;\n")
+        print("pub const MULBYINT: bool = true;\n")
 f.close()
 
 if formatted :
