@@ -1021,11 +1021,12 @@ def time_modmul(n,ra,rb) :
     str="void time_modmul{}() {{\n".format(DECOR)
     str+="\tspint x[{}],y[{}],z[{}];\n".format(N,N,N)
     str+="\tint i,j;\n"
-    str+="\tuint64_t start,finish;\n"
     if not embedded :
+        str+="\tuint64_t start,finish;\n"
         str+="\tclock_t begin;\n"
         str+="\tint elapsed;\n"
-
+    else :
+        str+="\tlong start,finish;\n"
     str+="\t"
     for i in range(0,N) :
         str+="x[{}]={}; ".format(i,hex(rap[i]))
@@ -1054,10 +1055,13 @@ def time_modmul(n,ra,rb) :
         else :
             str+="\t//provide code to stop counter, finish=?;\n"
         str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclesorsecs :
-            str+='\tprintf("modmul check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
+        if arduino :
+            str+='Serial.print("modmul usecs= "); Serial.println((finish-start)/1000);\n'
         else :
-            str+='\tprintf("modmul check %x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)));\n'
+            if cyclesorsecs :
+                str+='\tprintf("modmul check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
+            else :
+                str+='\tprintf("modmul check %x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)));\n'
         str+="}\n"
     else :
         if cyclescounter :
@@ -1095,10 +1099,12 @@ def time_modsqr(n,r) :
     str="void time_modsqr{}() {{\n".format(DECOR)
     str+="\tspint x[{}],z[{}];\n".format(N,N)
     str+="\tint i,j;\n"
-    str+="\tuint64_t start,finish;\n"
     if not embedded :
+        str+="\tuint64_t start,finish;\n"
         str+="\tclock_t begin;\n"
         str+="\tint elapsed;\n"
+    else :
+        str+="\tlong start,finish;\n"
 
     str+="\t"
     for i in range(0,N) :
@@ -1120,10 +1126,13 @@ def time_modsqr(n,r) :
         else :
             str+="\t//provide code to stop counter, finish=?;\n"
         str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclesorsecs :
-            str+='\tprintf("modsqr check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
+        if arduino :
+            str+='Serial.print("modsqr usecs= "); Serial.println((finish-start)/1000);\n'
         else :
-            str+='\tprintf("modsqr check %x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)));\n'
+            if cyclesorsecs :
+                str+='\tprintf("modsqr check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
+            else :
+                str+='\tprintf("modsqr check %x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)));\n'
         str+="}\n"
     else :
         if cyclescounter :
@@ -1158,10 +1167,12 @@ def time_modinv(n,r) :
     str="void time_modinv{}() {{\n".format(DECOR)
     str+="\tspint x[{}],z[{}];\n".format(N,N)
     str+="\tint i,j;\n"
-    str+="\tuint64_t start,finish;\n"
     if not embedded :
+        str+="\tuint64_t start,finish;\n"
         str+="\tclock_t begin;\n"
         str+="\tint elapsed;\n"
+    else :
+        str+="\tlong start,finish;\n"
 
     str+="\t"
     for i in range(0,N) :
@@ -1180,10 +1191,13 @@ def time_modinv(n,r) :
         else :
             str+="\t//provide code to stop counter, finish=?;\n"
         str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclesorsecs :
-            str+='\tprintf("modinv check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)(finish-start));\n'
+        if arduino :
+            str+='Serial.print("modinv usecs= "); Serial.println(finish-start);\n'
         else :
-            str+='\tprintf("modinv check %x Microsecs= %d\\n",(int)z[0]&0xFFFFFF,(int)(finish-start));\n'
+            if cyclesorsecs :
+                str+='\tprintf("modinv check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)(finish-start));\n'
+            else :
+                str+='\tprintf("modinv check %x Microsecs= %d\\n",(int)z[0]&0xFFFFFF,(int)(finish-start));\n'
         str+="}\n"
     else :
         if cyclescounter :
