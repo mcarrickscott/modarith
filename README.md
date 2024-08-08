@@ -122,10 +122,22 @@ Note that this intermediate API only provides the elliptic curve functionality. 
 ## Quickstart 2:-
 
 	python monty.py 64 0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
-Drop code.c into Ed448.c where indicated
+Drop code.c into Ed448.c (EdDSA using Ed448) where indicated
 
 	python monty.py 64 Ed448
 Drop code.c into edwards.c where indicated
 
 	gcc -O2 Ed448.c edwards.c -o Ed448
+	./Ed448
+
+
+## Quickstart 3:-
+
+	python monty.py 64 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+Drop code.c into EC256.c (ECDSA using P-256) where indicated
+
+	python monty.py 64 NIST256
+Drop code.c into weierstrass.c where indicated
+
+	gcc -O2 EC256.c weierstrass.c -o EC256
 	./Ed448

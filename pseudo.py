@@ -179,10 +179,11 @@ def prop(n) :
 def flat(n) :
     mask=(1<<base)-1
     str="//propagate carries and add p if negative, propagate carries again\n"
-    str+="static void inline flatten(spint *n) {\n"
+    str+="static int inline flatten(spint *n) {\n"
     str+="\tspint carry=prop(n);\n"
     str+=caddp(1)
     str+="\t(void)prop(n);\n"
+    str+="\treturn (int)(carry&1);\n"
     str+="}\n"
     return str
 
@@ -192,11 +193,11 @@ def modfsb(n) :
     if makestatic :
         str+="static "
     if inline and makestatic:
-        str+="void inline modfsb{}(spint *n) {{\n".format(DECOR)
+        str+="int inline modfsb{}(spint *n) {{\n".format(DECOR)
     else :
-        str+="void modfsb{}(spint *n) {{\n".format(DECOR)
+        str+="int modfsb{}(spint *n) {{\n".format(DECOR)
     str+=subp(1)
-    str+="\tflatten(n);\n"
+    str+="\treturn flatten(n);\n"
     str+="}\n"
     return str
 
@@ -875,7 +876,7 @@ def redc(n) :
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tm[i]=n[i];\n"
     str+="\t}\n"
-    str+="\tmodfsb{}(m);\n".format(DECOR)
+    str+="\t(void)modfsb{}(m);\n".format(DECOR)
     str+="}\n"
     return str 
 
@@ -969,16 +970,19 @@ def modexp() :
 #import from byte array
 def modimp() :
     str="//import from byte array\n"
+    str+="//returns 1 if in range, else 0\n"
     if makestatic :
         str+="static "
-    str+="void modimp{}(const char *b, spint *a) {{\n".format(DECOR)
-    str+="\tint i;\n"
+    str+="int modimp{}(const char *b, spint *a) {{\n".format(DECOR)
+    str+="\tint i,res;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
     str+="\t\ta[0]+=(spint)(unsigned char)b[i];\n\t}\n"
+    str+="\tres=modfsb(a);\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
+    str+="\treturn res;\n"
     str+="}\n"
     return str 
 
@@ -1056,7 +1060,7 @@ def time_modmul(n,ra,rb) :
             str+="\t//provide code to stop counter, finish=?;\n"
         str+="\tredc{}(z,z);\n".format(DECOR)
         if arduino :
-            str+='Serial.print("modmul usecs= "); Serial.println((finish-start)/1000);\n'
+            str+='\tSerial.print("modmul usecs= "); Serial.println((finish-start)/1000);\n'
         else :
             if cyclesorsecs :
                 str+='\tprintf("modmul check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
@@ -1127,7 +1131,7 @@ def time_modsqr(n,r) :
             str+="\t//provide code to stop counter, finish=?;\n"
         str+="\tredc{}(z,z);\n".format(DECOR)
         if arduino :
-            str+='Serial.print("modsqr usecs= "); Serial.println((finish-start)/1000);\n'
+            str+='\tSerial.print("modsqr usecs= "); Serial.println((finish-start)/1000);\n'
         else :
             if cyclesorsecs :
                 str+='\tprintf("modsqr check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
@@ -1192,7 +1196,7 @@ def time_modinv(n,r) :
             str+="\t//provide code to stop counter, finish=?;\n"
         str+="\tredc{}(z,z);\n".format(DECOR)
         if arduino :
-            str+='Serial.print("modinv usecs= "); Serial.println(finish-start);\n'
+            str+='\tSerial.print("modinv usecs= "); Serial.println(finish-start);\n'
         else :
             if cyclesorsecs :
                 str+='\tprintf("modinv check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)(finish-start));\n'

@@ -120,11 +120,11 @@ def flat(n,base) :
     str="//propagate carries and add p if negative, propagate carries again\n"
     str+="#[allow(unused_variables)]\n"
     str+="#[inline]\n"
-    str+="fn flatten(n: &mut [SPINT]) {\n"
+    str+="fn flatten(n: &mut [SPINT]) -> bool {\n"
     str+="\tlet carry=prop(n);\n"
     str+=caddp(1)
     str+="\tprop(n);\n"
-    str+="\treturn;\n}\n"
+    str+="\treturn (carry&1) == 1;\n}\n"
     return str
 
 #final subtract
@@ -134,11 +134,10 @@ def modfsb(n,base) :
     if inline :
         str+="#[inline]\n"
 
-    str+="fn modfsb(n: &mut[SPINT]) {\n"
+    str+="fn modfsb(n: &mut[SPINT]) -> bool{\n"
     #str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
     str+=subp(1)
-    str+="\tflatten(n);\n"
-    str+="\treturn;\n}\n"
+    str+="\treturn flatten(n);\n}\n"
     return str
 
 #modular addition
@@ -843,14 +842,15 @@ def modexp() :
 #import from byte array
 def modimp() :
     str="//import from byte array\n"
-    str+="pub fn modimp(b: &[u8], a: &mut [SPINT]) {\n"
+    str+="pub fn modimp(b: &[u8], a: &mut [SPINT]) -> bool {\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor i in 0..{} {{\n".format(Nbytes)
     str+="\t\tmodshl(8,a);\n"
     str+="\t\ta[0]+=b[i] as SPINT;\n\t}\n"
+    str+="\tlet res=modfsb(a);\n"
     str+="\tnres(a);\n"
-    str+="\treturn;\n}\n"
+    str+="\treturn res;\n}\n"
     return str 
 
 #get sign (parity)

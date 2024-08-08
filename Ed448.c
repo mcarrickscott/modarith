@@ -419,6 +419,8 @@ void ED448_KEY_GEN(char *prv,char *pub)
 
 const char dom4[10]={'S','i','g','E','d','4','4','8',0,0};
 
+
+// input private key, public key, message to be signed. Output signature
 void ED448_SIGN(char *prv,char *pub,char *m,char *sig)
 {
     int i,sign;
@@ -518,6 +520,8 @@ int ED448_VERIFY(char *pub,char *m,char *sig)
     SHA3_shake(&SHA3,h,2*BYTES+2); 
 
     reduce(h,u); modneg(u,u); modexp(u,h);
+
+    if (!modimp(buff,u)) return 0;  // out of range
 
     ecncof(&G); ecncof(&R); ecncof(&Q);
     ecnmul2(buff,&G,h,&Q,&Q);
