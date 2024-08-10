@@ -164,6 +164,20 @@ void HASH256_hash(hash256 *sh, char *digest)
 
 #include "curve.h"   // elliptic curve API
 
+/*** Insert automatically generated code for P-256 prime group order code.c here ***/
+
+// python monty.py 64 nist256
+
+/* Note that much of this code is not needed and can be deleted */
+
+
+
+/*** End of automatically generated code ***/
+
+// number of limbs and bytes in representation
+#define BYTES Nbytes
+#define LIMBS Nlimbs
+
 // Some utility functions for I/O and debugging
 
 // reverse bytes of buff - for little endian
@@ -230,26 +244,14 @@ static void toHex(int len, const char *src, char *dst)
     dst[2*len]='\0';
 }
 
-
-/*** Insert automatically generated code for P-256 prime group order code.c here ***/
-
-// python monty.py 64 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
-
-/* Note that much of this code is not needed and can be deleted */
-
-
-
-/*** End of automatically generated code ***/
-
 // I/O debug code
 // output a modulo number in hex
-
 /*
 static void output(spint *x) {
     char b[Nbytes+1];
     char buff[(2*Nbytes)+1];
     modexp(x,b);
-    toHex(56,b,buff);
+    toHex(Nbytes,b,buff);
     puts(buff);
 }
 

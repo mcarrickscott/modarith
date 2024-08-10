@@ -9,7 +9,7 @@
 #
 # and the "Goldilocks" prime
 #
-# C448=2^448-2^224-1
+# X448=2^448-2^224-1
 #
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
@@ -17,6 +17,10 @@
 # (1) First execute this program: python monty_rust.py 64 NIST256. Output code is written to file code.rs
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
+#
+# By convention if the curve name is entered in upper-case, the prime modulus is the field prime
+# If entered in lower-case, the prime modulus is the group order (a large prime factor of the number of points on the curve)
+# For example : python monty.py 64 nist256. This uses the prime 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
 #
 # Note that even though a modulus is represented to the base 2^29 rather than 2^32, it still retains some shape
 # For example on a 32-bit processor using a radix of 2^29 the NIST384 prime is
@@ -1445,6 +1449,9 @@ if prime=="NIST256" :
     #if WL==64 :                          # manual override of default
     #    base=48
 
+if prime=="nist256" :
+    p=0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+
 if prime=="NIST384" :
     p=2**384-2**128-2**96+2**32-1
     if WL==64:
@@ -1452,14 +1459,20 @@ if prime=="NIST384" :
     if WL==32 :
         base=29
 
-if prime=="C25519" :
+if prime=="X25519" :
     p=2**255-19
 
-if prime=="C448" :
+if prime=="X448" :
     p=2**448-2**224-1
     if not generic :
         algorithm=True  # if algorithm is known, fix multiple of prime (for modular subtractions) as described in https://eprint.iacr.org/2017/437
         mp=2            # Make sure there is sufficient excess - otherwise change default base. Here assuming Montgomery ladder algorithm. Now no reduction required after modular additions/subtractions.
+
+if prime=="Ed448" :
+    p=2**448-2**224-1
+
+if prime=="ed448" :
+    p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
 
 
 if prime=="NIST521" :

@@ -1,18 +1,18 @@
 // Edwards curve support 
-// Use python scripts to generate code for Ed25519 or Ed448, or your own curve
+// Use python scripts to generate code for ED25519 or ED448, or your own curve
 //
 // Mike Scott 16th July 2024
 // TII
 //
-// code for 16/32/64-bit processor for C25519 curve can be generated  by 
+// code for 16/32/64-bit processor for ED25519 curve can be generated  by 
 //
-// python pseudo.py 16/32/64 Ed25519
+// python pseudo.py 16/32/64 ED25519
 // or
-// python monty.py 16/32/64 Ed25519
+// python monty.py 16/32/64 ED25519
 //
-// code for 16/32/64-bit processor for X448 curve can be generated  by
+// code for 16/32/64-bit processor for ED448 curve can be generated  by
 //
-// python monty.py 16/32/64 Ed448
+// python monty.py 16/32/64 ED448
 
 // make sure decoration and generic are both set to False in monty.py or pseudo.py
 
@@ -23,6 +23,10 @@
 /*** End of automatically generated code ***/
 
 #include "curve.h"
+
+#define BYTES Nbytes
+#define LIMBS Nlimbs
+#define TOPBIT (8*sizeof(int)-1)
 
 // define edwards curve here ax^2+y^2 = 1+dx^2y^2, that is d, cofactor and prime order generator (x,y)
 
@@ -39,7 +43,7 @@
 
 // utility make.py can be used to generate these constants
 
-#ifdef Ed25519  // the way it was done....
+#ifdef ED25519  // the way it was done....
 // get constant d, generator point (x,y)
 #if Radix == 51
 const spint constant_d[5]={0x34dca135978a3,0x1a8283b156ebd,0x5e7a26001c029,0x739c663a03cbb,0x52036cee2b6ff};
@@ -55,7 +59,7 @@ const spint constant_y[9]={0x6666658,0x13333333,0x19999999,0xccccccc,0x6666666,0
 #define NEGA   // a is -1
 #endif
 
-#ifdef Ed448
+#ifdef ED448
 // get constant d, generator point (x,y), converted to n-residue form
 #ifdef MULBYINT
 #define CONSTANT_D -39081
@@ -378,6 +382,7 @@ void ecnset(int s,const char *x,const char *y,point *P)
         modimp(x,X);
         modimp(y,Y);
         setxy(s,X,Y,P);
+        return;
     }
     if (x!=NULL)
     {

@@ -4,13 +4,13 @@
 #
 # In particular this script generates code for primes like
 #
-# C25519 = 2^255-19
+# X25519 = 2^255-19
 # PM266 = 2^266-3
 # NIST521 = 2^521-1
 #
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
-# Execute this program as: python pseudo.py 64 C25519
+# Execute this program as: python pseudo.py 64 X25519
 # Production code is output to file code.c
 # 
 # Mike Scott 22nd April 2024
@@ -1354,10 +1354,10 @@ if prime=="NIST521" :
     if WL==64 :
         base=58
 
-if prime=="Ed25519" :
+if prime=="ED25519" :
     p=2**255-19
 
-if prime=="C25519" :
+if prime=="X25519" :
     p=2**255-19
     if not generic :
         algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
@@ -1515,16 +1515,16 @@ makestatic=False
 DECOR=""
 modulus=p
 
-with open('header.h', 'w') as f:
-    with redirect_stdout(f):
-        header()
-f.close()
-
+#with open('header.h', 'w') as f:
+#    with redirect_stdout(f):
+#        header()
+#f.close()
 
 import random
 with open('test.c', 'w') as f:
     with redirect_stdout(f):
-        print('#include "header.h"\n')
+        #print('#include "header.h"\n')
+        header()
         functions()
 f.close()
 
@@ -1676,7 +1676,8 @@ subprocess.call("rm time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
-        print('#include "header.h"\n')
+        #print('#include "header.h"\n')
+        header()
         if not embedded :
             if cyclescounter :
                 print("#include <cpucycles.h>\n")
@@ -1718,7 +1719,8 @@ else :
 makestatic=False
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        print('#include "header.h"\n')
+        #print('#include "header.h"\n')
+        header()
         functions()
 f.close()
 
@@ -1748,15 +1750,16 @@ if decoration :
     else :
         DECOR="_"+prime+"_ct"
 #re-write it
-with open('header.h', 'w') as f:
-    with redirect_stdout(f):
-        header()
-f.close()
+#with open('header.h', 'w') as f:
+#    with redirect_stdout(f):
+#        header()
+#f.close()
 
 makestatic=True
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        print('#include "header.h"\n')
+        #print('#include "header.h"\n')
+        header()
         functions()
 f.close()
 
@@ -1766,6 +1769,24 @@ if formatted :
 if check:
     subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True) 
 
-print("Production code is in code.c and header.h")
-
+if prime[0].isalpha() and prime[0].isupper() :
+    with open('header.h', 'w') as f:
+       with redirect_stdout(f):
+            print("// Command line : python {} {} {}".format(sys.argv[0], sys.argv[1], sys.argv[2]))
+            print("// elliptic curve point in projective coordinates")
+            print("\t#include <stdint.h>\n")
+            print("\t#ifndef",prime.upper())
+            print("\t#define",prime.upper())
+            print("\t#endif")
+            print("\t#define WORDLENGTH {}".format(WL))
+            print("\tstruct xyz {")
+            print("\t\tuint{}_t x[{}];".format(WL,N))
+            print("\t\tuint{}_t y[{}];".format(WL,N))
+            print("\t\tuint{}_t z[{}];".format(WL,N))
+            print("\t};")
+            print("\ttypedef struct xyz point;")
+            f.close()
+    print("Production code is in code.c and header.h")
+else :
+    print("Production code is in code.c")
 

@@ -1,24 +1,24 @@
 // Program to implement RFC7748 - https://datatracker.ietf.org/doc/html/rfc7748
 // Montgomery curve key exchange code, as used by TLS
-// Use associated python scripts to generate code for C25519 or C448, but easily modified for other Montgomery curves
+// Use associated python scripts to generate code for X25519 or X448, but easily modified for other Montgomery curves
 //
 // A good Montgomery curve can be found by running the sagemath script bowe.sage
 //
 // Mike Scott 23rd November 2023
 // TII
-// code for 16/32/64-bit processor for C25519 curve can be generated  by 
+// code for 16/32/64-bit processor for X25519 curve can be generated  by 
 //
-// python pseudo_rust.py 16/32/64 C25519
+// python pseudo_rust.py 16/32/64 X25519
 // or
-// python monty_rust.py 16/32/64 C25519
+// python monty_rust.py 16/32/64 X25519
 //
-// code for 16/32/64-bit processor for C448 curve can be generated  by
+// code for 16/32/64-bit processor for X448 curve can be generated  by
 //
-// python monty_rust.py 16/32/64 C448
+// python monty_rust.py 16/32/64 X448
 
 // rustc -O rfc7748.rs
 
-// NOTE: Code is set up for C25519. See // ****** for places where changes are needed for X448
+// NOTE: Code is set up for X25519. See // ****** for places where changes are needed for X448
 
 /*** Insert automatically generated code for modulus code.rs here ***/
 
@@ -171,7 +171,7 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
 
     if TWIST_SECURE {
         modpro(&z2,&mut a);       
-        modinv(Some(&a),&mut z2);    // sufficient for twist secure curves like C25519 and C448 
+        modinv(Some(&a),&mut z2);    // sufficient for twist secure curves like X25519 and X448 
     } else { // Do cheap point validation here - see https://eprint.iacr.org/2020/1497
         modcpy(&u,&mut b); modmul(&z2,&mut b);
         modcpy(&b,&mut a); modmul(&z2,&mut a);
@@ -206,9 +206,9 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
 // a test vector for x25519 or x448 from RFC7748
 fn main() {
 // ******
-//C25519
+//X25519
     const SK:&str="77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
-//C448
+//X448
 //    const SK:&str="9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
 
     let mut bk:[u8;NBYTES]=[0;NBYTES];

@@ -1,12 +1,12 @@
 # Python program to generate reasonably efficient C/C++ modular arithmetic code for any prime, on a 16, 32 or 64-bit processor
 # IMPORTANT:- Uses Montgomery representation. Uses unsaturated radix
 # 
-# In particular this script generates code for the NIST primes
+# In particular this script generates code for the NIST field primes
 #
 # NIST256 = 2^256-2^224+2^192+2^96-1
 # NIST384 = 2^384-2^128-2^96+2^32-1
 #
-# and the "Goldilocks" prime
+# and the "Goldilocks" field prime
 #
 # X448=2^448-2^224-1
 #
@@ -16,6 +16,10 @@
 # (1) First execute this program: python monty.py 64 NIST256. Output code is written to file code.c
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
+#
+# By convention if the curve name is entered in upper-case, the prime modulus is the field prime
+# If entered in lower-case, the prime modulus is the group order (a large prime factor of the number of points on the curve)
+# For example : python monty.py 64 nist256. This uses the prime 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
 #
 # Note that even though a modulus is represented using an unsaturated base, it may still retains some shape
 # For example on a 32-bit processor using a radix of 2^29 the NIST384 prime is
@@ -1669,7 +1673,7 @@ def header() :
     print("#define Nbytes{} {}\n".format(DECOR,Nbytes))
     print("#define MONTGOMERY")
     if prime[0].isalpha() :
-        print("#define",prime,"\n")
+        print("#define",prime.upper(),"\n")
     if trin>0 :
         print("#define MULBYINT")
 
@@ -1758,6 +1762,9 @@ if prime=="NIST256" :
     #if WL==64 :                          # manual override of default
     #    base=48
 
+if prime=="nist256" :
+    p=0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+
 if prime=="NIST384" :
     p=2**384-2**128-2**96+2**32-1
     if WL==64 :
@@ -1765,13 +1772,16 @@ if prime=="NIST384" :
     if WL==32 :
         base=29
 
-if prime=="C25519" :
+if prime=="X25519" :
     p=2**255-19
 
-if prime=="Ed448" :
+if prime=="ED448" :
     p=2**448-2**224-1
 
-if prime=="C448" :
+if prime=="ed448" :
+    p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
+
+if prime=="X448" :
     p=2**448-2**224-1
     if not generic :
         algorithm=True  # if algorithm is known, fix multiple of prime (for modular subtractions) as described in https://eprint.iacr.org/2017/437
@@ -2026,15 +2036,16 @@ makestatic=False
 DECOR=""
 modulus=p
 
-with open('header.h', 'w') as f:
-    with redirect_stdout(f):
-        header()
-f.close()
+#with open('header.h', 'w') as f:
+#    with redirect_stdout(f):
+#        header()
+#f.close()
 
 import random
 with open('test.c', 'w') as f:
     with redirect_stdout(f):
-        print('#include "header.h"\n')
+        #print('#include "header.h"\n')
+        header()
         functions()
 f.close()
 
@@ -2181,9 +2192,7 @@ subprocess.call("rm time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
-        #print("#include <stdio.h>")
-        #print("#include <stdint.h>\n")
-        print('#include "header.h"\n')
+        header()
         if not embedded :
             if cyclescounter :
                 print("#include <cpucycles.h>\n")
@@ -2227,7 +2236,8 @@ else :
 makestatic=False
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        print('#include "header.h"\n')
+        #print('#include "header.h"\n')
+        header()
         functions()
 f.close()
 
@@ -2264,15 +2274,16 @@ if decoration :
         DECOR="_"+prime+"_ct"
 
 #re-write it
-with open('header.h', 'w') as f:
-    with redirect_stdout(f):
-        header()
-f.close()
+#with open('header.h', 'w') as f:
+#    with redirect_stdout(f):
+#        header()
+#f.close()
 
 makestatic=True
 with open('code.c', 'w') as f:
     with redirect_stdout(f):
-        print('#include "header.h"\n')
+        #print('#include "header.h"\n')
+        header()
         functions()
 
 f.close()
@@ -2283,5 +2294,24 @@ if formatted :
 if check: 
     subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True)  # tidy up the format
 
-print("Production code is in code.c and header.h")
+if prime[0].isalpha() and prime[0].isupper() :
+    with open('header.h', 'w') as f:
+       with redirect_stdout(f):
+            print("// Command line : python {} {} {}".format(sys.argv[0], sys.argv[1], sys.argv[2]))
+            print("// elliptic curve point in projective coordinates")
+            print("\t#include <stdint.h>\n")
+            print("\t#ifndef",prime.upper())
+            print("\t#define",prime.upper())
+            print("\t#endif")
+            print("\t#define WORDLENGTH {}".format(WL))
+            print("\tstruct xyz {")
+            print("\t\tuint{}_t x[{}];".format(WL,N))
+            print("\t\tuint{}_t y[{}];".format(WL,N))
+            print("\t\tuint{}_t z[{}];".format(WL,N))
+            print("\t};")
+            print("\ttypedef struct xyz point;")
+            f.close()
+    print("Production code is in code.c and header.h")
+else :
+    print("Production code is in code.c")
 

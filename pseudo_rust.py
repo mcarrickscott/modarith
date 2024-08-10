@@ -4,13 +4,13 @@
 #
 # In particular this script generates code for primes like
 #
-# C25519 = 2^255-19
+# X25519 = 2^255-19
 # PM266 = 2^266-3
 # NIST521 = 2^521-1
 #
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
-# Execute this program as: python pseudo_rust.py 64 C25519
+# Execute this program as: python pseudo_rust.py 64 X25519
 # Code is output to file code.rs
 #
 # Mike Scott 22nd April 2024
@@ -1070,7 +1070,7 @@ if prime=="NIST521" :
     #if WL==32 :
     #    karatsuba=True
 
-if prime=="C25519" :
+if prime=="X25519" :
     p=2**255-19
     if not generic :
         algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437

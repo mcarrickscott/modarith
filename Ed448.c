@@ -245,6 +245,20 @@ static void H(int ilen,int olen,char *s,char *digest)
 
 #include "curve.h"   // elliptic curve API
 
+/*** Insert automatically generated code for Ed448 prime group order code.c here ***/
+
+// python monty.py 64 ed448
+
+/* Note that much of this code is not needed and can be deleted */
+
+
+
+/*** End of automatically generated code ***/
+
+// number of limbs and bytes in representation
+#define BYTES Nbytes
+#define LIMBS Nlimbs
+
 // Some utility functions for I/O and debugging
 
 // reverse bytes of buff - for little endian
@@ -312,15 +326,6 @@ static void toHex(int len, const char *src, char *dst)
 }
 
 
-/*** Insert automatically generated code for Ed448 prime group order code.c here ***/
-
-// python monty.py 64 0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
-
-/* Note that much of this code is not needed and can be deleted */
-
-
-
-/*** End of automatically generated code ***/
 
 // I/O debug code
 // output a modulo number in hex
@@ -350,6 +355,9 @@ void outputxy(point *P)
     }
 }
 */
+
+
+
 // reduce 114 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^472.x + 2^440.y + z, where x,y and z < q (z is first 55 bytes, y is next 4 bytes, x is last 55 bytes)
 // precalculate c1=nres(2^472 mod q) and c2=nres(2^440 mod q)
@@ -418,7 +426,6 @@ void ED448_KEY_GEN(char *prv,char *pub)
 }
 
 const char dom4[10]={'S','i','g','E','d','4','4','8',0,0};
-
 
 // input private key, public key, message to be signed. Output signature
 void ED448_SIGN(char *prv,char *pub,char *m,char *sig)

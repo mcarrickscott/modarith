@@ -1,24 +1,24 @@
 // Program to implement RFC7748 - https://datatracker.ietf.org/doc/html/rfc7748
 // Montgomery curve key exchange code, as used by TLS
-// Use associated python scripts to generate code for C25519 or C448, but easily modified for other Montgomery curves
+// Use associated python scripts to generate code for X25519 or X448, but easily modified for other Montgomery curves
 //
 // A good Montgomery curve can be found by running the sagemath script bowe.sage
 //
 // Mike Scott 23rd November 2023
 // TII
 //
-// code for 16/32/64-bit processor for C25519 curve can be generated  by 
+// code for 16/32/64-bit processor for X25519 curve can be generated  by 
 //
-// python pseudo.py 16/32/64 C25519
+// python pseudo.py 16/32/64 X25519
 // or
-// python monty.py 16/32/64 C25519
+// python monty.py 16/32/64 X25519
 //
 // code for 16/32/64-bit processor for X448 curve can be generated  by
 //
-// python monty.py 16/32/64 C448
+// python monty.py 16/32/64 X448
 
 // make sure decoration and generic are both set to False
-// Seems to prefer clang compiler and karatsuba set to False for C25519 and True for C448
+// Seems to prefer clang compiler and karatsuba set to False for X25519 and True for X448
 // clang -O3 -march=native -mtune=native rfc7748.c -lcpucycles -o rfc7748
 
 /*** Insert automatically generated code for modulus code.c here ***/
@@ -119,14 +119,14 @@ static void output(spint *x) {
 
 // Describe Montgomery Curve parameters
 
-#ifdef C25519
+#ifdef X25519
 #define A24 121665  // Montgomery curve constant (A-2)/4
 #define COF 3       // Montgomery curve cofactor = 2^cof (2 or 3)
 #define GENERATOR 9
 #define TWIST_SECURE // If it is a twist secure curve
 #endif
 
-#ifdef C448
+#ifdef X448
 #define A24 39081   // Montgomery curve constant (A-2)/4
 #define COF 2       // Montgomery curve cofactor = 2^cof (2 or 3)
 #define GENERATOR 5
@@ -204,7 +204,7 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
 
 #ifdef TWIST_SECURE
     modpro(z2,A);       
-    modinv(z2,A,z2);    // sufficient for twist secure curves like C25519 and C448 
+    modinv(z2,A,z2);    // sufficient for twist secure curves like X25519 and X448 
 #else
     // Do cheap point validation here - see https://eprint.iacr.org/2020/1497
     modmul(u,z2,B);     // wZ
@@ -238,10 +238,10 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
 // a test vector for x25519 or x448 from RFC7748
 int main()
 {
-#ifdef C25519
+#ifdef X25519
     const char *sk=(const char *)"77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
 #endif
-#ifdef C448
+#ifdef X448
     const char *sk=(const char *)"9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
 #endif
     uint64_t start,fin;

@@ -4,23 +4,8 @@
 #ifndef CURVE_H
 #define CURVE_H
 
+// generated from the monty.py or pseudo.py script, and required for definition of point structure 
 #include "header.h"
-
-// number of limbs and bytes in field representation
-#define BYTES Nbytes
-#define LIMBS Nlimbs
-
-#define TOPBIT (8*sizeof(int)-1)
-
-// elliptic curve point in projective coordinates
-struct xyz
-{
-    spint x[LIMBS];
-    spint y[LIMBS];
-    spint z[LIMBS];
-};                
-
-typedef struct xyz point;
 
 // api functions. char* parameters are big-endian integers of fixed length
 extern int ecnget(point *P,char *x, char *y);  // extract from point
@@ -35,7 +20,7 @@ extern void ecngen(point *P);          // create generator point
 extern void ecnmul(const char *e,point *P); // multiply P by e
 extern void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R); // R=eP+fQ
 extern int ecncmp(point *P,point *Q);  // compare points for equality
-extern void ecnaffine(point *P);       // convert from projective (x,y,z) to (x,y)
+extern void ecnaffine(point *P);       // convert from projective (x,y,z) to (x,y,1)
 extern void ecncpy(point *Q,point *P); // copy Q to P
 extern void ecncof(point *P);  // multiply point by small curve co-factor
 

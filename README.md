@@ -6,7 +6,7 @@ This repository contains Python 3 scripts for the automatic generation of effice
 
 The code uses a multi-limb unsaturated-radix representation for big numbers.
 
-For both languages there are two scripts, one specialised for pseudo-Mersenne moduli of the form $2^m-c$ (*pseudo.py* and *pseudo_rust.py*), and one that generates efficient and tailored code for other prime shapes, in particular generalised Mersennes like those required for the standardised NIST256, NIST384, and C448 curves, and Montgomery friendly moduli, as sometimes recommended for use with isogenies (*monty.py* and *monty_rust.py*).
+For both languages there are two scripts, one specialised for pseudo-Mersenne moduli of the form $2^m-c$ (*pseudo.py* and *pseudo_rust.py*), and one that generates efficient and tailored code for other prime shapes, in particular generalised Mersennes like those required for the standardised NIST256, NIST384, and X448 curves, and Montgomery friendly moduli, as sometimes recommended for use with isogenies (*monty.py* and *monty_rust.py*).
 
 The code generated includes functions for modular addition, subtraction, multiplication, inversion, quadratic residuosity and square roots. In other words all of the requirements to implement field arithmetic in the context of elliptic curve cryptography.
 
@@ -42,7 +42,7 @@ As a Proof of Concept, elliptic curve code for RFC7748 is provided in the files 
 
 Read comments in these files for simple build instructions.
 
-(RFC7748 describes an implementation of Diffie-Hellman key exchange on the Montgomery elliptic curves C25519 and C448. You can create your own Montgomery curve using the sagemath script provided in the file bowe.sage)
+(RFC7748 describes an implementation of Diffie-Hellman key exchange on the Montgomery elliptic curves X25519 and X448. You can create your own Montgomery curve using the sagemath script provided in the file bowe.sage)
 
 # Modular arithmetic API
 
@@ -111,7 +111,7 @@ The API interface is as indicated in *curve.h*. The API is completely implemente
 
 ## Quickstart 1:-
 
-	python pseudo.py 64 Ed25519
+	python pseudo.py 64 ED25519
 Drop *code.c* into *edwards.c* where indicated
 
 	gcc -O2 testcurve.c edwards.c -lcpucycles -o testcurve
@@ -121,24 +121,22 @@ Note that this intermediate API only provides the elliptic curve functionality. 
 
 ## Quickstart 2:-
 
-	python monty.py 64 0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
-Drop *code.c* into *Ed448.c* (EdDSA using Ed448) where indicated
+	python monty.py 64 ed448
+Drop *code.c* into *Ed448.c* (EdDSA using ED448) where indicated
 
-	python monty.py 64 Ed448
-Drop *code.c* into *edwards.c* where indicated. The order of these operations is important, as it is the *header.h* file emitted here that is required for the final compilation.
+	python monty.py 64 ED448
+Drop *code.c* into *edwards.c* where indicated. If the curve is given in upper-case, the prime is the field prime, otherwise its the group prime.
 
 	gcc -O2 Ed448.c edwards.c -o Ed448
 	./Ed448
 
-The order of these operations is imortant, as it is the *header.h* file emitted
-
 ## Quickstart 3:-
 
-	python monty.py 64 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+	python monty.py 64 nist256
 Drop *code.c* into *EC256.c* (ECDSA using P-256) where indicated
 
 	python monty.py 64 NIST256
 Drop *code.c* into *weierstrass.c* where indicated
 
 	gcc -O2 EC256.c weierstrass.c -o EC256
-	./Ed448
+	./EC256

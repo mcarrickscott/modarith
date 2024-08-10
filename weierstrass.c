@@ -19,6 +19,10 @@
 
 #include "curve.h"
 
+#define BYTES Nbytes
+#define LIMBS Nlimbs
+#define TOPBIT (8*sizeof(int)-1)
+
 // define weierstrass curve here y^2=x^3-3x+B, that is B and prime order generator (x,y)
 // define ZEROA if curve is y^2=x^3+B, and constant_B = 3B
 #ifdef NUMS256W  // the way it should have been done... see https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session4-costello-craig.pdf
@@ -93,7 +97,7 @@ void ecnneg(point *P)
 }
 
 // add Q to P
-// complete formuale from https://eprint.iacr.org/2015/1060
+// complete formulae from https://eprint.iacr.org/2015/1060
 void ecnadd(point *Q,point *P)
 {
     spint B[Nlimbs],T0[Nlimbs],T1[Nlimbs],T2[Nlimbs],T3[Nlimbs],T4[Nlimbs];
@@ -449,6 +453,7 @@ void ecnset(int s,const char *x,const char *y,point *P)
         modimp(x,X);
         modimp(y,Y);
         setxy(s,X,Y,P);
+        return;
     }
     if (x!=NULL)
     {
