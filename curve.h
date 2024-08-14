@@ -4,8 +4,12 @@
 #ifndef CURVE_H
 #define CURVE_H
 
-// generated from the monty.py or pseudo.py script, and required for definition of point structure 
-#include "header.h"
+// header.h generated from the monty.py or pseudo.py script, and required for definition of point structure 
+/*** Insert automatically generated code for curve header.h here ***/
+
+
+
+/*** End of automatically generated code ***/
 
 // api functions. char* parameters are big-endian integers of fixed length
 extern int ecnget(point *P,char *x, char *y);  // extract from point

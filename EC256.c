@@ -276,7 +276,7 @@ void outputxy(point *P)
 #define PREHASHED   // define for test vectors
 
 // Input private key - 32 random bytes
-// Output public key - 65 bytes, or 33 is compressed
+// Output public key - 65 bytes (0x04<x>|<y>), or 33 if compressed (0x02<x>.. or 0x03<x>)
 void EC256_KEY_GEN(char *prv,char *pub)
 {
     point P;
@@ -285,7 +285,7 @@ void EC256_KEY_GEN(char *prv,char *pub)
     ecnmul(prv,&P); 
 
 #ifdef COMPRESS
-    pub[0]=0x02+ecnget(&P,&pub[1],NULL);
+    pub[0]=0x02+ecnget(&P,&pub[1],NULL); // 0x02 or 0x03
 #else
     pub[0]=0x04; // no compression
     ecnget(&P,&pub[1],&pub[BYTES+1]);  // get x and y
@@ -355,12 +355,13 @@ int EC256_VERIFY(char *pub,char *m,char *sig)
 
     ecngen(&G);
 
+// import from signature
     if (!modimp(sig,r)) return 0; // if not in range
     if (!modimp(&sig[BYTES],s)) return 0;
 
     if (modis0(r) || modis0(s)) return 0;
     modinv(s,NULL,s);
-    modmul(r,s,r); modexp(r,v); 
+    modmul(r,s,r); modexp(r,v);  // export to byte array
     modmul(s,e,s); modexp(s,u); 
 
     if (pub[0]==0x04) {
@@ -381,6 +382,8 @@ int EC256_VERIFY(char *pub,char *m,char *sig)
     
     return res;
 }
+
+// test vector for FIPS 186-3 ECDSA Signature Generation
 
 int main()
 {

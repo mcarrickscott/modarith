@@ -113,6 +113,7 @@ The API interface is as indicated in *curve.h*. The API is completely implemente
 
 	python pseudo.py 64 ED25519
 Drop *code.c* into *edwards.c* where indicated
+Drop *header.h* into *curve.h* where indicated
 
 	gcc -O2 testcurve.c edwards.c -lcpucycles -o testcurve
 	./testcurve
@@ -122,10 +123,12 @@ Note that this intermediate API only provides the elliptic curve functionality. 
 ## Quickstart 2:-
 
 	python monty.py 64 ed448
+Note that if the curve is given in upper-case, the prime is the field prime, otherwise its the group prime.
 Drop *code.c* into *Ed448.c* (EdDSA using ED448) where indicated
 
 	python monty.py 64 ED448
-Drop *code.c* into *edwards.c* where indicated. If the curve is given in upper-case, the prime is the field prime, otherwise its the group prime.
+Drop *code.c* into *edwards.c* where indicated. 
+Drop *header.h* into *curve.h* where indicated
 
 	gcc -O2 Ed448.c edwards.c -o Ed448
 	./Ed448
@@ -137,6 +140,7 @@ Drop *code.c* into *EC256.c* (ECDSA using P-256) where indicated
 
 	python monty.py 64 NIST256
 Drop *code.c* into *weierstrass.c* where indicated
+Drop *header.h* into *curve.h* where indicated
 
 	gcc -O2 EC256.c weierstrass.c -o EC256
 	./EC256
