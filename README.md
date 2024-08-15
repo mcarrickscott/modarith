@@ -101,9 +101,9 @@ It is strongly recommended that the generated assembly language be closely studi
 2. Choose the field prime.
 3. Automatically generate field code to files *code.c* and *header.h*. If (pseudo)-Mersenne prime, use script *pseudo.py*, else use *monty.py*
 4. Decide on Edwards or Weierstrass curve. The number of points on the curve is assumed to be a prime for Weierstrass, or 4 or 8 times a prime for Edwards. This prime is the order of the group.
-5. Drop *code.c* into *edwards.c* or *weierstrass.c* and provide some curve constants (a constant *B* or *d* and a group generator point *x, y*) where indicated (some are provided already). If larger constants are required, a tool *make.py* is provided to generate them
+5. Drop *code.c* into *edwards.c* or *weierstrass.c* and provide some curve constants (a constant *B* or *d* and a group generator point (*x, y*) where indicated (some are provided already). If larger constants are required, a tool *make.py* is provided to generate them
 6. Insert the prime group order into *testcurve.c* where indicated (several examples are there already)
-7. Make sure fixed API header file *curve.h* is in the path. Note that this API is independent of the curve, its associated field and its parameters.
+7. Make sure the API header file *curve.h* is in the path, and drop in *header.h* where indicated. Note that this API is independent of the curve, its associated field and its parameters.
 8. Compile and link *testcurve.c* with *edwards.c* or *weierstrass.c*
 9. Run testcurve to test the arithmetic and perform some timings.
 
@@ -112,7 +112,7 @@ The API interface is as indicated in *curve.h*. The API is completely implemente
 ## Quickstart 1:-
 
 	python pseudo.py 64 ED25519
-Drop *code.c* into *edwards.c* where indicated
+Drop *code.c* into *edwards.c* where indicated \
 Drop *header.h* into *curve.h* where indicated
 
 	gcc -O2 testcurve.c edwards.c -lcpucycles -o testcurve
@@ -123,11 +123,11 @@ Note that this intermediate API only provides the elliptic curve functionality. 
 ## Quickstart 2:-
 
 	python monty.py 64 ed448
-Note that if the curve is given in upper-case, the prime is the field prime, otherwise its the group prime.
+Note that if the curve is given in upper-case then, by convention, the prime is the field prime, otherwise its the group prime.
 Drop *code.c* into *Ed448.c* (EdDSA using ED448) where indicated
 
 	python monty.py 64 ED448
-Drop *code.c* into *edwards.c* where indicated. 
+Drop *code.c* into *edwards.c* where indicated. \
 Drop *header.h* into *curve.h* where indicated
 
 	gcc -O2 Ed448.c edwards.c -o Ed448
@@ -139,7 +139,7 @@ Drop *header.h* into *curve.h* where indicated
 Drop *code.c* into *EC256.c* (ECDSA using P-256) where indicated
 
 	python monty.py 64 NIST256
-Drop *code.c* into *weierstrass.c* where indicated
+Drop *code.c* into *weierstrass.c* where indicated \
 Drop *header.h* into *curve.h* where indicated
 
 	gcc -O2 EC256.c weierstrass.c -o EC256
