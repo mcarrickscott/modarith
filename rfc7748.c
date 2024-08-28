@@ -154,17 +154,24 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
     int kt;
     int swap = 0;
     char ck[Nbytes];
+    char cu[Nbytes];
     spint u[Nlimbs]; spint x1[Nlimbs]; spint x2[Nlimbs]; spint x3[Nlimbs]; spint z2[Nlimbs]; spint z3[Nlimbs];
     spint A[Nlimbs]; spint B[Nlimbs]; spint AA[Nlimbs]; spint BB[Nlimbs]; spint C[Nlimbs]; spint D[Nlimbs]; spint E[Nlimbs];
 
     for (i=0;i<Nbytes;i++) {
         ck[i]=bk[i];
+        cu[i]=bu[i];
     }
+
+    reverse(cu);  // convert from little to big endian
+#ifdef X25519
+    cu[0]&=0x7f;  // implementations of X25519 (but not X448) MUST mask the most significant bit in the final byte
+#endif     
 // clamp input
     clamp(ck);
 
 // import into internal representation
-    modimp(bu,u);
+    modimp(cu,u);
 
     modcpy(u,x1);  // x_1=u
     modone(x2);    // x_2=1
@@ -232,7 +239,7 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
     modmul(x2,z2,x2);   
 
     modexp(x2,bv);
-    reverse(bv); // little endian
+    reverse(bv); // convert to little endian
 }
 
 // a test vector for x25519 or x448 from RFC7748
@@ -251,7 +258,7 @@ int main()
     char bk[Nbytes],bv[Nbytes];
     char bu[Nbytes]={};
 
-    bu[Nbytes-1]=GENERATOR;
+    bu[0]=GENERATOR;
 // convert to byte array
     fromHex(sk,bk);
 

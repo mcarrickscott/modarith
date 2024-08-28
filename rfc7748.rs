@@ -108,6 +108,7 @@ fn bit(n: usize,a: &[u8]) -> isize {
 fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
     let mut swap = 0 as isize;
     let mut ck:[u8;NBYTES]=[0;NBYTES];
+    let mut cu:[u8;NBYTES]=[0;NBYTES];
     let mut u:[SPINT;NLIMBS]=[0;NLIMBS];
     let mut x1:[SPINT;NLIMBS]=[0;NLIMBS];
     let mut x2:[SPINT;NLIMBS]=[0;NLIMBS];
@@ -124,12 +125,17 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
 
     for i in 0..NBYTES {
         ck[i]=bk[i];
+        cu[i]=bu[i];
     }
+
+    cu.reverse(); // convert from little to big endian
+//X25519 only!
+    cu[0]&=0x7f;   // implementations of X25519 (but not X448) MUST mask the most significant bit in the final byte
 // clamp input
     clamp(&mut ck);
 
 // import into internal representation
-    modimp(&bu,&mut u);
+    modimp(&cu,&mut u);
 
     modcpy(&u,&mut x1);  // x_1=u
     modone(&mut x2);     // x_2=1
@@ -200,7 +206,7 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
     modmul(&z2,&mut x2);   
 
     modexp(&x2,bv);
-    bv.reverse(); // little endian
+    bv.reverse(); // convert to little endian
 }
 
 // a test vector for x25519 or x448 from RFC7748
@@ -214,7 +220,7 @@ fn main() {
     let mut bk:[u8;NBYTES]=[0;NBYTES];
     let mut bu:[u8;NBYTES]=[0;NBYTES];
     let mut bv:[u8;NBYTES]=[0;NBYTES];
-    bu[NBYTES-1]=GENERATOR;
+    bu[0]=GENERATOR;
 
 // convert to byte array
     from_hex(&SK,&mut bk);
