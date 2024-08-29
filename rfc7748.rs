@@ -16,9 +16,10 @@
 //
 // python monty_rust.py 16/32/64 X448
 
-// rustc -O rfc7748.rs
-
-// NOTE: Code is set up for X25519. See // ****** for places where changes are needed for X448
+// To compile:-
+// rustc -O --cfg 'X25519' rfc7748.rs
+// or
+// rustc -O --cfg 'X448' rfc7748.rs
 
 /*** Insert automatically generated code for modulus code.rs here ***/
 
@@ -78,16 +79,24 @@ fn output(x: &[SPINT]) {
 // Describe Montgomery Curve parameters
 // ******
 //X25519
+#[cfg(X25519)]
 const A24: usize = 121665;
+#[cfg(X25519)]
 const COF: usize = 3;
+#[cfg(X25519)]
 const GENERATOR: u8=9;
+#[cfg(X25519)]
 const TWIST_SECURE: bool = true;
 
 //X448
-//const A24: usize = 39081;
-//const COF: usize = 2;
-//const GENERATOR: u8=5;
-//const TWIST_SECURE: bool = true;
+#[cfg(X448)]
+const A24: usize = 39081;
+#[cfg(X448)]
+const COF: usize = 2;
+#[cfg(X448)]
+const GENERATOR: u8=5;
+#[cfg(X448)]
+const TWIST_SECURE: bool = true;
 
 // clamp input - see RFC7748
 fn clamp(bk: &mut [u8]) {
@@ -130,7 +139,10 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
 
     cu.reverse(); // convert from little to big endian
 //X25519 only!
+#[cfg(X25519)]
+{
     cu[0]&=0x7f;   // implementations of X25519 (but not X448) MUST mask the most significant bit in the final byte
+}
 // clamp input
     clamp(&mut ck);
 
@@ -213,9 +225,11 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
 fn main() {
 // ******
 //X25519
+#[cfg(X25519)]
     const SK:&str="77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
 //X448
-//    const SK:&str="9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
+#[cfg(X448)]
+    const SK:&str="9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
 
     let mut bk:[u8;NBYTES]=[0;NBYTES];
     let mut bu:[u8;NBYTES]=[0;NBYTES];
