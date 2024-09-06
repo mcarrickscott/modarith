@@ -27,14 +27,14 @@ For a quick start copy the files from here into a working directory, and try
 	python3 pseudo.py 64 2**255-19
 	./time
 
-Then 64-bit code for the suggested modulus is generated and tested. An executable that times important functions will be created if the platform allows it. The standalone C timing code is output to *time.c*, and code for production use is output to *code.c* and *header.h*
+Then 64-bit code for the suggested modulus is generated and tested. An executable that times important functions will be created if the platform allows it. The standalone C timing code is output to *time.c*, and code for production use is output to *field.c* and *field.h*
 
 For Rust 
 
 	python3 pseudo_rust.py 64 2**255-19
 	./time
 
-In this case the output is directed to files *time.rs* and *code.rs*
+In this case the output is directed to files *time.rs* and *field.rs*
 
 For more details read the comments in the provided scripts.
 
@@ -97,24 +97,20 @@ It is strongly recommended that the generated assembly language be closely studi
 
 # New - automatic generation of Edwards or Weierstrass curve API code in C
 
-1. Decide on wordlength (32 or 64 bit)
-2. Choose the field prime.
-3. Automatically generate field code to files *code.c* and *header.h*. If (pseudo)-Mersenne prime, use script *pseudo.py*, else use *monty.py*
-4. Decide on Edwards or Weierstrass curve. The number of points on the curve is assumed to be a prime for Weierstrass, or 4 or 8 times a prime for Edwards. This prime is the order of the group.
-5. Drop *code.c* into *edwards.c* or *weierstrass.c* and provide some curve constants (a constant *B* or *d* and a group generator point (*x, y*) where indicated (some are provided already). If larger constants are required, a tool *make.py* is provided to generate them
-6. Insert the prime group order into *testcurve.c* where indicated (several examples are there already)
-7. Make sure the API header file *curve.h* is in the path, and drop in *header.h* where indicated. Note that this API is independent of the curve, its associated field and its parameters.
-8. Compile and link *testcurve.c* with *edwards.c* or *weierstrass.c*
-9. Run testcurve to test the arithmetic and perform some timings.
+1. Copy all code from this directory to a working directory.
+2. Run the python script curve.py, selecting curve name and wordlength (32 or 64 bit). The curve will be in either Edwards or Weierstrass form. Edit this script to add your own curve
+3. The script generates 4 files *field.c* *group.c* *point.h* and *curve.c*
+4. The script automatically injects this code into *edwards.c* or *weierstrass.c* and *curve.h*
+5. Compile and link *testcurve.c* with *edwards.c* or *weierstrass.c* and *hash.c*
+6. Run testcurve to test the arithmetic and perform some timings.
 
 The API interface is as indicated in *curve.h*. The API is completely implemented in *edwards.c* or *weierstrass.c*
 
+Make sure to copy fresh copies of *edwards.c* *weierstrass.c* and *curve.h* from source after each test
+
 ## Quickstart 1:-
 
-	python pseudo.py 64 ED25519
-Drop *code.c* into *edwards.c* where indicated \
-Drop *header.h* into *curve.h* where indicated
-
+	python curve.py 64 ED25519
 	gcc -O2 testcurve.c edwards.c -lcpucycles -o testcurve
 	./testcurve
 
@@ -122,25 +118,18 @@ Note that this intermediate API only provides the elliptic curve functionality. 
 
 ## Quickstart 2:-
 
-	python monty.py 64 ed448
-Note that if the curve is given in upper-case then, by convention, the prime is the field prime, otherwise its the group prime.
-Drop *code.c* into *Ed448.c* (EdDSA using ED448) where indicated
+	python curve.py 64 ED448
+Drop *group.c* into *Ed448.c* (EdDSA using ED448) where indicated
 
-	python monty.py 64 ED448
-Drop *code.c* into *edwards.c* where indicated. \
-Drop *header.h* into *curve.h* where indicated
-
-	gcc -O2 Ed448.c edwards.c -o Ed448
+	gcc -O2 Ed448.c edwards.c hash.c -o Ed448
 	./Ed448
 
 ## Quickstart 3:-
 
-	python monty.py 64 nist256
-Drop *code.c* into *EC256.c* (ECDSA using P-256) where indicated
+	python curve.py 64 NIST256
+Drop *group.c* into *EC256.c* (ECDSA using P-256) where indicated
 
-	python monty.py 64 NIST256
-Drop *code.c* into *weierstrass.c* where indicated \
-Drop *header.h* into *curve.h* where indicated
-
-	gcc -O2 EC256.c weierstrass.c -o EC256
+	gcc -O2 EC256.c weierstrass.c hash.c -o EC256
 	./EC256
+
+# coming soon - rust version

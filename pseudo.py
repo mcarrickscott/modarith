@@ -1515,15 +1515,9 @@ makestatic=False
 DECOR=""
 modulus=p
 
-#with open('header.h', 'w') as f:
-#    with redirect_stdout(f):
-#        header()
-#f.close()
-
 import random
 with open('test.c', 'w') as f:
     with redirect_stdout(f):
-        #print('#include "header.h"\n')
         header()
         functions()
 f.close()
@@ -1676,7 +1670,6 @@ subprocess.call("rm time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
-        #print('#include "header.h"\n')
         header()
         if not embedded :
             if cyclescounter :
@@ -1717,15 +1710,14 @@ else :
 
 # to determine code size
 makestatic=False
-with open('code.c', 'w') as f:
+with open('field.c', 'w') as f:
     with redirect_stdout(f):
-        #print('#include "header.h"\n')
         header()
         functions()
 f.close()
 
-subprocess.call(compiler+" -O3 -c code.c",shell=True)
-subprocess.call("size code.o > size.txt",shell=True)
+subprocess.call(compiler+" -O3 -c field.c",shell=True)
+subprocess.call("size field.o > size.txt",shell=True)
 
 f=open('size.txt')
 lines=f.readlines()
@@ -1733,8 +1725,8 @@ info=lines[1].split()
 
 print("Code size using -O3 = ",info[0])
 
-subprocess.call(compiler+" -Os -c code.c",shell=True)
-subprocess.call("size code.o > size.txt",shell=True)
+subprocess.call(compiler+" -Os -c field.c",shell=True)
+subprocess.call("size field.o > size.txt",shell=True)
 
 f=open('size.txt')
 lines=f.readlines()
@@ -1742,51 +1734,27 @@ info=lines[1].split()
 
 print("Code size using -Os = ",info[0])
 subprocess.call("rm size.txt",shell=True)     
-subprocess.call("rm code.o",shell=True)  
+subprocess.call("rm field.o",shell=True)  
 
 if decoration :
     if noname :
         DECOR="_"+str(n)+str(m)+"_ct"
     else :
         DECOR="_"+prime+"_ct"
-#re-write it
-#with open('header.h', 'w') as f:
-#    with redirect_stdout(f):
-#        header()
-#f.close()
 
 makestatic=True
-with open('code.c', 'w') as f:
+with open('field.c', 'w') as f:
     with redirect_stdout(f):
-        #print('#include "header.h"\n')
         header()
         functions()
 f.close()
 
 if formatted :
-    subprocess.call("clang-format -i code.c", shell=True)  # tidy up the format
+    subprocess.call("clang-format -i field.c", shell=True)  # tidy up the format
 
 if check:
-    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True) 
+    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem field.c", shell=True) 
 
-if prime[0].isalpha() and prime[0].isupper() :
-    with open('header.h', 'w') as f:
-       with redirect_stdout(f):
-            print("// Command line : python {} {} {}".format(sys.argv[0], sys.argv[1], sys.argv[2]))
-            print("// elliptic curve point in projective coordinates")
-            print("\t#include <stdint.h>\n")
-            print("\t#ifndef",prime.upper())
-            print("\t#define",prime.upper())
-            print("\t#endif")
-            print("\t#define WORDLENGTH {}".format(WL))
-            print("\tstruct xyz {")
-            print("\t\tuint{}_t x[{}];".format(WL,N))
-            print("\t\tuint{}_t y[{}];".format(WL,N))
-            print("\t\tuint{}_t z[{}];".format(WL,N))
-            print("\t};")
-            print("\ttypedef struct xyz point;")
-            f.close()
-    print("Production code is in code.c and header.h")
-else :
-    print("Production code is in code.c")
+print("Field code is in field.c")
 
+sys.exit(base)

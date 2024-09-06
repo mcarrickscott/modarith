@@ -4,10 +4,10 @@
 #ifndef CURVE_H
 #define CURVE_H
 
-// header.h generated from the monty.py or pseudo.py script, and required for definition of point structure 
-/*** Insert automatically generated code for curve header.h here ***/
+// point.h generated from the curve.py script, and required for definition of point structure 
+/*** Insert automatically generated point definition point.h here ***/
 
-
+@point@
 
 /*** End of automatically generated code ***/
 

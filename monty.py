@@ -13,7 +13,7 @@
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
 # How to use. 
-# (1) First execute this program: python monty.py 64 NIST256. Output code is written to file code.c
+# (1) First execute this program: python monty.py 64 NIST256. Output code is written to file field.c or group.c
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
 #
@@ -1781,6 +1781,9 @@ if prime=="ED448" :
 if prime=="ed448" :
     p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
 
+if prime=="ed25519" :
+    p=0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED
+
 if prime=="X448" :
     p=2**448-2**224-1
     if not generic :
@@ -1858,6 +1861,9 @@ if prime=="NIST224" :
 if prime=="SECP256K1" :
     p=2**256-2**32-977
 
+if prime=="secp256k1" :
+    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+
 if prime=="TWEEDLE" :
     p=0x40000000000000000000000000000000038aa127696286c9842cafd400000001
 
@@ -1891,8 +1897,15 @@ if prime=="MFP1973" :
 if prime=="CSIDH512" :
     p=5326738796327623094747867617954605554069371494832722337612446642054009560026576537626892113026381253624626941643949444792662881241621373288942880288065659
 
+if prime=="nums256e" :
+    p=0x4000000000000000000000000000000041955AA52F59439B1A47B190EEDD4AF5
+
+if prime=="nums256w" :
+    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE43C8275EA265C6020AB20294751A825
+
 ### End of user editable area
 
+field=True
 
 noname=False
 if p==0 :
@@ -1902,6 +1915,15 @@ if p==0 :
     else :
         print("This named prime not supported")
         exit(0)
+else :
+    if prime.islower() :
+        field=False
+
+fnamec='field.c'
+fnameo='field.o'
+if not field :
+    fnamec='group.c'
+    fnameo='group.o'
 
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
@@ -2036,15 +2058,9 @@ makestatic=False
 DECOR=""
 modulus=p
 
-#with open('header.h', 'w') as f:
-#    with redirect_stdout(f):
-#        header()
-#f.close()
-
 import random
 with open('test.c', 'w') as f:
     with redirect_stdout(f):
-        #print('#include "header.h"\n')
         header()
         functions()
 f.close()
@@ -2189,7 +2205,6 @@ ri=random.randint(0,modulus-1)
 #if embedded :
 subprocess.call("rm time.c", shell=True)
 
-
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
         header()
@@ -2234,15 +2249,14 @@ else :
 
 # to determine code size
 makestatic=False
-with open('code.c', 'w') as f:
+with open(fnamec, 'w') as f:
     with redirect_stdout(f):
-        #print('#include "header.h"\n')
         header()
         functions()
 f.close()
 
-subprocess.call(compiler+" -O3 -c code.c",shell=True)
-subprocess.call("size code.o > size.txt",shell=True)
+subprocess.call(compiler+" -O3 -c "+fnamec,shell=True)
+subprocess.call("size "+fnameo+" > size.txt",shell=True)
 
 f=open('size.txt')
 lines=f.readlines()
@@ -2250,8 +2264,8 @@ info=lines[1].split()
 
 print("Code size using -O3 = ",info[0])
 
-subprocess.call(compiler+" -Os -c code.c",shell=True)
-subprocess.call("size code.o > size.txt",shell=True)
+subprocess.call(compiler+" -Os -c "+fnamec,shell=True)
+subprocess.call("size "+fnameo+" > size.txt",shell=True)
 
 f=open('size.txt')
 lines=f.readlines()
@@ -2259,7 +2273,7 @@ info=lines[1].split()
 
 print("Code size using -Os = ",info[0])
 subprocess.call("rm size.txt",shell=True)    
-subprocess.call("rm code.o",shell=True)   
+subprocess.call("rm "+fnameo,shell=True)   
 
 if decoration :
     if PM :
@@ -2273,45 +2287,24 @@ if decoration :
             exit(0);
         DECOR="_"+prime+"_ct"
 
-#re-write it
-#with open('header.h', 'w') as f:
-#    with redirect_stdout(f):
-#        header()
-#f.close()
-
 makestatic=True
-with open('code.c', 'w') as f:
+with open(fnamec, 'w') as f:
     with redirect_stdout(f):
-        #print('#include "header.h"\n')
         header()
         functions()
 
 f.close()
 
 if formatted :
-    subprocess.call("clang-format -i code.c", shell=True)  # tidy up the format
+    subprocess.call("clang-format -i "+fnamec, shell=True)  # tidy up the format
 
 if check: 
-    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem code.c", shell=True)  # tidy up the format
+    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem "+fnamec, shell=True)  # tidy up the format
 
-if prime[0].isalpha() and prime[0].isupper() :
-    with open('header.h', 'w') as f:
-       with redirect_stdout(f):
-            print("// Command line : python {} {} {}".format(sys.argv[0], sys.argv[1], sys.argv[2]))
-            print("// elliptic curve point in projective coordinates")
-            print("\t#include <stdint.h>\n")
-            print("\t#ifndef",prime.upper())
-            print("\t#define",prime.upper())
-            print("\t#endif")
-            print("\t#define WORDLENGTH {}".format(WL))
-            print("\tstruct xyz {")
-            print("\t\tuint{}_t x[{}];".format(WL,N))
-            print("\t\tuint{}_t y[{}];".format(WL,N))
-            print("\t\tuint{}_t z[{}];".format(WL,N))
-            print("\t};")
-            print("\ttypedef struct xyz point;")
-            f.close()
-    print("Production code is in code.c and header.h")
+
+if field :
+    print("field code is in field.c")
 else :
-    print("Production code is in code.c")
+    print("group code is in group.c")
 
+sys.exit(base)

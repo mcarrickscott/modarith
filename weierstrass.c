@@ -1,19 +1,20 @@
 // Weierstrass curve support 
-// Use python scripts to generate code for NIST curves, or your own curves
+// Use python scripts to generate code for standard curves, or your own curves
+// Assumes A constant is -3 or 0
 //
-// Mike Scott 16th July 2024
+// Mike Scott 5th September 2024
 // TII
 //
 // code for 16/32/64-bit processor for NIST curve can be generated  by 
 //
-// python monty.py 16/32/64 NIST256
+// python curve.py 16/32/64 NIST256
 //
 
 // make sure decoration and generic are both set to False in monty.py or pseudo.py
 
-/*** Insert automatically generated code for modulus code.c here ***/
+/*** Insert automatically generated code for modulus field.c here ***/
 
-
+@field@
 
 /*** End of automatically generated code ***/
 
@@ -23,56 +24,11 @@
 #define LIMBS Nlimbs
 #define TOPBIT (8*sizeof(int)-1)
 
-// define weierstrass curve here y^2=x^3-3x+B, that is B and prime order generator (x,y)
-// define ZEROA if curve is y^2=x^3+B, and constant_B = 3B
-#ifdef NUMS256W  // the way it should have been done... see https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session4-costello-craig.pdf
-#ifdef MULBYINT
-#define CONSTANT_B 152961
-#define CONSTANT_X 2
-#else
-#error "Only allowed if MULBYINT defined in Fp. Otherwise use make.py to precompute constant"
-#endif
-#endif
+/*** Insert automatically generated curve definition curve.c here ***/
 
-// utility make.py can be used to generate these constants
+@curve@
 
-#ifdef NIST256  // the way it was done....
-// get constant d, generator point (x,y)
-#if Radix == 52
-const spint constant_b[5]={0xdf6229c4bddfd,0xca8843090d89c,0x212ed6acf005c,0x83415a220abf7,0xc30061dd4874};
-const spint constant_x[5]={0x30d418a9143c1,0xc4fedb60179e7,0x62251075ba95f,0x5c669fb732b77,0x8905f76b5375};
-const spint constant_y[5]={0x5357ce95560a8,0x43a19e45cddf2,0x21f3258b4ab8e,0xd8552e88688dd,0x571ff18a5885};
-#endif
-#if Radix ==  29
-const spint constant_b[9]={0x1897bbfb,0x1cdf6229,0x18486c4,0x1732821,0x1dad59e0,0xabf7212,0x1a06d110,0x17721d20,0x8600c3};
-const spint constant_x[9]={0x15228783,0x730d418,0xdb00bcf,0x57f11fb,0xa20eb75,0x12b77622,0x330fdb9,0x1af4dd57,0x120bee};
-const spint constant_y[9]={0x12aac150,0x125357ce,0xf22e6ef,0xe390e86,0x64b1695,0x88dd21f,0x2a97443,0x2962176,0xae3fe3};
-#endif
-#endif
-
-#ifdef SECP256K1
-#define ZEROA
-#ifdef MULBYINT
-#define CONSTANT_B 7
-#define CONSTANT_B3 21 // needed if ZEROA
-#else
-#if Radix == 29 // monty
-const spint constant_b[9]={0x356e0,0x700,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
-const spint constant_b3[9]={0xa04a0,0x1500,0x0,0x0,0x0,0x0,0x0,0x0,0x0}; // needed if ZEROA
-#endif
-
-#endif
-
-#if Radix == 52 // pseudo
-const spint constant_x[5]={0x2815b16f81798,0xdb2dce28d959f,0xe870b07029bfc,0xbbac55a06295c,0x79be667ef9dc};
-const spint constant_y[5]={0x7d08ffb10d4b8,0x48a68554199c4,0xe1108a8fd17b4,0xc4655da4fbfc0,0x483ada7726a3};
-#endif
-#if Radix ==  29 // monty
-const spint constant_x[9]={0xfc45b63,0x162e5ae0,0x336deb9,0xa54ca6f,0x538463c,0xc033fd1,0x44bcfa4,0xfa4227d,0x303cc8};
-const spint constant_y[9]={0x1b75dba9,0x1ea6d39b,0xe326d8a,0x175747c7,0x26d1bf8,0x19aac19c,0xb385b5a,0x1f52960b,0xe7f0a3};
-#endif
-
-#endif
+/*** End of automatically generated code ***/
 
 // return 1 if b==c, no branching 
 static int teq(int b, int c)
@@ -126,17 +82,17 @@ void ecnadd(point *Q,point *P)
     modadd(T0,T2,P->y);     // 17
     modsub(P->x,P->y,P->y); // 18
 
-#ifdef ZEROA
+#if CONSTANT_A==0
     modadd(T0,T0,P->x);   // 19
     modadd(T0,P->x,T0);   // 20
 
-#ifdef CONSTANT_B3
-#if CONSTANT_B3>0
-    modmli(T2,CONSTANT_B3,T2);      // 21
-    modmli(P->y,CONSTANT_B3,P->y);  // 24
+#ifdef CONSTANT_B
+#if CONSTANT_B>0
+    modmli(T2,3*CONSTANT_B,T2);      // 21
+    modmli(P->y,3*CONSTANT_B,P->y);  // 24
 #else
-    modmli(T2,-CONSTANT_B3,T2);  modneg(T2,T2);    // 21
-    modmli(P->y,-CONSTANT_B3,P->y);  modneg(P->y,P->y);// 24
+    modmli(T2,-3*CONSTANT_B,T2);  modneg(T2,T2);    // 21
+    modmli(P->y,-3*CONSTANT_B,P->y);  modneg(P->y,P->y);// 24
 #endif
 #else
     modcpy(constant_b3,B);
@@ -220,7 +176,7 @@ void ecndbl(point *P)
 {
     spint B[Nlimbs],T0[Nlimbs],T1[Nlimbs],T2[Nlimbs],T3[Nlimbs],T4[Nlimbs];
 
-#ifdef ZEROA
+#if CONSTANT_A==0
     modsqr(P->y,T0); // 1
     modadd(T0,T0,T3);  // 2 T3=Z3
     modadd(T3,T3,T3);  // 3
@@ -228,11 +184,11 @@ void ecndbl(point *P)
     modmul(P->x,P->y,T4); // 16 T4=X*Y
     modmul(P->y,P->z,T1); // 5
     modsqr(P->z,T2);      // 6
-#ifdef CONSTANT_B3
-#if CONSTANT_B3>0
-    modmli(T2,CONSTANT_B3,T2);      // 7
+#ifdef CONSTANT_B
+#if CONSTANT_B>0
+    modmli(T2,3*CONSTANT_B,T2);      // 7
 #else
-    modmli(T2,-CONSTANT_B3,T2); modneg(T2,T2);
+    modmli(T2,-3*CONSTANT_B,T2); modneg(T2,T2);
 #endif
 #else
     modcpy(constant_b3,B);
@@ -392,15 +348,10 @@ int ecngetxyz(point *P,char *x,char *y,char *z)
 static void setxy(int s,const spint *x,const spint *y,point *P)
 {
     spint T[Nlimbs],V[Nlimbs],H[Nlimbs];
-    if (x==NULL)
-    {
-        ecninf(P);
-        return;
-    }
     modcpy(x,P->x);
     modsqr(x,V);
     modmul(V,x,V); // x^3
-#ifndef ZEROA
+#if CONSTANT_A==-3
     modsub(V,x,V);
     modsub(V,x,V);
     modsub(V,x,V); // x^3-3x
@@ -448,23 +399,14 @@ void ecncof(point *P)
 void ecnset(int s,const char *x,const char *y,point *P)
 {
     spint X[Nlimbs],Y[Nlimbs];
-    if (x!=NULL && y!=NULL)
+    modimp(x,X);
+    if (y!=NULL)
     {
-        modimp(x,X);
         modimp(y,Y);
         setxy(s,X,Y,P);
         return;
     }
-    if (x!=NULL)
-    {
-        modimp(x,X);
-        setxy(s,X,NULL,P);
-    }
-    if (y!=NULL)
-    {
-        modimp(y,Y);
-        setxy(s,NULL,X,P);
-    }
+    setxy(s,X,NULL,P);
 }
 
 // set generator

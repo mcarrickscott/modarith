@@ -11,7 +11,7 @@
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
 # Execute this program as: python pseudo_rust.py 64 X25519
-# Code is output to file code.rs
+# Code is output to file field.rs
 #
 # Mike Scott 22nd April 2024
 # TII
@@ -685,7 +685,7 @@ def modsqrt() :
         #str+="\t\tfor _ in 1..k-1 { \n"
         #str+="\t\t\tmodsqr(&mut b);\n\t\t}\n"
 
-        str+="\t\tlet d= 1 - (modis1(&b) as isize);\n"
+        str+="\t\tlet d= 1 - (modis1(&b) as usize);\n"
         str+="\t\tmodcpy(&z,&mut v);\n"
         str+="\t\tmodmul(&s,&mut v);\n"
         str+="\t\tmodcmv(d,&v,&mut s);\n"
@@ -769,8 +769,8 @@ def redc(n,base) :
 #conditional swap
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
-    str+="pub fn modcsw(d: isize,g: &mut [SPINT],f: &mut [SPINT]) -> SPINT {\n"
-    str+="\tlet c=-d as SPINT;\n"
+    str+="pub fn modcsw(d: usize,g: &mut [SPINT],f: &mut [SPINT]) -> SPINT {\n"
+    str+="\tlet c=-(d as isize) as SPINT;\n"
     str+="\tlet mut w=0 as SPINT;\n"
     str+="\tlet r=f[0]^g[1];\n"
     str+="\tlet mut ra=r.wrapping_add(r); ra>>=1;\n"
@@ -787,8 +787,8 @@ def modcsw() :
 #conditional move
 def modcmv() :
     str="//conditional move g to f if d=1\n"
-    str+="pub fn modcmv(d: isize,g: &[SPINT],f: &mut [SPINT]) -> SPINT {\n"
-    str+="\tlet c=-d as SPINT;\n"
+    str+="pub fn modcmv(d: usize,g: &[SPINT],f: &mut [SPINT]) -> SPINT {\n"
+    str+="\tlet c=-(d as isize) as SPINT;\n"
     str+="\tlet mut w=0 as SPINT;\n"
     str+="\tlet r=f[0]^g[1];\n"
     str+="\tlet mut ra=r.wrapping_add(r); ra>>=1;\n"
@@ -1064,6 +1064,11 @@ if prime=="PM266" :
     #if WL==32 :
     #    base=29
 
+if prime=="NUMS256W" :
+    p=2**256-189
+
+if prime=="NUMS256E" :
+    p=2**256-189
 
 if prime=="NIST521" :
     p=2**521-1
@@ -1075,6 +1080,9 @@ if prime=="X25519" :
     if not generic :
         algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
         mp=2            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm. Now no reduction required after modular additions/subtractions.
+
+if prime=="ED25519" :
+    p=2**255-19
 
 if prime=="C2065" :
     p=2**206-5
@@ -1268,7 +1276,7 @@ subprocess.call("rustc -C opt-level=3 -C target-cpu=native time.rs", shell=True)
 print("For timings run ./time")
 
 # output code in final form
-with open('code.rs', 'w') as f:
+with open('field.rs', 'w') as f:
     with redirect_stdout(f):
         print("pub type SPINT = u{};".format(WL))
         print("pub type SSPINT = i{};".format(WL))
@@ -1317,6 +1325,7 @@ with open('code.rs', 'w') as f:
 f.close()
 
 if formatted :
-    subprocess.call("rustfmt code.rs", shell=True)
-print("Production code is in code.rs")
+    subprocess.call("rustfmt field.rs", shell=True)
+print("Field code is in field.rs")
 
+sys.exit(base)

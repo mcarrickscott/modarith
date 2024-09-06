@@ -1,24 +1,23 @@
 // Edwards curve support 
 // Use python scripts to generate code for ED25519 or ED448, or your own curve
+// Assumes A constant is -1 or +1
 //
 // Mike Scott 16th July 2024
 // TII
 //
 // code for 16/32/64-bit processor for ED25519 curve can be generated  by 
 //
-// python pseudo.py 16/32/64 ED25519
-// or
-// python monty.py 16/32/64 ED25519
+// python curve.py 16/32/64 ED25519
 //
 // code for 16/32/64-bit processor for ED448 curve can be generated  by
 //
-// python monty.py 16/32/64 ED448
+// python curve.py 16/32/64 ED448
 
 // make sure decoration and generic are both set to False in monty.py or pseudo.py
 
-/*** Insert automatically generated code for modulus code.c here ***/
+/*** Insert automatically generated code for modulus field.c here ***/
 
-
+@field@
 
 /*** End of automatically generated code ***/
 
@@ -28,58 +27,12 @@
 #define LIMBS Nlimbs
 #define TOPBIT (8*sizeof(int)-1)
 
-// define edwards curve here ax^2+y^2 = 1+dx^2y^2, that is d, cofactor and prime order generator (x,y)
+/*** Insert automatically generated curve definition curve.c here ***/
 
-#ifdef NUMS256E  // the way it should have been done... see https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session4-costello-craig.pdf
-#ifdef MULBYINT
-#define CONSTANT_D -15342   
-#define CONSTANT_X 34
-#else
-#error "Only allowed if MULBYINT defined in Fp. Otherwise use make.py to precompute constant"
-#endif
+@curve@
 
-#define COF 2
-#endif
+/*** End of automatically generated code ***/
 
-// utility make.py can be used to generate these constants
-
-#ifdef ED25519  // the way it was done....
-// get constant d, generator point (x,y)
-#if Radix == 51
-const spint constant_d[5]={0x34dca135978a3,0x1a8283b156ebd,0x5e7a26001c029,0x739c663a03cbb,0x52036cee2b6ff};
-const spint constant_x[5]={0x62d608f25d51a,0x412a4b4f6592a,0x75b7171a4b31d,0x1ff60527118fe,0x216936d3cd6e5};
-const spint constant_y[5]={0x6666666666658,0x4cccccccccccc,0x1999999999999,0x3333333333333,0x6666666666666};
-#endif
-#if Radix ==  29
-const spint constant_d[9]={0x135978a3,0xf5a6e50,0x10762add,0x149a82,0x1e898007,0x3cbbbc,0x19ce331d,0x1dc56dff,0x52036c};
-const spint constant_x[9]={0xf25d51a,0xab16b04,0x969ecb2,0x198ec12a,0xdc5c692,0x1118feeb,0xffb0293,0x1a79adca,0x216936};
-const spint constant_y[9]={0x6666658,0x13333333,0x19999999,0xccccccc,0x6666666,0x13333333,0x19999999,0xccccccc,0x666666};
-#endif
-#define COF 3
-#define NEGA   // a is -1
-#endif
-
-#ifdef ED448
-// get constant d, generator point (x,y), converted to n-residue form
-#ifdef MULBYINT
-#define CONSTANT_D -39081
-#else
-#error "Only allowed if MULBYINT defined in Fp. Otherwise use make.py to precompute constant"
-#endif
-#if Radix == 56
-const spint constant_x[8]={0x420685f0ea8836,0x35bf93b17aa383,0xb7bc2914f8fe6d,0xe44cd37ab765fa,0x34f39b1b69235e,0x44d6fb9be886a8,0xee96c7295e6eb4,0xd16ef0905d88b9};
-const spint constant_y[8]={0xd81f4fba184177,0xac119c79a99632,0xda8e9ac23c2104,0x416ef259fc5486,0x46ff5902c1cc32,0x4fa9dd01223251,0xa1f0e6acaf9471,0x65f7687a33ab50};
-//const spint constant_x[8]={0xaaaaaaaaaaaaaa,0xffffffffffffff,0xffffffffffffff,0xffffffffffffff,0xaaaaaaaaaaaaa9,0xaaaaaaaaaaaaa9,0xaaaaaaaaaaaaaa,0xaaaaaaaaaaaaaa};
-//const spint constant_y[8]={0xe6e4977ea3136e,0x7349a5a276f460,0x756ed53c780c10,0x10ed8406b90c43,0x1fc34599fb4fd8,0xfb977d5a5a61d4,0x381ed8ab4fac45,0x9ea0dddcd95cca};
-#endif
-#if Radix == 28
-const spint constant_x[16]={0x420685f,0x17aa383,0x35bf93b,0x4f8fe6d,0xb7bc291,0xab765fa,0xe44cd37,0xa7e9b28,0x34f39b1,0xbe886a8,0x44d6fb9,0x95e6eb4,0xee96c72,0x5d88b9,0xd16ef09,0xea8836};
-const spint constant_y[16]={0xd81f4fb,0x9a99632,0xac119c7,0x23c2104,0xda8e9ac,0x9fc5486,0x416ef25,0x8a98abb,0x46ff58f,0x1223251,0x4fa9dd0,0xcaf9471,0xa1f0e6a,0xa33ab50,0x65f7687,0xa184177};
-//const spint constant_x[16]={0xaaaaaaa,0xfffffff,0xfffffff,0xfffffff,0xfffffff,0xfffffff,0xfffffff,0xfffffff,0xaaaaaa9,0xaaaaaa9,0xaaaaaaa,0xaaaaaaa,0xaaaaaaa,0xaaaaaaa,0xaaaaaaa,0xaaaaaaa};
-//const spint constant_y[16]={0xe6e4977,0x276f460,0x7349a5a,0xc780c10,0x756ed53,0x6b90c43,0x10ed840,0xb583c6a,0x1fc3458,0xa5a61d4,0xfb977d5,0xb4fac45,0x381ed8a,0xcd95cca,0x9ea0ddd,0xea3136e};
-#endif
-#define COF 2
-#endif
 
 // return 1 if b==c, no branching 
 static int teq(int b, int c)
@@ -113,18 +66,18 @@ void ecnadd(point *Q,point *P)
     modmul(Q->x,P->x,C);
     modmul(Q->y,P->y,D);
     modmul(C,D,E);
-#ifdef CONSTANT_D
-#if CONSTANT_D>0
-    modmli(E,CONSTANT_D,E);
+#ifdef CONSTANT_B
+#if CONSTANT_B>0
+    modmli(E,CONSTANT_B,E);
     modsub(B,E,F);
     modadd(B,E,G);
 #else
-    modmli(E,-CONSTANT_D,E);
+    modmli(E,-CONSTANT_B,E);
     modadd(B,E,F);
     modsub(B,E,G);
 #endif
 #else
-    modmul(E,constant_d,E);
+    modmul(E,constant_b,E);
     modsub(B,E,F);
     modadd(B,E,G);
 #endif
@@ -135,7 +88,7 @@ void ecnadd(point *Q,point *P)
     modsub(P->x,D,P->x);
     modmul(P->x,F,P->x);
     modmul(P->x,A,P->x);
-#ifdef NEGA
+#if CONSTANT_A==-1
     modadd(D,C,P->y);
 #else
     modsub(D,C,P->y);
@@ -164,7 +117,7 @@ void ecndbl(point *P)
     modsqr(P->y,D);
     modsqr(P->z,H);
     modadd(H,H,H);
-#ifdef NEGA
+#if CONSTANT_A==-1
     modneg(C,E);
 #else
     modcpy(C,E);
@@ -280,22 +233,22 @@ static void setxy(int s,const spint *x,const spint *y,point *P)
     {
         modsqr(x,X);
         modsqr(y,Y);
-#ifdef NEGA
+#if CONSTANT_A==-1
         modsub(Y,X,U);
 #else
         modadd(Y,X,U);  //lhs
 #endif
         modmul(X,Y,V);  //rhs
-#ifdef CONSTANT_D
-#if CONSTANT_D>0
-        modmli(V,CONSTANT_D,V);
+#ifdef CONSTANT_B
+#if CONSTANT_B>0
+        modmli(V,CONSTANT_B,V);
         modadd(O,V,V); // V=1+dx^2
 #else
-        modmli(V,-CONSTANT_D,V);
+        modmli(V,-CONSTANT_B,V);
         modsub(O,V,V); // V=1-dx^2
 #endif      
 #else
-        modmul(V,constant_d,V);
+        modmul(V,constant_b,V);
         modadd(O,V,V);
 #endif
         if (modcmp(U,V)) {
@@ -310,7 +263,7 @@ static void setxy(int s,const spint *x,const spint *y,point *P)
     if (y==NULL)
     {
         modsqr(x,X);
-#ifdef NEGA             // U=1-ax^2
+#if CONSTANT_A==-1             // U=1-ax^2
         modadd(O,X,U);
 #else
         modsub(O,X,U); 
@@ -319,21 +272,21 @@ static void setxy(int s,const spint *x,const spint *y,point *P)
     } else {
         modsqr(y,Y);
         modsub(O,Y,U); // U=1-y^2
-#ifdef NEGA
+#if CONSTANT_A==-1
         modneg(O,O);   // O=-1
 #endif
         modcpy(Y,V);   // V=y^2
     }
-#ifdef CONSTANT_D
-#if CONSTANT_D>0
-    modmli(V,CONSTANT_D,V);
+#ifdef CONSTANT_B
+#if CONSTANT_B>0
+    modmli(V,CONSTANT_B,V);
     modsub(O,V,V); // V=1-dV^2
 #else
-    modmli(V,-CONSTANT_D,V);
+    modmli(V,-CONSTANT_B,V);
     modadd(O,V,V); // V=1+dV^2
 #endif
 #else
-    modmul(V,constant_d,V);
+    modmul(V,constant_b,V);
     modsub(O,V,V); // V=1-dV^2      
 #endif
 
@@ -416,15 +369,15 @@ static void select(int b,point W[],point *P)
     int babs = (b ^ m) - m;
 
     ecncmv(teq(babs, 0),&W[0],P); // conditional move
-    ecncmv(teq(babs, 1),&W[1],P); // conditional move
-    ecncmv(teq(babs, 2),&W[2],P); // conditional move
-    ecncmv(teq(babs, 3),&W[3],P); // conditional move
-    ecncmv(teq(babs, 4),&W[4],P); // conditional move
-    ecncmv(teq(babs, 5),&W[5],P); // conditional move
-    ecncmv(teq(babs, 6),&W[6],P); // conditional move
-    ecncmv(teq(babs, 7),&W[7],P); // conditional move
-    ecncmv(teq(babs, 8),&W[8],P); // conditional move
-    
+    ecncmv(teq(babs, 1),&W[1],P);
+    ecncmv(teq(babs, 2),&W[2],P);    
+    ecncmv(teq(babs, 3),&W[3],P);
+    ecncmv(teq(babs, 4),&W[4],P);
+    ecncmv(teq(babs, 5),&W[5],P);
+    ecncmv(teq(babs, 6),&W[6],P);    
+    ecncmv(teq(babs, 7),&W[7],P);
+    ecncmv(teq(babs, 8),&W[8],P);
+
     ecncpy(P,&MP);
     ecnneg(&MP);  // minus P
     ecncmv((int)(m & 1),&MP,P);
@@ -514,7 +467,7 @@ void ecnmul(const char *e,point *P)
 // not constant time
 void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
 {
-    int i;
+    int i,j;
     point T,W[5];
     signed char w[8*Nbytes+8];
     ecninf(&W[0]);     // O
@@ -531,10 +484,9 @@ void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
     while (i>=1)
     {
         ecndbl(R);
-        if (w[i]!=0) {
-            select(w[i],W,&T);
-            ecnadd(&T,R);
-        }
+        j=w[i];
+        if (j>0) ecnadd(&W[j],R);
+        if (j<0) ecnsub(&W[-j],R);
         i--;
     }
 }

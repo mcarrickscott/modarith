@@ -21,7 +21,7 @@
 // Seems to prefer clang compiler and karatsuba set to False for X25519 and True for X448
 // clang -O3 -march=native -mtune=native rfc7748.c -lcpucycles -o rfc7748
 
-/*** Insert automatically generated code for modulus code.c here ***/
+/*** Insert automatically generated code for modulus field.c here ***/
 
 
 

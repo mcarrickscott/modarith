@@ -21,7 +21,7 @@
 // or
 // rustc -O --cfg 'X448' rfc7748.rs
 
-/*** Insert automatically generated code for modulus code.rs here ***/
+/*** Insert automatically generated code for modulus field.rs here ***/
 
 
 
@@ -108,14 +108,14 @@ fn clamp(bk: &mut [u8]) {
 }
 
 // extract a bit from a byte array
-fn bit(n: usize,a: &[u8]) -> isize {
-    return ((a[n / 8] & (1 << (n % 8))) >> (n%8)) as isize;
+fn bit(n: usize,a: &[u8]) -> usize {
+    return ((a[n / 8] & (1 << (n % 8))) >> (n%8)) as usize;
 }
 
 // RFC7748 - Montgomery curve
 // bv=bk*bu, bu,bv are x coordinates on elliptic curve
 fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
-    let mut swap = 0 as isize;
+    let mut swap = 0;
     let mut ck:[u8;NBYTES]=[0;NBYTES];
     let mut cu:[u8;NBYTES]=[0;NBYTES];
     let mut u:[SPINT;NLIMBS]=[0;NLIMBS];

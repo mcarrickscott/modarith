@@ -14,7 +14,7 @@
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
 # How to use. 
-# (1) First execute this program: python monty_rust.py 64 NIST256. Output code is written to file code.rs
+# (1) First execute this program: python monty_rust.py 64 NIST256. Output code is written to file field.rs or group.rs
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
 #
@@ -1061,7 +1061,7 @@ def modsqrt() :
         str+="\t\tmodcpy(&t,&mut b);\n"
 
         str+="\t\tmodnsqr(&mut b,k-2);\n"
-        str+="\t\tlet d= 1 - (modis1(&b) as isize);\n"
+        str+="\t\tlet d= 1 - (modis1(&b) as usize);\n"
         str+="\t\tmodcpy(&z,&mut v);\n"
         str+="\t\tmodmul(&s,&mut v);\n"
         str+="\t\tmodcmv(d,&v,&mut s);\n"
@@ -1155,8 +1155,8 @@ def redc(n,base) :
 #conditional swap
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
-    str+="pub fn modcsw(d: isize,g: &mut [SPINT],f: &mut [SPINT]) -> SPINT {\n"
-    str+="\tlet c=-d as SPINT;\n"
+    str+="pub fn modcsw(d: usize,g: &mut [SPINT],f: &mut [SPINT]) -> SPINT {\n"
+    str+="\tlet c=-(d as isize) as SPINT;\n"
     str+="\tlet mut w=0 as SPINT;\n"
     str+="\tlet r=f[0]^g[1];\n"
     str+="\tlet mut ra=r.wrapping_add(r); ra>>=1;\n"
@@ -1173,8 +1173,8 @@ def modcsw() :
 #conditional move
 def modcmv() :
     str="//conditional move g to f if d=1\n"
-    str+="pub fn modcmv(d: isize,g: &[SPINT],f: &mut [SPINT]) -> SPINT {\n"
-    str+="\tlet c=-d as SPINT;\n"
+    str+="pub fn modcmv(d: usize,g: &[SPINT],f: &mut [SPINT]) -> SPINT {\n"
+    str+="\tlet c=-(d as isize) as SPINT;\n"
     str+="\tlet mut w=0 as SPINT;\n"
     str+="\tlet r=f[0]^g[1];\n"
     str+="\tlet mut ra=r.wrapping_add(r); ra>>=1;\n"
@@ -1256,8 +1256,8 @@ def modcmp() :
     str+="\tlet mut c:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tlet mut d:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tlet mut eq=1;\n"
-    str+="\tmodcpy(a,&mut c);\n"
-    str+="\tmodcpy(b,&mut d);\n"
+    str+="\tmodcpy(a,&mut c); redc(&mut c);\n"
+    str+="\tmodcpy(b,&mut d); redc(&mut d);\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\teq&=(((c[i]^d[i])-1)>>{})&1;\n\t}}\n".format(base)
     str+="\treturn eq==1;\n"
@@ -1468,12 +1468,14 @@ if prime=="X448" :
         algorithm=True  # if algorithm is known, fix multiple of prime (for modular subtractions) as described in https://eprint.iacr.org/2017/437
         mp=2            # Make sure there is sufficient excess - otherwise change default base. Here assuming Montgomery ladder algorithm. Now no reduction required after modular additions/subtractions.
 
-if prime=="Ed448" :
+if prime=="ED448" :
     p=2**448-2**224-1
 
 if prime=="ed448" :
     p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
 
+if prime=="ed25519" :
+    p=0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED
 
 if prime=="NIST521" :
     p=2**521-1
@@ -1555,6 +1557,9 @@ if prime=="NIST224" :
 if prime=="SECP256K1" :
     p=2**256-2**32-977
 
+if prime=="secp256k1" :
+    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+
 if prime=="TWEEDLE" :
     p=0x40000000000000000000000000000000038aa127696286c9842cafd400000001
 
@@ -1588,9 +1593,15 @@ if prime=="MFP1973" :
 if prime=="CSIDH512" :
     p=5326738796327623094747867617954605554069371494832722337612446642054009560026576537626892113026381253624626941643949444792662881241621373288942880288065659
 
+if prime=="nums256e" :
+    p=0x4000000000000000000000000000000041955AA52F59439B1A47B190EEDD4AF5
+
+if prime=="nums256w" :
+    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE43C8275EA265C6020AB20294751A825
 
 ### End of user editable area
 
+field=True
 
 if p==0 :
     if prime[0].isdigit() :
@@ -1598,6 +1609,9 @@ if p==0 :
     else :
         print("This named prime not supported")
         exit(0)
+else :
+    if prime.islower() :
+        field=False
 
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
@@ -1764,9 +1778,12 @@ f.close()
 subprocess.call("rustc -C opt-level=3 -C target-cpu=native time.rs", shell=True)
 print("For timings run ./time")
 
+fname='field.rs'
+if not field :
+    fname='group.rs'
 
 # output code in final form
-with open('code.rs', 'w') as f:
+with open(fname, 'w') as f:
     with redirect_stdout(f):
         print("pub type SPINT = u{};".format(WL))
         print("pub type SSPINT = i{};".format(WL))
@@ -1820,5 +1837,13 @@ with open('code.rs', 'w') as f:
 f.close()
 
 if formatted :
-    subprocess.call("rustfmt code.rs", shell=True)
-print("Production code is in code.rs")
+    if field :
+        subprocess.call("rustfmt field.rs", shell=True)
+    else :
+        subprocess.call("rustfmt group.rs", shell=True)
+if field :
+    print("field code is in field.rs")
+else :
+    print("group code is in group.rs")
+
+sys.exit(base)

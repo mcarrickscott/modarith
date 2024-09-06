@@ -1,6 +1,6 @@
 // test and timing program for Edwards and Weierstrass curves
 //
-// run monty or pseudo script, drop code.c output into edwards.c (or weierstrass.c) and make sure curve.h and header.h are in the path
+// run curve.py script, and make sure curve.h is in the path
 //
 // clang -O3 -march=native -mtune=native testcurve.c edwards.c -lcpucycles -o testcurve
 // or
