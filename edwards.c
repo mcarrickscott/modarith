@@ -1,17 +1,18 @@
 // Edwards curve support 
 // Use python scripts to generate code for ED25519 or ED448, or your own curve
+// Ax*2+y^2=1+B*x^2*y^2
 // Assumes A constant is -1 or +1
 //
 // Mike Scott 16th July 2024
 // TII
 //
-// code for 16/32/64-bit processor for ED25519 curve can be generated  by 
+// code for 32/64-bit processor for ED25519 curve can be generated  by 
 //
-// python curve.py 16/32/64 ED25519
+// python curve.py 32/64 ED25519
 //
-// code for 16/32/64-bit processor for ED448 curve can be generated  by
+// code for 32/64-bit processor for ED448 curve can be generated  by
 //
-// python curve.py 16/32/64 ED448
+// python curve.py 32/64 ED448
 
 // make sure decoration and generic are both set to False in monty.py or pseudo.py
 

@@ -1,6 +1,8 @@
 // test and timing program for Edwards and Weierstrass curves
 //
-// run curve.py script, and make sure curve.h is in the path
+// run curve.py script to complete edwards.rs or weierstrass.rs 
+// For example python curve_rust.py 64 ED25519
+// make sure curve.h is in the path
 //
 // clang -O3 -march=native -mtune=native testcurve.c edwards.c -lcpucycles -o testcurve
 // or

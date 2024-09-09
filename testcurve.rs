@@ -1,11 +1,11 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
-// For example: cargo run --release --features ED25519
+// For example: cargo run --release --features ED25519 --bin testcurve
 // test and timing program for Edwards and Weierstrass curves
 //
-// run curve_rust.py script
-//
+// run curve_rust.py script to complete edwards.rs or weierstrass.rs for ED25519
+// For example python curve_rust.py 64 ED25519
 
 #[cfg(feature="WEIERSTRASS")]
 mod weierstrass;
@@ -69,6 +69,9 @@ fn outputxy(P: &mut ECP) {
     } else {
         let mut x: [u8; NBYTES] = [0; NBYTES]; 
         let mut y: [u8; NBYTES] = [0; NBYTES]; 
+#[cfg(feature="WEIERSTRASS")]
+        ecnget(P,&mut x, Some(&mut y));
+#[cfg(feature="EDWARDS")]
         ecnget(P,Some(&mut x), Some(&mut y));
         print!("Px= "); printhex(&x); 
         print!("Py= "); printhex(&y); 
@@ -117,6 +120,18 @@ const r2:&str=   "E9978934937938999F9998765C890986DAE5E19F451EF6EE89D3C2C839450A
 const n1:&str=   "120347457078878f77b707c070707077a07707b7b07070707223252357134272";
 #[cfg(feature="NUMS256W")]
 const n2:&str=  "235279279432f249b298a876788d86294e02842092769136c086038b1812383a";    
+
+#[cfg(feature="NUMS256E")]
+const ORDER:&str="4000000000000000000000000000000041955AA52F59439B1A47B190EEDD4AF5";
+#[cfg(feature="NUMS256E")]
+const r1:&str=  "166876CB6C86C76660666789A376F6790956A0D6A507657196D75D610E0C9D7B";
+#[cfg(feature="NUMS256E")]
+const r2:&str=   "29978934937938999F9998765C890987383EB9CE8A51DE298370542FE0D0AD7A";
+#[cfg(feature="NUMS256E")]
+const n1:&str=   "21347457078878f77b707c070707077a07707b7b070707072232523571342729";
+#[cfg(feature="NUMS256E")]
+const n2:&str=  "35279279432f249b298a876788d86294e02842092769136c086038b1812383a5";
+
 
 #[cfg(feature="SECP256K1")]
 const ORDER:&str="FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141";

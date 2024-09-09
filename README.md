@@ -132,4 +132,38 @@ Drop *group.c* into *EC256.c* (ECDSA using P-256) where indicated
 	gcc -O2 EC256.c weierstrass.c hash.c -o EC256
 	./EC256
 
-# coming soon - rust version
+# rust version
+
+Copy all code from this directory to a working directory, and move to that directory. Create a standard rust project, named "ecc".
+
+	cargo new ecc
+
+Replace the default Cargo.toml file with the one provided. 
+
+Copy *testcurve.rs* and *hash.rs* into the rust project src subdirectory. Delete the default *main.rs*
+
+In the working directory
+
+	python curve_rust.py 64 ED25519
+Copy *edwards.rs* into the rust project src subdirectory. 
+
+	cd ecc
+	cargo run --release --features ED25519 --bin testcurve
+
+Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
+
+	python curve_rust.py 64 NIST256
+
+Drop *group.rs* into *EC256.rs* (ECDSA using P-256) where indicated. Copy *EC256.rs* and *weierstrass.rs* to the rust src subdirectory
+	
+	cd ecc
+	cargo run --release --features NIST256 --bin EC256
+
+Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
+
+	python curve_rust.py 64 ED448
+
+Drop *group.rs* into *Ed448.rs* (EdDSA using ED448) where indicated. Copy *Ed448.rs* and *edwards.rs* to the rust src subdirectory
+	
+	cd ecc
+	cargo run --release --features ED448 --bin Ed448

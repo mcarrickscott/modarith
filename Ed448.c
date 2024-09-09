@@ -1,6 +1,9 @@
 // Ed448 Implementation
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
 // and RFC8032
+// python curve.py 64 ED448
+// This completes edwards.rs for this curve. Then
+// gcc -O2 Ed448.c edwards.c hash.c -o Ed448
 
 #include <stdio.h>
 #include <stdint.h>
@@ -8,7 +11,7 @@
 
 #include "curve.h"   // elliptic curve API
 
-/*** Insert automatically generated code for Ed448 prime group order group.c here ***/
+/*** Insert code automatically generated from group.c here ***/
 /* Note that much of this code is not needed and can be deleted */
 
 
@@ -182,7 +185,7 @@ void ED448_KEY_GEN(char *prv,char *pub)
     H(BYTES+1,BYTES,prv,s);
 // clamp s
     s[0]&=0xFC;
-    s[55]!=0x80;
+    s[55]|=0x80;
 
     reverse(s);  // little endian to big endian
     ecnmul(s,&P); 
@@ -209,7 +212,7 @@ void ED448_SIGN(char *prv,char *pub,char *m,char *sig)
 
 // derive and clamp s
     h[0]&=0xFC;
-    h[55]!=0x80;
+    h[55]|=0x80;
     reverse(h); 
     modimp(h,s);
 

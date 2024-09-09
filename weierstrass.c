@@ -1,13 +1,14 @@
 // Weierstrass curve support 
 // Use python scripts to generate code for standard curves, or your own curves
+// y^2=x^3+Ax+B
 // Assumes A constant is -3 or 0
 //
 // Mike Scott 5th September 2024
 // TII
 //
-// code for 16/32/64-bit processor for NIST curve can be generated  by 
+// code for 32/64-bit processor for NIST curve can be generated  by 
 //
-// python curve.py 16/32/64 NIST256
+// python curve.py 32/64 NIST256
 //
 
 // make sure decoration and generic are both set to False in monty.py or pseudo.py
@@ -317,19 +318,18 @@ int ecnget(point *P,char *x,char *y)
 {
     spint X[Nlimbs],Y[Nlimbs];
     ecnaffine(P);
-    if (x!=NULL)
-    {
-        modcpy(P->x,X);
-        modexp(X,x);
-    }
+
+    modcpy(P->x,X);
+    modexp(X,x);
+
     if (y!=NULL)
     {
         modcpy(P->y,Y);
         modexp(Y,y);
+        return 0;
     }
-    if (y==NULL) return modsign(P->y);
-    if (x==NULL) return modsign(P->x);
-    return 0;
+    else
+        return modsign(P->y);
 }
 /*
 int ecngetxyz(point *P,char *x,char *y,char *z)

@@ -7,13 +7,13 @@
 // Mike Scott 4th September 2024
 // TII
 //
-// code for 16/32/64-bit processor for ED25519 curve can be generated  by 
+// code for 32/64-bit processor for ED25519 curve can be generated  by 
 //
-// python curve_rust.py 16/32/64 ED25519
+// python curve_rust.py 32/64 ED25519
 //
-// code for 16/32/64-bit processor for ED448 curve can be generated  by
+// code for 32/64-bit processor for ED448 curve can be generated  by
 //
-// python curve_rust.py 16/32/64 ED448
+// python curve_rust.py 32/64 ED448
 
 // make sure decoration and generic are both set to False in monty_rust.py or pseudo_rust.py
 
@@ -168,20 +168,20 @@ fn ecncmv(d: usize,Q: &ECP,P: &mut ECP) {
 }
 
 // return 1 if equal, else 0
-pub fn ecncmp(Q: &ECP,P: &ECP) -> usize {
+pub fn ecncmp(Q: &ECP,P: &ECP) -> bool {
     let mut a:[SPINT;NLIMBS]=[0;NLIMBS];   
     let mut b:[SPINT;NLIMBS]=[0;NLIMBS];  
     modcpy(&P.x,&mut a); modmul(&Q.z,&mut a);
     modcpy(&Q.x,&mut b); modmul(&P.z,&mut b);
     if !modcmp(&a,&b) {
-        return 0;
+        return false;
     }
     modcpy(&P.y,&mut a); modmul(&Q.z,&mut a);
     modcpy(&Q.y,&mut b); modmul(&P.z,&mut b);
     if !modcmp(&a,&b) {
-        return 0;
+        return false;
     }
-    return 1;
+    return true;
 }
 
 // extract (x,y) from point, if y is NULL compress and just return x and sign of y, if x is NULL compress and just return y and sign of x

@@ -1,6 +1,8 @@
 
 // ECDSA Implementation for curve P-256
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
+// python curve.py 64 NIST256
+// This completes weierstrass.c for this curve. Then
 // gcc -O2 EC256.c weierstrass.c hash.c -o EC256
 
 #include <stdio.h>
