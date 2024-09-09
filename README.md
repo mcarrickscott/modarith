@@ -27,7 +27,7 @@ For a quick start copy the files from here into a working directory, and try
 	python3 pseudo.py 64 2**255-19
 	./time
 
-Then 64-bit code for the suggested modulus is generated and tested. An executable that times important functions will be created if the platform allows it. The standalone C timing code is output to *time.c*, and code for production use is output to *field.c* and *field.h*
+Then 64-bit code for the suggested modulus is generated and tested. An executable that times important functions will be created if the platform allows it. The standalone C timing code is output to *time.c*, and code for production use is output to *field.c*
 
 For Rust 
 
@@ -101,7 +101,7 @@ It is strongly recommended that the generated assembly language be closely studi
 2. Run the python script curve.py, selecting curve name and wordlength (32 or 64 bit). The curve will be in either Edwards or Weierstrass form. Edit this script to add your own curve
 3. The script generates 4 files *field.c* *group.c* *point.h* and *curve.c*
 4. The script automatically injects this code into *edwards.c* or *weierstrass.c* and *curve.h*
-5. Compile and link *testcurve.c* with *edwards.c* or *weierstrass.c* and *hash.c*
+5. Compile and link *testcurve.c* with *edwards.c* or *weierstrass.c*
 6. Run testcurve to test the arithmetic and perform some timings.
 
 The API interface is as indicated in *curve.h*. The API is completely implemented in *edwards.c* or *weierstrass.c*
@@ -132,13 +132,13 @@ Drop *group.c* into *EC256.c* (ECDSA using P-256) where indicated
 	gcc -O2 EC256.c weierstrass.c hash.c -o EC256
 	./EC256
 
-# rust version
+# Rust version
 
 Copy all code from this directory to a working directory, and move to that directory. Create a standard rust project, named "ecc".
 
 	cargo new ecc
 
-Replace the default Cargo.toml file with the one provided. 
+Replace the default *Cargo.toml* file with the one provided. 
 
 Copy *testcurve.rs* and *hash.rs* into the rust project src subdirectory. Delete the default *main.rs*
 

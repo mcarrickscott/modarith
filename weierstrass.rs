@@ -469,6 +469,7 @@ fn dnaf(e: &[u8],f: &[u8],w: &mut [i8]) {
     }
 }
 
+// point multiplication - constant time
 pub fn ecnmul(e: &[u8],P: &mut ECP) {
     let mut Q=ECP::new();
     let mut W: [ECP; 9] = [
