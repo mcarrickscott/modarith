@@ -1354,6 +1354,9 @@ if prime=="NIST521" :
     if WL==64 :
         base=58
 
+if prime=="ED521" :
+    p=2**521-1
+
 if prime=="ED25519" :
     p=2**255-19
 

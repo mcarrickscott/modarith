@@ -18,22 +18,11 @@
 
 /*** End of automatically generated code ***/
 
-// number of limbs and bytes in representation
+// number of bytes in representation
 #define BYTES Nbytes
-#define LIMBS Nlimbs
+typedef spint gel[Nlimbs];  // group element definition
 
 // Some utility functions for I/O and debugging
-
-// general purpose SHAKE256 hash function
-// Input ilen bytes, output olen bytes
-static void H(int ilen,int olen,char *s,char *digest)
-{
-    sha3 SHA3;
-    SHA3_init(&SHA3,SHAKE256);
-    for (int i=0;i<ilen;i++) 
-        SHA3_process(&SHA3,s[i]);
-    SHA3_shake(&SHA3,digest,olen); 
-}
 
 // reverse bytes of buff - for little endian
 static void reverse(char *buff) {
@@ -130,8 +119,8 @@ void outputxy(point *P)
 
 // reduce 114 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^472.x + 2^440.y + z, where x,y and z < q (z is first 55 bytes, y is next 4 bytes, x is last 55 bytes)
-// precalculate c1=nres(2^472 mod q) and c2=nres(2^440 mod q)
-// using utility ed448_order.py 
+// Important that x,y and z < q, 55 bytes = 440 bits, q is 446 bits
+// precalculate c1=nres(2^472 mod q) and c2=nres(2^440 mod q) in this case using utility ed448_order.py 
 #if Wordlength==64
 const spint constant_c1[8]={0xe3033c23525654,0x7624da8d5b86ce,0x3a503352aa569,0x3337c35f209580,0xae17cf72c9860f,0x9cc14ba3c47c44,0xbcb7e4d070af1a,0x39f823b7292052};
 const spint constant_c2[8]={0xecfdd2acf1d7f0,0x1d5087ce8f0058,0xbe9c8459d676ba,0xff8fc444c3d266,0xa3c47c44ae17ce,0xd070af1a9cc14b,0xb7292052bcb7e4,0x383402a939f823};
@@ -146,9 +135,9 @@ static void reduce(char *h,spint *r)
 {
     int i;
     char buff[BYTES];
-    spint x[LIMBS],y[LIMBS],z[LIMBS];
+    gel x,y,z;
 
-    for (int i=0;i<55;i++)
+    for (i=0;i<55;i++)
         buff[i]=h[i];
     buff[55]=0;
     reverse(buff);
@@ -167,10 +156,21 @@ static void reduce(char *h,spint *r)
     reverse(buff);
     modimp(buff,x);
 
-    modmul(x,constant_c1,x);
+    modmul(x,constant_c1,x);  // 2^472.x + 2^440.y + z
     modmul(y,constant_c2,y);
     modadd(x,y,r);
     modadd(r,z,r);
+}
+
+// general purpose SHAKE256 hash function
+// Input ilen bytes, output olen bytes
+static void H(int ilen,int olen,char *s,char *digest)
+{
+    sha3 SHA3;
+    SHA3_init(&SHA3,SHAKE256);
+    for (int i=0;i<ilen;i++) 
+        SHA3_process(&SHA3,s[i]);
+    SHA3_shake(&SHA3,digest,olen); 
 }
 
 // Input private key - 57 random bytes
@@ -202,7 +202,7 @@ void ED448_SIGN(char *prv,char *pub,char *m,char *sig)
 {
     int i,sign;
     char h[2*BYTES+2];
-    spint r[LIMBS],s[LIMBS],d[LIMBS];
+    gel r,s,d;
     sha3 SHA3;
     point R;
     ecngen(&R);
@@ -259,7 +259,7 @@ int ED448_VERIFY(char *pub,char *m,char *sig)
     int i;
     char buff[BYTES];
     point G,R,Q;
-    spint u[LIMBS];
+    gel u;
     int sign;
     sha3 SHA3;
     char h[2*BYTES+2];

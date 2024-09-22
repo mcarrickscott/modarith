@@ -39,17 +39,6 @@ const LIMBS:usize= NLIMBS;
 
 // Some utility functions for I/O and debugging
 
-// general purpose SHAKE256 hash function
-// Input ilen bytes, output olen bytes
-fn H(ilen:usize,olen:usize,s:&[u8],digest: &mut [u8])
-{
-    let mut sha3=SHA3::new(SHAKE256);
-    for i in 0..ilen { 
-        sha3.process(s[i]);
-    }
-    sha3.shake(digest,olen); 
-}
-
 fn char2int(inp: u8) -> u8 {
     if inp>='0' as u8 && inp <='9' as u8 {
         return inp-'0' as u8;
@@ -90,8 +79,8 @@ fn printhex(len:usize,array: &[u8]) {
 }
 // reduce 114 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^472.x + 2^440.y + z, where x,y and z < q (z is first 55 bytes, y is next 4 bytes, x is last 55 bytes)
-// precalculate c1=nres(2^472 mod q) and c2=nres(2^440 mod q)
-// using utility ed448_order.py 
+// Important that x,y and z < q, 55 bytes = 440 bits, q is 446 bits
+// precalculate c1=nres(2^472 mod q) and c2=nres(2^440 mod q) in this case using utility ed448_order.py 
 fn reduce(h:&[u8],r:&mut [SPINT]) {
     let mut buff:[u8;BYTES]=[0;BYTES];    
     let mut x:[SPINT;LIMBS]=[0;LIMBS];
@@ -121,6 +110,7 @@ fn reduce(h:&[u8],r:&mut [SPINT]) {
     buff.reverse();
     modimp(&buff,&mut x);
 
+// 2^472.x + 2^440.y + z
     if LIMBS==8 {
         let constant_c1: [SPINT; 8] = [0xe3033c23525654,0x7624da8d5b86ce,0x3a503352aa569,0x3337c35f209580,0xae17cf72c9860f,0x9cc14ba3c47c44,0xbcb7e4d070af1a,0x39f823b7292052];
         let constant_c2: [SPINT; 8] = [0xecfdd2acf1d7f0,0x1d5087ce8f0058,0xbe9c8459d676ba,0xff8fc444c3d266,0xa3c47c44ae17ce,0xd070af1a9cc14b,0xb7292052bcb7e4,0x383402a939f823];
@@ -135,6 +125,17 @@ fn reduce(h:&[u8],r:&mut [SPINT]) {
 
     modcpy(&x,r); modadd(&y,r);
     modadd(&z,r);
+}
+
+// general purpose SHAKE256 hash function
+// Input ilen bytes, output olen bytes
+fn H(ilen:usize,olen:usize,s:&[u8],digest: &mut [u8])
+{
+    let mut sha3=SHA3::new(SHAKE256);
+    for i in 0..ilen { 
+        sha3.process(s[i]);
+    }
+    sha3.shake(digest,olen); 
 }
 
 // Input private key - 57 random bytes

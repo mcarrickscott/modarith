@@ -108,6 +108,8 @@ The API interface is as indicated in *curve.h*. The API is completely implemente
 
 Make sure to copy fresh copies of *edwards.c* *weierstrass.c* and *curve.h* from source after each test
 
+Support for standard SHA2 and SHA3 hashing algorithms is provided in *hash.c* and *hash.h*
+
 ## Quickstart 1:-
 
 	python curve.py 64 ED25519
@@ -167,3 +169,26 @@ Drop *group.rs* into *Ed448.rs* (EdDSA using ED448) where indicated. Copy *Ed448
 	
 	cd ecc
 	cargo run --release --features ED448 --bin Ed448
+
+# Create your own ECC scheme
+
+Here we describe the steps involved to create your own ECC based signature scheme in C. The process for Rust is very similar.
+
+The file *signature.c* contains templates for the implementation of an API for a digital signature scheme. For working examples see *Ed448.c* and *EC256.c* 
+
+Start with a clean download of all of the files in this directory to a working directory.
+
+Next ensure that the elliptic curve modulus is named (upper case) and supported in either *pseudo.py* or *monty.py*. Ensure the elliptic curve group is named (lower case) in *monty.py*.
+
+Make sure the various elliptic curve constants are given in *curve.py* under the upper case curve name. Then for a 64-bit build
+
+	python curve.py 64 <Upper Case Name>
+
+This will automatically modify or create the files *curve.h*, *group.c* and either *edwards.c* or *weierstrass.c*. 
+
+Now edit the *signature.c* file. First drop in the code from *group.c* where indicated. Then access the document that outlines the details of the signature scheme, and complete the API implementation. For working examples refer to *Ed448.c* and *EC256.c*
+
+Provide a main program in *signature.c* which implements some test vectors and compile as
+
+	gcc -O2 signature.c <weierstrass.c or edwards.c> hash.c -o signature
+

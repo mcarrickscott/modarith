@@ -17,6 +17,23 @@ typedef struct
     int hlen;		/**< Hash length in bytes */
 } hash256;
 
+
+/**
+ * @brief SHA384-512 hash function instance */
+typedef struct
+{
+    uint64_t length[2]; /**< 64-bit input length */
+    uint64_t h[8];      /**< Internal state */
+    uint64_t w[80];	/**< Internal state */
+    int hlen;           /**< Hash length in bytes */
+} hash512;
+
+/**
+ * @brief SHA384 hash function instance */
+typedef hash512 hash384;
+
+
+
 /* SHA3 */
 
 /**
@@ -63,6 +80,56 @@ extern void HASH256_hash(hash256 *H, char *h);
  */
 extern void HASH256_continuing_hash(hash256 *H, char *h);
 
+
+/**	@brief Initialise an instance of SHA384
+ *
+	@param H an instance SHA384
+ */
+extern void HASH384_init(hash384 *H);
+/**	@brief Add a byte to the hash
+ *
+	@param H an instance SHA384
+	@param b byte to be included in hash
+ */
+extern void HASH384_process(hash384 *H, int b);
+/**	@brief Generate 48-byte final hash
+ *
+	@param H an instance SHA384
+	@param h is the output 48-byte hash
+ */
+extern void HASH384_hash(hash384 *H, char *h);
+
+/**	@brief Generate 48-byte intermediate hash
+ *
+	@param H an instance SHA384
+	@param h is the output 48-byte hash
+ */
+extern void HASH384_continuing_hash(hash384 *H, char *h);
+
+/**	@brief Initialise an instance of SHA512
+ *
+	@param H an instance SHA512
+ */
+extern void HASH512_init(hash512 *H);
+/**	@brief Add a byte to the hash
+ *
+	@param H an instance SHA512
+	@param b byte to be included in hash
+ */
+extern void HASH512_process(hash512 *H, int b);
+/**	@brief Generate 64-byte final hash
+ *
+	@param H an instance SHA512
+	@param h is the output 64-byte hash
+ */
+extern void HASH512_hash(hash512 *H, char *h);
+
+/**	@brief Generate 64-byte intermediate hash
+ *
+	@param H an instance SHA512
+	@param h is the output 64-byte hash
+ */
+extern void HASH512_continuing_hash(hash512 *H, char *h);
 
 
 /**	@brief Initialise an instance of SHA3

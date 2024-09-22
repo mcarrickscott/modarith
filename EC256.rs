@@ -36,6 +36,7 @@ use hash::SHA256;
 // number of limbs and bytes in representation
 const BYTES:usize = NBYTES;
 const LIMBS:usize= NLIMBS;
+type GEL = [SPINT; LIMBS];
 
 fn char2int(inp: u8) -> u8 {
     if inp>='0' as u8 && inp <='9' as u8 {
@@ -110,10 +111,10 @@ pub fn EC256_SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
     let mut rb:[u8;BYTES]=[0;BYTES];
     let mut sb:[u8;BYTES]=[0;BYTES];
     let mut R=ECP::new();
-    let mut e:[SPINT;LIMBS]=[0;LIMBS];
-    let mut r:[SPINT;LIMBS]=[0;LIMBS];
-    let mut s:[SPINT;LIMBS]=[0;LIMBS];
-    let mut k:[SPINT;LIMBS]=[0;LIMBS];
+    let mut e:GEL=[0;LIMBS];
+    let mut r:GEL=[0;LIMBS];
+    let mut s:GEL=[0;LIMBS];
+    let mut k:GEL=[0;LIMBS];
 
     if PREHASHED {
         modimp(m,&mut e);
@@ -161,9 +162,9 @@ pub fn EC256_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut u:[u8;BYTES]=[0;BYTES];
     let mut v:[u8;BYTES]=[0;BYTES];
     
-    let mut e:[SPINT;LIMBS]=[0;LIMBS];
-    let mut r:[SPINT;LIMBS]=[0;LIMBS];
-    let mut s:[SPINT;LIMBS]=[0;LIMBS];
+    let mut e:GEL=[0;LIMBS];
+    let mut r:GEL=[0;LIMBS];
+    let mut s:GEL=[0;LIMBS];
     
     if PREHASHED {
         modimp(m,&mut e);

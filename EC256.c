@@ -18,9 +18,9 @@
 
 /*** End of automatically generated code ***/
 
-// number of limbs and bytes in representation
+// number of bytes in representation
 #define BYTES Nbytes
-#define LIMBS Nlimbs
+typedef spint gel[Nlimbs];  // group element definition
 
 // Some utility functions for I/O and debugging
 
@@ -141,7 +141,7 @@ void EC256_SIGN(char *prv,char *ran,char *m,char *sig)
 {
     char rb[BYTES];
     point R;
-    spint e[LIMBS],r[LIMBS],s[LIMBS],k[LIMBS];
+    gel e,r,s,k;
 
 #ifdef PREHASHED
     modimp(m,e);
@@ -182,7 +182,7 @@ int EC256_VERIFY(char *pub,char *m,char *sig)
     point G,Q;
     int i,res;
     char rb[BYTES],u[BYTES],v[BYTES];
-    spint e[LIMBS],r[LIMBS],s[LIMBS];
+    gel e,r,s;
 #ifdef PREHASHED
     modimp(m,e);
 #else

@@ -4,19 +4,19 @@ print(hex(q))
 c1=(2**472)%q
 c2=2**440
 
-R=2**448
+R=2**448  # Montgomery reduction R value
 
-c1 =(c1*R)%q
+c1 =(c1*R)%q # convert to nresidue form
 c2= (c2*R)%q
 
 print(hex(c1))
 print(hex(c2))
 
-limbs=8
-radix=56
-
-limbs=16
+limbs=16    # 32 bit target
 radix=28
+
+limbs=8     # 64 bit target
+radix=56
 
 base=2**radix
 
