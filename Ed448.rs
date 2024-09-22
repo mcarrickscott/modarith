@@ -36,6 +36,7 @@ use hash::SHA3;
 // number of limbs and bytes in representation
 const BYTES:usize = NBYTES;
 const LIMBS:usize= NLIMBS;
+type GEL = [SPINT; LIMBS];
 
 // Some utility functions for I/O and debugging
 
@@ -83,9 +84,9 @@ fn printhex(len:usize,array: &[u8]) {
 // precalculate c1=nres(2^472 mod q) and c2=nres(2^440 mod q) in this case using utility ed448_order.py 
 fn reduce(h:&[u8],r:&mut [SPINT]) {
     let mut buff:[u8;BYTES]=[0;BYTES];    
-    let mut x:[SPINT;LIMBS]=[0;LIMBS];
-    let mut y:[SPINT;LIMBS]=[0;LIMBS];
-    let mut z:[SPINT;LIMBS]=[0;LIMBS];
+    let mut x:GEL=[0;LIMBS];
+    let mut y:GEL=[0;LIMBS];
+    let mut z:GEL=[0;LIMBS];
 
     for i in 0..55 {
         buff[i]=h[i];
@@ -169,9 +170,9 @@ const dom4:[u8;10]=[b'S',b'i',b'g',b'E',b'd',b'4',b'4',b'8',0,0];
 pub fn ED448_SIGN(prv:&[u8],public:&[u8],m:&[u8],sig:&mut [u8]) {
     let mut h:[u8;2*BYTES+2]=[0;2*BYTES+2];  
     let mut sh:[u8;BYTES]=[0;BYTES];
-    let mut s:[SPINT;LIMBS]=[0;LIMBS];
-    let mut r:[SPINT;LIMBS]=[0;LIMBS];
-    let mut d:[SPINT;LIMBS]=[0;LIMBS];
+    let mut s:GEL=[0;LIMBS];
+    let mut r:GEL=[0;LIMBS];
+    let mut d:GEL=[0;LIMBS];
 
     let mut sha3=SHA3::new(SHAKE256);
 
@@ -253,7 +254,7 @@ pub fn ED448_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut R=ECP::new();
     let mut Q=ECP::new();
    
-    let mut u:[SPINT;LIMBS]=[0;LIMBS];
+    let mut u:GEL=[0;LIMBS];
     let mut h:[u8;2*BYTES+2]=[0;2*BYTES+2];
 
     ecngen(&mut G);
