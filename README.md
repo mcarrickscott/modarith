@@ -170,6 +170,12 @@ Drop *group.rs* into *Ed448.rs* (EdDSA using ED448) where indicated. Copy *Ed448
 	cd ecc
 	cargo run --release --features ED448 --bin Ed448
 
+# A lazy reduction optimization
+
+For the *Ed448.c* example, modular additions and subtractions can be speeded up by first editing *monty.py* amd *monty_rust.py* and setting *generic=False*.
+
+This activates a curve-specific optimization described in https://eprint.iacr.org/2017/437
+
 # Create your own ECC scheme
 
 Here we describe the steps involved to create your own ECC based signature scheme in C. The process for Rust is very similar.

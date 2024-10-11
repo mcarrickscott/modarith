@@ -1777,6 +1777,9 @@ if prime=="X25519" :
 
 if prime=="ED448" :
     p=2**448-2**224-1
+    if not generic :
+    	algorithm=True
+    	mp=4			# Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="ed448" :
     p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
