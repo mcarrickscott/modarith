@@ -198,10 +198,8 @@ pub fn ED448_SIGN(prv:&[u8],public:&[u8],m:&[u8],sig:&mut [u8]) {
         sha3.process(h[i]);
     }
 
-    let mut i=0;
-    while m[i]!=0 {
+    for i in 0..m.len() {
         sha3.process(m[i]);
-        i+=1;
     }
     sha3.shake(&mut h,2*BYTES+2); 
 
@@ -228,10 +226,8 @@ pub fn ED448_SIGN(prv:&[u8],public:&[u8],m:&[u8],sig:&mut [u8]) {
     for i in 0..BYTES+1 {
         sha3.process(public[i]);  // Q
     }
-    i=0;
-    while m[i]!=0 {
+    for i in 0..m.len() {
         sha3.process(m[i]);
-        i+=1;
     }
     sha3.shake(&mut h,2*BYTES+2);
 
@@ -291,10 +287,8 @@ pub fn ED448_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     for i in 0..BYTES+1 {
         sha3.process(public[i]);  // Q
     }
-    let mut i=0;
-    while m[i]!=0 {
+    for i in 0..m.len() {
         sha3.process(m[i]);
-        i+=1;
     }
     sha3.shake(&mut h,2*BYTES+2);
 
@@ -329,11 +323,10 @@ fn main() {
     print!("Public key= "); printhex(BYTES+1,&public);
 
     m[0]=0x03; // message to be signed
-    m[1]=0;    // null terminated string
-    ED448_SIGN(&prv,&mut public,&m,&mut sig);
+    ED448_SIGN(&prv,&mut public,&m[0..1],&mut sig);
     print!("signature=  "); printhex(2*BYTES+2,&sig); 
 
-    let res=ED448_VERIFY(&public,&m,&sig);
+    let res=ED448_VERIFY(&public,&m[0..1],&sig);
     if res {
         println!("Signature is valid");
     } else {

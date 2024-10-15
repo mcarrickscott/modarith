@@ -173,7 +173,7 @@ void EC256_KEY_GEN(char *prv,char *pub)
 
 // input private key, per-message random number, message to be signed. Output signature.
 // ran must be Nbytes+8 in length, in this case 40 bytes
-void EC256_SIGN(char *prv,char *ran,char *m,char *sig)
+void EC256_SIGN(char *prv,char *ran,int mlen,char *m,char *sig)
 {
     char h[BYTES];
     point R;
@@ -186,9 +186,8 @@ void EC256_SIGN(char *prv,char *ran,char *m,char *sig)
     char h[BYTES];
     hash256 sh256;
     HASH256_init(&sh256);
-    i=0;
-    while (m[i]!=0)
-        HASH256_process(&sh256,m[i++]);
+    for (i=0;i<mlen;i++)
+        HASH256_process(&sh256,m[i]);
     HASH256_hash(&sh256,h); 
 
     modimp(h,e);
@@ -202,9 +201,6 @@ void EC256_SIGN(char *prv,char *ran,char *m,char *sig)
     ecnmul(h,&R);
     modinv(k,NULL,k);
 
-    //ecnmul(ran,&R);
-    //modimp(ran,k);
-    //modinv(k,NULL,k);
     ecnget(&R,h,NULL);
     modimp(h,r);
 
@@ -218,7 +214,7 @@ void EC256_SIGN(char *prv,char *ran,char *m,char *sig)
 }
 
 // input public key, message and signature
-int EC256_VERIFY(char *pub,char *m,char *sig) 
+int EC256_VERIFY(char *pub,int mlen,char *m,char *sig) 
 {
     point G,Q;
     int i,res;
@@ -230,9 +226,8 @@ int EC256_VERIFY(char *pub,char *m,char *sig)
     char h[BYTES];
     hash256 sh256;
     HASH256_init(&sh256);
-    i=0;
-    while (m[i]!=0)
-        HASH256_process(&sh256,m[i++]);
+    for (i=0;i<mlen;i++)
+        HASH256_process(&sh256,m[i]);
     HASH256_hash(&sh256,h); 
 
     modimp(h,e);
@@ -290,11 +285,11 @@ int main()
     toHex(2*BYTES+1,pub,buff);
 #endif
     printf("public key= "); puts(buff);
-    EC256_SIGN(prv,k,m,sig);
+    EC256_SIGN(prv,k,32,m,sig);
     toHex(2*BYTES,sig,buff);
     printf("signature=  "); puts(buff);
 
-    res=EC256_VERIFY(pub,m,sig);
+    res=EC256_VERIFY(pub,32,m,sig);
     if (res)
         printf("Signature is valid\n");
     else

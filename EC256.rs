@@ -158,10 +158,8 @@ pub fn EC256_SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
         modimp(m,&mut e);
     } else {
         let mut sh256 = SHA256::new();
-        let mut i=0;
-        while m[i]!=0 {
+        for i in 0..m.len() {
             sh256.process(m[i]);
-            i+=1;
         }
         let h=sh256.hash();
         modimp(&h,&mut e);
@@ -210,10 +208,8 @@ pub fn EC256_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
         modimp(m,&mut e);
     } else {
         let mut sh256 = SHA256::new();
-        let mut i=0;
-        while m[i]!=0 {
+        for i in 0..m.len() {
             sh256.process(m[i]);
-            i+=1;
         }
         let h=sh256.hash();
         modimp(&h,&mut e);
@@ -289,10 +285,10 @@ fn main() {
     } else {
         printhex(2*BYTES+1,&public);
     }
-    EC256_SIGN(&prv,&k,&m,&mut sig);
+    EC256_SIGN(&prv,&k,&m[0..32],&mut sig);
     print!("signature= "); printhex(2*BYTES,&sig);
 
-    let res=EC256_VERIFY(&public,&m,&sig);
+    let res=EC256_VERIFY(&public,&m[0..32],&sig);
     if res {
         println!("Signature is valid");
     } else {

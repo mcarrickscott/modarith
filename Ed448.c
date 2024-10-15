@@ -198,7 +198,7 @@ void ED448_KEY_GEN(char *prv,char *pub)
 const char dom4[10]={'S','i','g','E','d','4','4','8',0,0};
 
 // input private key, public key, message to be signed. Output signature
-void ED448_SIGN(char *prv,char *pub,char *m,char *sig)
+void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
 {
     int i,sign;
     char h[2*BYTES+2];
@@ -220,9 +220,8 @@ void ED448_SIGN(char *prv,char *pub,char *m,char *sig)
         SHA3_process(&SHA3,dom4[i]);
     for (i=BYTES+1;i<2*BYTES+2;i++ )
         SHA3_process(&SHA3,h[i]);
-    i=0;
-    while (m[i]!=0)
-        SHA3_process(&SHA3,m[i++]);
+    for (i=0;i<mlen;i++)
+        SHA3_process(&SHA3,m[i]);
     SHA3_shake(&SHA3,h,2*BYTES+2); 
 
     reduce(h,r);
@@ -240,9 +239,8 @@ void ED448_SIGN(char *prv,char *pub,char *m,char *sig)
         SHA3_process(&SHA3,sig[i]);  // R
     for (int i=0;i<BYTES+1;i++)
         SHA3_process(&SHA3,pub[i]);  // Q
-    i=0;
-    while (m[i]!=0)
-        SHA3_process(&SHA3,m[i++]);  // M
+    for (i=0;i<mlen;i++)
+        SHA3_process(&SHA3,m[i]);   // M
     SHA3_shake(&SHA3,h,2*BYTES+2); 
 
     reduce(h,d);
@@ -254,7 +252,7 @@ void ED448_SIGN(char *prv,char *pub,char *m,char *sig)
     sig[2*BYTES+1]=0;           // second part of signature
 }
 
-int ED448_VERIFY(char *pub,char *m,char *sig) 
+int ED448_VERIFY(char *pub,int mlen,char *m,char *sig) 
 {
     int i;
     char buff[BYTES];
@@ -291,9 +289,8 @@ int ED448_VERIFY(char *pub,char *m,char *sig)
         SHA3_process(&SHA3,sig[i]);  // R
     for (int i=0;i<BYTES+1;i++)
         SHA3_process(&SHA3,pub[i]);  // Q
-    i=0;
-    while (m[i]!=0)
-        SHA3_process(&SHA3,m[i++]);  // M
+    for (i=0;i<mlen;i++)
+        SHA3_process(&SHA3,m[i]);   // M
     SHA3_shake(&SHA3,h,2*BYTES+2); 
 
     reduce(h,u); modneg(u,u); modexp(u,h);
@@ -324,12 +321,11 @@ int main()
     printf("public key=  "); puts(buff);
 
     m[0]=0x03; // message to be signed
-    m[1]=0;    // null terminated string
-    ED448_SIGN(prv,pub,m,sig);
+    ED448_SIGN(prv,pub,1,m,sig);
     toHex(2*BYTES+2,sig,buff);
     printf("signature=  "); puts(buff); 
 
-    res=ED448_VERIFY(pub,m,sig);
+    res=ED448_VERIFY(pub,1,m,sig);
     if (res)
         printf("Signature is valid\n");
     else
