@@ -116,6 +116,41 @@ void outputxy(point *P)
 }
 */
 
+// reduce 40 byte array h to integer r modulo group order q, in constant time
+// Consider h as 2^248.x + y, where x and y < q (x is top 9 bytes, y is bottom 31 bytes)
+// Important that x and y < q
+// precalculate c=nres(2^248 mod q) - see ec256_order.py
+#if Wordlength==64
+const spint constant_c[5]={0x57b7a0c28d8f5,0x31e8132cb7905,0x92b6bec16b3c6,0xd9571e2845b23,0xfe66e12c96f3};
+#endif
+
+#if Wordlength==32
+const spint constant_c[9]={0xc28d8f5,0x2abdbd0,0x4cb2de4,0x78c63d0,0x16bec16b,0x2d91c95,0x55c78a1,0x592de7b,0xfe66e1};
+#endif
+
+static void reduce(char *h,spint *r)
+{
+    int i;
+    char buff[BYTES];
+    gel x,y,z;
+
+    for (i=0;i<31;i++)
+        buff[i]=h[i];  // little endian
+    buff[31]=0;
+    reverse(buff);
+    modimp(buff,y);
+
+    for (i=0;i<9;i++)
+        buff[i]=h[31+i];
+    for (i=9;i<32;i++)
+        buff[i]=0;
+    reverse(buff);
+    modimp(buff,x);
+
+    modmul(x,constant_c,x);  // 2^248.x 
+    modadd(x,y,r);
+}
+
 //#define COMPRESS 
 #define PREHASHED   // define for test vectors
 
@@ -137,9 +172,10 @@ void EC256_KEY_GEN(char *prv,char *pub)
 }
 
 // input private key, per-message random number, message to be signed. Output signature.
+// ran must be Nbytes+8 in length, in this case 40 bytes
 void EC256_SIGN(char *prv,char *ran,char *m,char *sig)
 {
-    char rb[BYTES];
+    char h[BYTES];
     point R;
     gel e,r,s,k;
 
@@ -159,13 +195,18 @@ void EC256_SIGN(char *prv,char *ran,char *m,char *sig)
 #endif
 
     ecngen(&R);
-
     modimp(prv,s);
-    ecnmul(ran,&R);
-    modimp(ran,k);
+
+    reduce(ran,k);
+    modexp(k,h);
+    ecnmul(h,&R);
     modinv(k,NULL,k);
-    ecnget(&R,rb,NULL);
-    modimp(rb,r);
+
+    //ecnmul(ran,&R);
+    //modimp(ran,k);
+    //modinv(k,NULL,k);
+    ecnget(&R,h,NULL);
+    modimp(h,r);
 
     modmul(s,r,s);
     modadd(s,e,s);
@@ -227,20 +268,20 @@ int EC256_VERIFY(char *pub,char *m,char *sig)
     return res;
 }
 
-// test vector for FIPS 186-3 ECDSA Signature Generation
+// test for FIPS 186-3 ECDSA Signature Generation
 
 int main()
 {
     const char *sk= (const char *)"519b423d715f8b581f4fa8ee59f4771a5b44c8130b4e3eacca54a56dda72b464";
-    const char *ran=(const char *)"94a1bbb14b906a61a280f245f9e93c7f3b4a6247824f5d33b9670787642a68de";
+    const char *ran=(const char *)"94a1bbb14b906a61a280f245f9e93c7f3b4a6247824f5d33b9670787642a68deb9670787642a68de";
     const char *msg=(const char *)"44acf6b7e36c1342c2c5897204fe09504e1e2efb1a900377dbc4e7a6a133ec56";
     char prv[BYTES],pub[2*BYTES+1];
-    char buff[256],m[BYTES],k[BYTES],sig[2*BYTES];
+    char buff[256],m[BYTES],k[BYTES+8],sig[2*BYTES];
     int res;
     printf("Run test vector\n");
     printf("private key= "); puts(sk); 
     fromHex(BYTES,sk,prv);
-    fromHex(BYTES,ran,k);
+    fromHex(BYTES+8,ran,k);
     fromHex(BYTES,msg,m);
     EC256_KEY_GEN(prv,pub);
 #ifdef COMPRESS

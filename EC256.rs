@@ -80,6 +80,44 @@ fn printhex(len:usize,array: &[u8]) {
 const COMPRESS:bool = false;
 const PREHASHED:bool = true;  // true for test vector
 
+
+// reduce 40 byte array h to integer r modulo group order q, in constant time
+// Consider h as 2^248.x + y, where x and y < q (x is top 9 bytes, y is bottom 31 bytes)
+// Important that x and y < q
+// precalculate c=nres(2^248 mod q) - see ec256_order.py
+fn reduce(h:&[u8],r:&mut [SPINT]) {
+    let mut buff:[u8;BYTES]=[0;BYTES];    
+    let mut x:GEL=[0;LIMBS];
+    let mut y:GEL=[0;LIMBS];
+
+    for i in 0..31 {
+        buff[i]=h[i];
+    }
+    buff[31]=0;
+    buff.reverse();
+    modimp(&buff,&mut y);
+
+    for i in 0..9 {
+        buff[i]=h[31+i];
+    }
+    for i in 9..32 {
+        buff[i]=0;
+    }
+    buff.reverse();
+    modimp(&buff,&mut x);
+
+// 2^472.x + 2^440.y + z
+    if LIMBS==5 {
+        let constant_c: [SPINT; 5] = [0x57b7a0c28d8f5,0x31e8132cb7905,0x92b6bec16b3c6,0xd9571e2845b23,0xfe66e12c96f3];
+        modmul(&constant_c,&mut x); 
+    } else {
+        let constant_c: [SPINT; 9] = [0xc28d8f5,0x2abdbd0,0x4cb2de4,0x78c63d0,0x16bec16b,0x2d91c95,0x55c78a1,0x592de7b,0xfe66e1];
+        modmul(&constant_c,&mut x);
+    }
+    modcpy(&x,r); modadd(&y,r);
+}
+
+
 // Input private key - 32 random bytes
 // Output public key - 65 bytes (0x04<x>|<y>), or 33 if compressed (0x02<x>.. or 0x03<x>)
 pub fn EC256_KEY_GEN(prv: &[u8],public: &mut [u8]) {
@@ -130,11 +168,13 @@ pub fn EC256_SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
     }
 
     ecngen(&mut R);
-
     modimp(prv,&mut s);
-    ecnmul(ran,&mut R);
-    modimp(ran,&mut k);
+
+    reduce(ran,&mut k);
+    modexp(&k,&mut rb);
+    ecnmul(&rb,&mut R);
     modinv(None,&mut k);
+
     ecnget(&mut R,&mut rb,None);
     modimp(&rb,&mut r);
 
@@ -230,9 +270,9 @@ pub fn EC256_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
 // test vector for FIPS 186-3 ECDSA Signature Generation
 fn main() {
     const sk:&str="519b423d715f8b581f4fa8ee59f4771a5b44c8130b4e3eacca54a56dda72b464";
-    const ran:&str="94a1bbb14b906a61a280f245f9e93c7f3b4a6247824f5d33b9670787642a68de";
+    const ran:&str="94a1bbb14b906a61a280f245f9e93c7f3b4a6247824f5d33b9670787642a68deb9670787642a68de";
     const msg:&str="44acf6b7e36c1342c2c5897204fe09504e1e2efb1a900377dbc4e7a6a133ec56";
-    let mut k:[u8;BYTES]=[0;BYTES];
+    let mut k:[u8;BYTES+8]=[0;BYTES+8];
     let mut m:[u8;BYTES]=[0;BYTES];
     let mut prv:[u8;BYTES]=[0;BYTES];
     let mut public:[u8;2*BYTES+1]=[0;2*BYTES+1];
@@ -240,7 +280,7 @@ fn main() {
     println!("Run test vector");
     from_hex(BYTES,&sk,&mut prv);
     print!("private key= "); printhex(BYTES,&prv);
-    from_hex(BYTES,&ran,&mut k);
+    from_hex(BYTES+8,&ran,&mut k);
     from_hex(BYTES,&msg,&mut m);
     EC256_KEY_GEN(&prv,&mut public);  
     print!("Public key= ");
