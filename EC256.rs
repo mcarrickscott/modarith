@@ -120,7 +120,7 @@ fn reduce(h:&[u8],r:&mut [SPINT]) {
 
 // Input private key - 32 random bytes
 // Output public key - 65 bytes (0x04<x>|<y>), or 33 if compressed (0x02<x>.. or 0x03<x>)
-pub fn EC256_KEY_GEN(prv: &[u8],public: &mut [u8]) {
+pub fn NIST256_KEY_GEN(compress: bool,prv: &[u8],public: &mut [u8]) {
     let mut P=ECP::new();
     let mut x:[u8;BYTES]=[0;BYTES];
     let mut y:[u8;BYTES]=[0;BYTES];
@@ -129,7 +129,7 @@ pub fn EC256_KEY_GEN(prv: &[u8],public: &mut [u8]) {
 
     ecnmul(prv,&mut P); 
 
-    if COMPRESS {
+    if compress {
         fb=0x02+ecnget(&mut P,&mut x,None) as u8; // 0x02 or 0x03
         for i in 0..BYTES {
             public[1+i]=x[i];
@@ -145,7 +145,7 @@ pub fn EC256_KEY_GEN(prv: &[u8],public: &mut [u8]) {
     public[0]=fb;
 }
 
-pub fn EC256_SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
+pub fn NIST256_SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
     let mut rb:[u8;BYTES]=[0;BYTES];
     let mut sb:[u8;BYTES]=[0;BYTES];
     let mut R=ECP::new();
@@ -191,7 +191,7 @@ pub fn EC256_SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
 }
 
 // input public key, message and signature
-pub fn EC256_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
+pub fn NIST256_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut G=ECP::new();
     let mut Q=ECP::new();
 
@@ -273,22 +273,23 @@ fn main() {
     let mut prv:[u8;BYTES]=[0;BYTES];
     let mut public:[u8;2*BYTES+1]=[0;2*BYTES+1];
     let mut sig:[u8;2*BYTES]=[0;2*BYTES];
+    let compress:bool=true;
     println!("Run test vector");
     from_hex(BYTES,&sk,&mut prv);
     print!("private key= "); printhex(BYTES,&prv);
     from_hex(BYTES+8,&ran,&mut k);
     from_hex(BYTES,&msg,&mut m);
-    EC256_KEY_GEN(&prv,&mut public);  
+    NIST256_KEY_GEN(compress,&prv,&mut public);  
     print!("Public key= ");
-    if COMPRESS {
+    if compress {
         printhex(BYTES+1,&public);
     } else {
         printhex(2*BYTES+1,&public);
     }
-    EC256_SIGN(&prv,&k,&m[0..32],&mut sig);
+    NIST256_SIGN(&prv,&k,&m[0..32],&mut sig);
     print!("signature= "); printhex(2*BYTES,&sig);
 
-    let res=EC256_VERIFY(&public,&m[0..32],&sig);
+    let res=NIST256_VERIFY(&public,&m[0..32],&sig);
     if res {
         println!("Signature is valid");
     } else {

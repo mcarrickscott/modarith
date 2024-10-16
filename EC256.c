@@ -151,29 +151,28 @@ static void reduce(char *h,spint *r)
     modadd(x,y,r);
 }
 
-//#define COMPRESS 
 #define PREHASHED   // define for test vectors
 
 // Input private key - 32 random bytes
 // Output public key - 65 bytes (0x04<x>|<y>), or 33 if compressed (0x02<x>.. or 0x03<x>)
-void EC256_KEY_GEN(char *prv,char *pub)
+void NIST256_KEY_GEN(int compress,char *prv,char *pub)
 {
     point P;
     ecngen(&P);
 
     ecnmul(prv,&P); 
 
-#ifdef COMPRESS
-    pub[0]=0x02+ecnget(&P,&pub[1],NULL); // 0x02 or 0x03
-#else
-    pub[0]=0x04; // no compression
-    ecnget(&P,&pub[1],&pub[BYTES+1]);  // get x and y
-#endif
+    if (compress) {
+        pub[0]=0x02+ecnget(&P,&pub[1],NULL); // 0x02 or 0x03
+    } else {
+        pub[0]=0x04; // no compression
+        ecnget(&P,&pub[1],&pub[BYTES+1]);  // get x and y
+    }
 }
 
 // input private key, per-message random number, message to be signed. Output signature.
 // ran must be Nbytes+8 in length, in this case 40 bytes
-void EC256_SIGN(char *prv,char *ran,int mlen,char *m,char *sig)
+void NIST256_SIGN(char *prv,char *ran,int mlen,char *m,char *sig)
 {
     char h[BYTES];
     point R;
@@ -214,7 +213,7 @@ void EC256_SIGN(char *prv,char *ran,int mlen,char *m,char *sig)
 }
 
 // input public key, message and signature
-int EC256_VERIFY(char *pub,int mlen,char *m,char *sig) 
+int NIST256_VERIFY(char *pub,int mlen,char *m,char *sig) 
 {
     point G,Q;
     int i,res;
@@ -272,24 +271,24 @@ int main()
     const char *msg=(const char *)"44acf6b7e36c1342c2c5897204fe09504e1e2efb1a900377dbc4e7a6a133ec56";
     char prv[BYTES],pub[2*BYTES+1];
     char buff[256],m[BYTES],k[BYTES+8],sig[2*BYTES];
-    int res;
+    int res,compress=1;
     printf("Run test vector\n");
     printf("private key= "); puts(sk); 
     fromHex(BYTES,sk,prv);
     fromHex(BYTES+8,ran,k);
     fromHex(BYTES,msg,m);
-    EC256_KEY_GEN(prv,pub);
-#ifdef COMPRESS
-    toHex(BYTES+1,pub,buff);
-#else
-    toHex(2*BYTES+1,pub,buff);
-#endif
+    NIST256_KEY_GEN(compress,prv,pub);
+    if (compress)
+        toHex(BYTES+1,pub,buff);
+    else
+        toHex(2*BYTES+1,pub,buff);
+
     printf("public key= "); puts(buff);
-    EC256_SIGN(prv,k,32,m,sig);
+    NIST256_SIGN(prv,k,32,m,sig);
     toHex(2*BYTES,sig,buff);
     printf("signature=  "); puts(buff);
 
-    res=EC256_VERIFY(pub,32,m,sig);
+    res=NIST256_VERIFY(pub,32,m,sig);
     if (res)
         printf("Signature is valid\n");
     else
