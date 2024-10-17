@@ -204,14 +204,14 @@ strng+="#define CONSTANT_A {}\n".format(A)
 
 if not small_b or not mulbyint:
     B3=B3%p
-    strng+="const spint constant_b[{}]={{".format(limbs)
+    strng+="static const spint constant_b[{}]={{".format(limbs)
     for i in range(0,limbs-1) :
         strng+="{},".format(hex(B%base))
         B//=base
     strng+="{}".format(hex(B))
     strng+=("};\n")
     if curve_type==WEIERSTRASS :
-        strng+="const spint constant_b3[{}]={{".format(limbs)
+        strng+="static const spint constant_b3[{}]={{".format(limbs)
         for i in range(0,limbs-1) :
             strng+="{},".format(hex(B3%base))
             B3//=base
@@ -221,7 +221,7 @@ else :
     strng+="#define CONSTANT_B {}\n".format(B)
 
 if not small_x or not mulbyint:
-    strng+="const spint constant_x[{}]={{".format(limbs)
+    strng+="static const spint constant_x[{}]={{".format(limbs)
     for i in range(0,limbs-1) :
         strng+="{},".format(hex(X%base))
         X//=base
@@ -231,7 +231,7 @@ else :
     strng+="#define CONSTANT_X {}\n".format(X)
 
 if not small_x or not mulbyint :
-    strng+="const spint constant_y[{}]={{".format(limbs)
+    strng+="static const spint constant_y[{}]={{".format(limbs)
     for i in range(0,limbs-1) :
         strng+="{},".format(hex(Y%base))
         Y//=base
