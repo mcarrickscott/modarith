@@ -182,7 +182,6 @@ void NIST256_SIGN(char *prv,char *ran,int mlen,char *m,char *sig)
     modimp(m,e);
 #else
     int i;
-    char h[BYTES];
     hash256 sh256;
     HASH256_init(&sh256);
     for (i=0;i<mlen;i++)
