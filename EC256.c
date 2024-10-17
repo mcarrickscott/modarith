@@ -134,15 +134,15 @@ static void reduce(char *h,spint *r)
     char buff[BYTES];
     gel x,y,z;
 
-    for (i=0;i<31;i++)
+    for (i=0;i<BYTES-1;i++)
         buff[i]=h[i];  // little endian
-    buff[31]=0;
+    buff[BYTES-1]=0;
     reverse(buff);
     modimp(buff,y);
 
     for (i=0;i<9;i++)
-        buff[i]=h[31+i];
-    for (i=9;i<32;i++)
+        buff[i]=h[BYTES-1+i];
+    for (i=9;i<BYTES;i++)
         buff[i]=0;
     reverse(buff);
     modimp(buff,x);
