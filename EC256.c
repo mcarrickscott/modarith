@@ -121,11 +121,11 @@ void outputxy(point *P)
 // Important that x and y < q
 // precalculate c=nres(2^248 mod q) - see ec256_order.py
 #if Wordlength==64
-const spint constant_c[5]={0x57b7a0c28d8f5,0x31e8132cb7905,0x92b6bec16b3c6,0xd9571e2845b23,0xfe66e12c96f3};
+static const spint constant_c[5]={0x4d633f8be5f91,0xf1b6d081aebd7,0x2b6bec559b3b2,0x9562e2845b239,0xe66e12d86f3d};
 #endif
 
 #if Wordlength==32
-const spint constant_c[9]={0xc28d8f5,0x2abdbd0,0x4cb2de4,0x78c63d0,0x16bec16b,0x2d91c95,0x55c78a1,0x592de7b,0xfe66e1};
+static const spint constant_c[9]={0x151999d1,0x197f0d27,0x2593621,0xd66b8d,0x17d8af68,0x1b2392b6,0xb131422,0x163bcf65,0xccdc25};
 #endif
 
 static void reduce(char *h,spint *r)
