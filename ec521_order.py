@@ -1,17 +1,18 @@
-q=0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+q = 0x1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409
+
 print(hex(q))
 
-c=(2**248)%q
+c=(2**512)%q
 
 WL=32
 
-limbs=9
-radix=29
-R=2**261
+limbs=19
+radix=28
+R=2**532
 if WL==64 :
-	limbs=5
-	radix=52
-	R=2**260
+	limbs=9
+	radix=59
+	R=2**531
 
 
 c =(c*R)%q # convert to nresidue form

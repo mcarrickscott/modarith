@@ -3,19 +3,18 @@ print(hex(q))
 
 c=(2**248)%q
 
-WL=32
-
-limbs=9
-radix=29
-R=2**261
-if WL==64 :
-	limbs=5
-	radix=52
-	R=2**260
-
+R=2**256  # Montgomery reduction R value
 
 c =(c*R)%q # convert to nresidue form
+
 print(hex(c))
+
+limbs=9    # 32 bit target
+radix=29
+
+#limbs=5     # 64 bit target
+#radix=52
+
 base=2**radix
 
 print("const spint constant_c[{}]={{".format(limbs),end="")
