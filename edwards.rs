@@ -154,6 +154,10 @@ pub fn ecnisinf(P: &ECP) -> bool {
 // set to affine
 pub fn ecnaffine(P: &mut ECP) {
     let mut i:[SPINT;NLIMBS]=[0;NLIMBS]; 
+    if modis0(&P.z) {
+        ecninf(P);
+        return;
+    }
     modcpy(&P.z,&mut i); modinv(None,&mut i);
     modone(&mut P.z);
     modmul(&i,&mut P.x);

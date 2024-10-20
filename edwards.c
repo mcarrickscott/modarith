@@ -173,6 +173,10 @@ int ecnisinf(point *P)
 void ecnaffine(point *P)
 {
     spint I[Nlimbs];
+    if (modis0(P->z)) {
+        ecninf(P);
+        return;
+    }
     modinv(P->z,NULL,I);
     modone(P->z);
     modmul(P->x,I,P->x);
