@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Program to implement RFC7748 - https://datatracker.ietf.org/doc/html/rfc7748
 // Montgomery curve key exchange code, as used by TLS
 // Use associated python scripts to generate code for X25519 or X448, but easily modified for other Montgomery curves

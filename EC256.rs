@@ -78,42 +78,37 @@ fn printhex(len:usize,array: &[u8]) {
 }
 
 const COMPRESS:bool = false;
-const PREHASHED:bool = true;  // true for test vector
+const PREHASHED:bool = true;  // true only for test vector
 
 
 // reduce 40 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^248.x + y, where x and y < q (x is top 9 bytes, y is bottom 31 bytes)
 // Important that x and y < q
-// precalculate c=nres(2^248 mod q) - see ec256_order.py
 fn reduce(h:&[u8],r:&mut [SPINT]) {
     let mut buff:[u8;BYTES]=[0;BYTES];    
     let mut x:GEL=[0;LIMBS];
     let mut y:GEL=[0;LIMBS];
+    let mut c:GEL=[0;LIMBS];
 
-    for i in 0..31 {
+    mod2r(8*(BYTES-1),&mut c);
+
+    for i in 0..BYTES-1 {
         buff[i]=h[i];
     }
-    buff[31]=0;
+    buff[BYTES-1]=0;
     buff.reverse();
     modimp(&buff,&mut y);
 
     for i in 0..9 {
-        buff[i]=h[31+i];
+        buff[i]=h[BYTES-1+i];
     }
-    for i in 9..32 {
+    for i in 9..BYTES {
         buff[i]=0;
     }
     buff.reverse();
     modimp(&buff,&mut x);
 
-// 2^472.x + 2^440.y + z
-    if LIMBS==5 {
-        let constant_c: [SPINT; 5] = [0x57b7a0c28d8f5,0x31e8132cb7905,0x92b6bec16b3c6,0xd9571e2845b23,0xfe66e12c96f3];
-        modmul(&constant_c,&mut x); 
-    } else {
-        let constant_c: [SPINT; 9] = [0xc28d8f5,0x2abdbd0,0x4cb2de4,0x78c63d0,0x16bec16b,0x2d91c95,0x55c78a1,0x592de7b,0xfe66e1];
-        modmul(&constant_c,&mut x);
-    }
+    modmul(&c,&mut x); 
     modcpy(&x,r); modadd(&y,r);
 }
 

@@ -118,48 +118,39 @@ void outputxy(point *P)
 */
 
 // reduce 114 byte array h to integer r modulo group order q, in constant time
-// Consider h as 2^472.x + 2^440.y + z, where x,y and z < q (z is first 55 bytes, y is next 4 bytes, x is last 55 bytes)
+// Consider h as 2^440.(2^440x + y)  + z, where x,y and z < q (z is bottom 55 bytes, y is next 55 bytes, x is top 4 bytes)
 // Important that x,y and z < q, 55 bytes = 440 bits, q is 446 bits
-// precalculate c1=nres(2^472 mod q) and c2=nres(2^440 mod q) in this case using utility ed448_order.py 
-#if Wordlength==64
-const spint constant_c1[8]={0xe3033c23525654,0x7624da8d5b86ce,0x3a503352aa569,0x3337c35f209580,0xae17cf72c9860f,0x9cc14ba3c47c44,0xbcb7e4d070af1a,0x39f823b7292052};
-const spint constant_c2[8]={0xecfdd2acf1d7f0,0x1d5087ce8f0058,0xbe9c8459d676ba,0xff8fc444c3d266,0xa3c47c44ae17ce,0xd070af1a9cc14b,0xb7292052bcb7e4,0x383402a939f823};
-#endif
-
-#if Wordlength==32
-const spint constant_c1[16]={0x3525654,0xe3033c2,0xd5b86ce,0x7624da8,0x52aa569,0x3a5033,0xf209580,0x3337c35,0x2c9860f,0xae17cf7,0x3c47c44,0x9cc14ba,0x70af1a,0xbcb7e4d,0x7292052,0x39f823b};
-const spint constant_c2[16]={0xcf1d7f0,0xecfdd2a,0xe8f0058,0x1d5087c,0x9d676ba,0xbe9c845,0x4c3d266,0xff8fc44,0x4ae17ce,0xa3c47c4,0xa9cc14b,0xd070af1,0x2bcb7e4,0xb729205,0x939f823,0x383402a};
-#endif
-
 static void reduce(char *h,spint *r)
 {
     int i;
     char buff[BYTES];
-    gel x,y,z;
+    gel x,y,z,c;
 
-    for (i=0;i<55;i++)
+    mod2r(440,c);
+   
+    for (i=0;i<55;i++)  // bottom 55 bytes
         buff[i]=h[i];
     buff[55]=0;
     reverse(buff);
-    modimp(buff,z);
-
-    for (i=0;i<4;i++ )
-        buff[i]=h[55+i];
+    modimp(buff,z);  
+    
+    for (i=0;i<55;i++)  // middle 55 bytes
+        buff[i]=h[i+55];
+    buff[55]=0;
+    reverse(buff);
+    modimp(buff,y);  
+    
+    for (i=0;i<4;i++)  // top 4 bytes
+       buff[i]=h[110+i];   
     for (i=4;i<56;i++)
         buff[i]=0;
     reverse(buff);
-    modimp(buff,y);
-
-    for (i=0;i<55;i++)
-        buff[i]=h[59+i];
-    buff[55]=0;
-    reverse(buff);
-    modimp(buff,x);
-
-    modmul(x,constant_c1,x);  // 2^472.x + 2^440.y + z
-    modmul(y,constant_c2,y);
-    modadd(x,y,r);
-    modadd(r,z,r);
+    modimp(buff,x);    
+    
+    modmul(x,c,x); 
+    modadd(x,y,x); 
+    modmul(x,c,x); 
+    modadd(x,z,r);  
 }
 
 // general purpose SHAKE256 hash function

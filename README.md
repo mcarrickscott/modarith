@@ -71,6 +71,7 @@ Assume the modulus is $p$. The provided functions are
 *modcsw()* -- Conditional constant time swap  \
 *modshl()* -- shift left by bits  \
 *modshr()* -- shift right by bits  \
+*mod2r()*  -- set to 2^r \
 *modexp()* -- export from internal format to byte array \
 *modimp()* -- import to internal format from byte array  \
 *modsign()* -- Extract sign (parity bit) \

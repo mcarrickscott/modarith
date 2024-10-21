@@ -119,20 +119,13 @@ void outputxy(point *P)
 // reduce 40 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^248.x + y, where x and y < q (x is top 9 bytes, y is bottom 31 bytes)
 // Important that x and y < q
-// precalculate c=nres(2^248 mod q) - see ec256_order.py
-#if Wordlength==64
-static const spint constant_c[5]={0x4d633f8be5f91,0xf1b6d081aebd7,0x2b6bec559b3b2,0x9562e2845b239,0xe66e12d86f3d};
-#endif
-
-#if Wordlength==32
-static const spint constant_c[9]={0x151999d1,0x197f0d27,0x2593621,0xd66b8d,0x17d8af68,0x1b2392b6,0xb131422,0x163bcf65,0xccdc25};
-#endif
-
 static void reduce(char *h,spint *r)
 {
     int i;
     char buff[BYTES];
-    gel x,y,z;
+    gel x,y,c;
+    
+    mod2r(8*(BYTES-1),c); // 2^248
 
     for (i=0;i<BYTES-1;i++)
         buff[i]=h[i];  // little endian
@@ -147,11 +140,11 @@ static void reduce(char *h,spint *r)
     reverse(buff);
     modimp(buff,x);
 
-    modmul(x,constant_c,x);  // 2^248.x 
-    modadd(x,y,r);
+    modmul(x,c,x);  
+    modadd(x,y,r); // 2^248.x + y
 }
 
-#define PREHASHED   // define for test vectors
+#define PREHASHED   // define only for test vectors
 
 // Input private key - 32 random bytes
 // Output public key - 65 bytes (0x04<x>|<y>), or 33 if compressed (0x02<x>.. or 0x03<x>)

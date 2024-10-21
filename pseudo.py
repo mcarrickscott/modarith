@@ -952,6 +952,18 @@ def modshr(n) :
     str+="\treturn r;\n}\n"
     return str
 
+def mod2r() :
+    str="//set a= 2^r\n"
+    if makestatic :
+        str+="static "
+    str+="void mod2r{}(unsigned int r,spint *a) {{\n".format(DECOR)
+    str+="\tunsigned int n=r/{}u;\n".format(base)
+    str+="\tunsigned int m=r%{}u;\n".format(base)
+    str+="\tmodzer(a);\n"
+    str+="\tif (r>={}*8) return;\n".format(Nbytes)
+    str+="\ta[n]=1; a[n]<<=m;\n}\n"
+    return str
+
 #export to byte array
 def modexp() :
     str="//export to byte array\n"
@@ -1283,6 +1295,7 @@ def functions() :
     print(modsqrt())
     print(modshl(n))
     print(modshr(n))
+    print(mod2r())
     print(modexp())
     print(modimp())
     print(modsign())
