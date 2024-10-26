@@ -21,7 +21,8 @@ typedef spint gel[Nlimbs];  // group element definition
 // some general purpose functions
 
 // reverse bytes of buff - for endian conversion
-static void reverse(int n,char *buff) {
+static void reverse(char *buff) {
+    int n=BYTES;
     for (int i = 0; i < n/2; i++) { 
         char ch = buff[i]; 
         buff[i] = buff[n - i - 1]; 

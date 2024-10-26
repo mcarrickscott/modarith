@@ -166,7 +166,7 @@ static void H(int ilen,int olen,char *s,char *digest)
 
 // Input private key - 57 random bytes
 // Output public key - 57 bytes
-void ED448_KEY_GEN(char *prv,char *pub)
+void ED448_KEY_PAIR(char *prv,char *pub)
 {
     int sign;
     point P;
@@ -228,7 +228,7 @@ void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
         SHA3_process(&SHA3,dom4[i]);
     for (i=0;i<BYTES+1;i++ )
         SHA3_process(&SHA3,sig[i]);  // R
-    for (int i=0;i<BYTES+1;i++)
+    for (i=0;i<BYTES+1;i++)
         SHA3_process(&SHA3,pub[i]);  // Q
     for (i=0;i<mlen;i++)
         SHA3_process(&SHA3,m[i]);   // M
@@ -307,7 +307,7 @@ int main()
     printf("Run RFC8032 test vector\n");
     printf("private key= "); puts(sk); 
     fromHex(BYTES+1,sk,prv);
-    ED448_KEY_GEN(prv,pub);
+    ED448_KEY_PAIR(prv,pub);
     toHex(BYTES+1,pub,buff);
     printf("public key=  "); puts(buff);
 
