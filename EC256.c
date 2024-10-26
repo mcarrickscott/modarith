@@ -148,7 +148,7 @@ static void reduce(char *h,spint *r)
 
 // Input private key - 32 random bytes
 // Output public key - 65 bytes (0x04<x>|<y>), or 33 if compressed (0x02<x>.. or 0x03<x>)
-void NIST256_KEY_GEN(int compress,char *prv,char *pub)
+void NIST256_KEY_PAIR(int compress,char *prv,char *pub)
 {
     point P;
     ecngen(&P);
@@ -254,7 +254,7 @@ int NIST256_VERIFY(char *pub,int mlen,char *m,char *sig)
     return res;
 }
 
-// test for FIPS 186-3 ECDSA Signature Generation
+// test for FIPS 186-5 ECDSA Signature Generation
 
 int main()
 {
@@ -269,7 +269,7 @@ int main()
     fromHex(BYTES,sk,prv);
     fromHex(BYTES+8,ran,k);
     fromHex(BYTES,msg,m);
-    NIST256_KEY_GEN(compress,prv,pub);
+    NIST256_KEY_PAIR(compress,prv,pub);
     if (compress)
         toHex(BYTES+1,pub,buff);
     else
