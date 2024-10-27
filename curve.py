@@ -170,8 +170,6 @@ if radix==0 :
     print("Bad curve");
     exit(0)
 
-
-
 base=2**radix
 
 mulbyint=True
