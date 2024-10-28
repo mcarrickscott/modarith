@@ -1151,6 +1151,9 @@ if prime=="X25519" :
 
 if prime=="ED25519" :
     p=2**255-19
+    if not generic :
+        algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
+        mp=4            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm. Now no reduction required after modular additions/subtractions.
 
 if prime=="C2065" :
     p=2**206-5
