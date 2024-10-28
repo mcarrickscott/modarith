@@ -256,6 +256,9 @@ pub fn ED448_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     buff.reverse();
     let mut sign=(sig[BYTES]>>7) as usize;
     ecnset(sign,None,Some(&buff),&mut R);
+    if ecnisinf(&R) {
+        return false;
+    }
 
 // reconstruct point Q 
     for i in 0..BYTES {
@@ -264,6 +267,10 @@ pub fn ED448_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     buff.reverse();
     sign=((public[BYTES]>>7)&1) as usize;
     ecnset(sign,None,Some(&buff),&mut Q);
+    if ecnisinf(&Q) {
+        return false;
+    }
+
 
     for i in 0..BYTES {
         buff[i]=sig[i+BYTES+1];

@@ -256,6 +256,7 @@ static void setxy(int s,const spint *x,const spint *y,point *P)
         modmul(V,constant_b,V);
         modadd(O,V,V);
 #endif
+        modmul(U,O,U); modmul(V,O,V);
         if (modcmp(U,V)) {
             modcpy(x,P->x);
             modcpy(y,P->y);

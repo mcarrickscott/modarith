@@ -255,6 +255,7 @@ fn setxy(s: usize,x: Option<&[SPINT]>,y: Option<&[SPINT]>,P: &mut ECP) {
                 modmul(&constant_b,&mut v);
                 modadd(&o,&mut v);
             }
+            modmul(&o,&mut u); modmul(&o,&mut v); 
             if modcmp(&u,&v) {
                 modcpy(&rx,&mut P.x);
                 modcpy(&ry,&mut P.y);
