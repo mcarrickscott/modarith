@@ -579,6 +579,16 @@ def modmli(n,base) :
     str+="\treturn;\n}\n"
     return str
 
+def dummymodmli(n,base) :
+    str="// Modular multiplication by an integer, c=c*b mod 2p\n"
+    str+="#[allow(dead_code)]\n"
+    if inline :
+        str+="#[inline]\n"
+    if makepublic :
+        str+="pub "
+    str+="fn modmli(_b: usize,_c: &mut [SPINT]) {\n"
+    str+="\treturn;\n}\n"
+    return str
 
 # modular multiplication, modulo p. Exploits 0 digits in p.
 # Note that allowing inlining gives significant speed-up
@@ -1836,6 +1846,8 @@ with open('time.rs', 'w') as f:
         print(modfsb(n,base))
         if trin>0 :
             print(modmli(n,base))
+        else :
+            print(dummymodmli(n,base))
         print(modmul(n,base))
         print(modsqr(n,base))
         print(modcpy())
@@ -1886,6 +1898,8 @@ with open(fname, 'w') as f:
         print(modneg(n,base))
         if trin>0 :
             print(modmli(n,base))
+        else :
+            print(dummymodmli(n,base))
         print(modmul(n,base))
         print(modsqr(n,base))
         print(modcpy())

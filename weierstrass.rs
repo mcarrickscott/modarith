@@ -84,17 +84,14 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
     if CONSTANT_A==0 {
         modcpy(&t0,&mut P.x); modadd(&t0,&mut P.x);
         modadd(&P.x,&mut t0);
-#[cfg(feature="MLI")]
         if CONSTANT_B>0 {
             modmli(3*CONSTANT_B as usize,&mut t2);
             modmli(3*CONSTANT_B as usize,&mut P.y);
         }
-#[cfg(feature="MLI")]
         if CONSTANT_B<0 {
             modmli((-3*CONSTANT_B) as usize,&mut t2); modneg(&mut t2);
             modmli((-3*CONSTANT_B) as usize,&mut P.y); modneg(&mut P.y);
         }
-#[cfg(not(feature="MLI"))]
         if CONSTANT_B==0 {
             modcpy(&constant_b3,&mut b);
             modmul(&b, &mut t2);
@@ -113,19 +110,16 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
         modmul(&t4,&mut P.z);
         modadd(&t0,&mut P.z);
     } else {
-#[cfg(feature="MLI")]
         if CONSTANT_B>0 {
             modcpy(&t2,&mut P.z); modmli(CONSTANT_B as usize,&mut P.z);
             modcpy(&P.y,&mut P.x); modsub(&P.z,&mut P.x);
             modmli(CONSTANT_B as usize,&mut P.y);
         }
-#[cfg(feature="MLI")]
         if CONSTANT_B<0 {
             modcpy(&t2,&mut P.z); modmli((-CONSTANT_B) as usize,&mut P.z);
             modcpy(&P.y,&mut P.x); modadd(&P.z,&mut P.x);
             modmli((-CONSTANT_B) as usize,&mut P.y); modneg(&mut P.y);
         }
-#[cfg(not(feature="MLI"))]
         if CONSTANT_B==0 {
             modcpy(&constant_b,&mut b);
             modcpy(&b,&mut P.z); modmul(&t2,&mut P.z);
@@ -189,15 +183,12 @@ pub fn ecndbl(P: &mut ECP) {
         modcpy(&P.x,&mut t4); modmul(&P.y,&mut t4);
         modcpy(&P.y,&mut t1); modmul(&P.z,&mut t1);
         modcpy(&P.z,&mut t2); modsqr(&mut t2);
-#[cfg(feature="MLI")]
         if CONSTANT_B>0 {
             modmli(3*CONSTANT_B as usize,&mut t2);
         }
-#[cfg(feature="MLI")]
         if CONSTANT_B<0 {
             modmli((-3*CONSTANT_B) as usize,&mut t2); modneg(&mut t2);
         }
-#[cfg(not(feature="MLI"))]
         if CONSTANT_B==0 {
             modcpy(&constant_b3,&mut b);
             modmul(&b,&mut t2);
@@ -223,19 +214,16 @@ pub fn ecndbl(P: &mut ECP) {
         modcpy(&t3,&mut b); modadd(&b,&mut t3);
         modmul(&P.x,&mut P.z);
         modcpy(&P.z,&mut b); modadd(&b,&mut P.z);
-#[cfg(feature="MLI")]
         if CONSTANT_B>0 {
             modcpy(&t2,&mut P.y); modmli(CONSTANT_B as usize,&mut P.y);
             modsub(&P.z,&mut P.y);
             modmli(CONSTANT_B as usize,&mut P.z);
         }
-#[cfg(feature="MLI")]
         if CONSTANT_B<0 {
             modcpy(&t2,&mut P.y); modmli((-CONSTANT_B) as usize,&mut P.y);  modneg(&mut P.y);
             modsub(&P.z,&mut P.y);
             modmli((-CONSTANT_B) as usize,&mut P.z); modneg(&mut P.z);
         }
-#[cfg(not(feature="MLI"))]
         if CONSTANT_B==0 {
             modcpy(&constant_b,&mut b);
             modcpy(&t2,&mut P.y); modmul(&b,&mut P.y);
@@ -357,17 +345,14 @@ fn setxy(s: usize,x: &[SPINT],y: Option<&[SPINT]>,P: &mut ECP) {
         modsub(x,&mut v);
         modsub(x,&mut v); // x^3-3x
     }  
-#[cfg(feature="MLI")]
     if CONSTANT_B>0 {
         modint(CONSTANT_B as usize,&mut t);
         modadd(&t,&mut v); // V=1+dx^2
     }
-#[cfg(feature="MLI")]
     if CONSTANT_B<0 {
         modint((-CONSTANT_B) as usize,&mut t);
         modsub(&t,&mut v);
     }
-#[cfg(not(feature="MLI"))]
     if CONSTANT_B==0 {
         modadd(&constant_b,&mut v);
     }
@@ -414,13 +399,11 @@ pub fn ecnset(s: usize,x: &[u8],y: Option<&[u8]>,P: &mut ECP) {
 
 // set generator
 pub fn ecngen(P: &mut ECP) {
-#[cfg(feature="SMX")]
     if CONSTANT_X!=0 {
         let mut sx:[SPINT;NLIMBS]=[0;NLIMBS];  
         modint(CONSTANT_X,&mut sx);
         setxy(0,&sx,None,P);
     } 
-#[cfg(not(feature="SMX"))]
     if CONSTANT_X==0 {
         setxy(0,&constant_x,Some(&constant_y),P);
     }

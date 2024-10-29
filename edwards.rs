@@ -66,19 +66,16 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
     modcpy(&Q.x,&mut c); modmul(&P.x,&mut c);
     modcpy(&Q.y,&mut d); modmul(&P.y,&mut d);
     modcpy(&c,&mut e); modmul(&d,&mut e);
-#[cfg(feature="MLI")]
     if CONSTANT_B>0 {
         modmli(CONSTANT_B as usize,&mut e);
         modcpy(&b, &mut f); modsub(&e,&mut f);
         modcpy(&b, &mut g); modadd(&e,&mut g);
     }
-#[cfg(feature="MLI")]
     if CONSTANT_B<0 {
         modmli(-CONSTANT_B as usize,&mut e);
         modcpy(&b, &mut f); modadd(&e,&mut f);
         modcpy(&b, &mut g); modsub(&e,&mut g);
     }
-#[cfg(not(feature="MLI"))]
     if CONSTANT_B==0 {
         modmul(&constant_b,&mut e);
         modcpy(&b, &mut f); modsub(&e,&mut f);
@@ -240,17 +237,14 @@ fn setxy(s: usize,x: Option<&[SPINT]>,y: Option<&[SPINT]>,P: &mut ECP) {
                 modcpy(&sy,&mut u); modadd(&sx,&mut u);
             }
             modcpy(&sx,&mut v); modmul(&sy,&mut v);
-#[cfg(feature="MLI")]
             if CONSTANT_B>0 {
                 modmli(CONSTANT_B as usize,&mut v);
                 modadd(&o,&mut v);
             }
-#[cfg(feature="MLI")]
             if CONSTANT_B<0 {
                 modmli(-CONSTANT_B as usize,&mut v);
                 modsub(&o,&mut v); modneg(&mut v);
             }
-#[cfg(not(feature="MLI"))]
             if CONSTANT_B==0 {
                 modmul(&constant_b,&mut v);
                 modadd(&o,&mut v);
@@ -285,17 +279,14 @@ fn setxy(s: usize,x: Option<&[SPINT]>,y: Option<&[SPINT]>,P: &mut ECP) {
             modcpy(&sy,&mut v);
         }
     }
-#[cfg(feature="MLI")]
     if CONSTANT_B>0 {
         modmli(CONSTANT_B as usize,&mut v);
         modsub(&o,&mut v); modneg(&mut v);
     }
-#[cfg(feature="MLI")]
     if CONSTANT_B<0 {
         modmli(-CONSTANT_B as usize,&mut v);
         modadd(&o,&mut v);
     }
-#[cfg(not(feature="MLI"))]
     if CONSTANT_B==0 {
         modmul(&constant_b,&mut v);
         modsub(&o,&mut v); modneg(&mut v);
@@ -359,13 +350,11 @@ pub fn ecnset(s: usize,x: Option<&[u8]>,y: Option<&[u8]>,P: &mut ECP) {
 
 // set generator
 pub fn ecngen(P: &mut ECP) {
-#[cfg(feature="SMX")]
     if CONSTANT_X!=0 {
         let mut sx:[SPINT;NLIMBS]=[0;NLIMBS];  
         modint(CONSTANT_X,&mut sx);
         setxy(0,Some(&sx),None,P);
     } 
-#[cfg(not(feature="SMX"))]
     if CONSTANT_X==0 {
         setxy(0,Some(&constant_x),Some(&constant_y),P);
     }

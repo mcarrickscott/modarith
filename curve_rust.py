@@ -234,6 +234,19 @@ if not small_b or not mulbyint:
         strng+=("];\n")
 else :
     strng+="const CONSTANT_B: isize = {};\n".format(B)
+    strng+="const constant_b: [SPINT;{}]=[".format(limbs)
+    for i in range(0,limbs-1) :
+        strng+="{},".format(0)
+        B//=base
+    strng+="{}".format(0)
+    strng+=("];\n")
+    if curve_type==WEIERSTRASS :
+        strng+="const constant_b3: [SPINT;{}]=[".format(limbs)
+        for i in range(0,limbs-1) :
+            strng+="{},".format(0)
+            B3//=base
+        strng+="{}".format(0)
+        strng+=("];\n")
 
 if not small_x or not mulbyint:
     strng+="const CONSTANT_X: usize = 0;\n"
@@ -245,6 +258,12 @@ if not small_x or not mulbyint:
     strng+="];\n"
 else :
     strng+="const CONSTANT_X: usize = {};\n".format(X)
+    strng+="const constant_x: [SPINT;{}]=[".format(limbs)
+    for i in range(0,limbs-1) :
+        strng+="{},".format(0)
+        X//=base
+    strng+="{}".format(0)
+    strng+="];\n"
 
 if not small_x or not mulbyint :
     strng+="const constant_y: [SPINT;{}]=[".format(limbs)
@@ -252,6 +271,13 @@ if not small_x or not mulbyint :
         strng+="{},".format(hex(Y%base))
         Y//=base
     strng+="{}".format(hex(Y))
+    strng+="];\n"
+else :
+    strng+="const constant_y: [SPINT;{}]=[".format(limbs)
+    for i in range(0,limbs-1) :
+        strng+="{},".format(0)
+        Y//=base
+    strng+="{}".format(0)
     strng+="];\n"
 
 from contextlib import redirect_stdout

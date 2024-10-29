@@ -14,26 +14,10 @@ path="src/testcurve.rs"
 [[bin]]
 name="EC256"
 path="src/EC256.rs"
-required-features=["NIST256"]
 
 [[bin]]
 name="Ed448"
 path="src/Ed448.rs"
-required-features=["ED448"]
 
 [features]
 
-# Features to be added to Cargo.toml
-# MLI - elliptic curve constant B is small integer, and multiplication by small integer supported.
-# SMX - small generator X coordinate
-
-WEIERSTRASS=[]
-EDWARDS=[]
-MLI=[]
-SMX=[]
-ED25519 =["EDWARDS"]
-ED448 =["MLI","EDWARDS"]
-NIST256 =["WEIERSTRASS"]
-NUMS256E=["MLI","EDWARDS","SMX"]
-NUMS256W=["MLI","WEIERSTRASS","SMX"]
-SECP256K1=["MLI","WEIERSTRASS"]

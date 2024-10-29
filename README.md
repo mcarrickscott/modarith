@@ -151,7 +151,7 @@ In the working directory
 Copy *edwards.rs* into the rust project src subdirectory. 
 
 	cd ecc
-	cargo run --release --features ED25519 --bin testcurve
+	cargo run --release --bin testcurve
 
 Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
 
@@ -160,7 +160,7 @@ Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source 
 Drop *group.rs* into *EC256.rs* (ECDSA using P-256) where indicated. Copy *EC256.rs* and *weierstrass.rs* to the rust src subdirectory
 	
 	cd ecc
-	cargo run --release --features NIST256 --bin EC256
+	cargo run --release --bin EC256
 
 Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
 
@@ -169,7 +169,7 @@ Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source 
 Drop *group.rs* into *Ed448.rs* (EdDSA using ED448) where indicated. Copy *Ed448.rs* and *edwards.rs* to the rust src subdirectory
 	
 	cd ecc
-	cargo run --release --features ED448 --bin Ed448
+	cargo run --release --bin Ed448
 
 # A lazy reduction optimization
 

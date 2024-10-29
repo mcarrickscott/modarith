@@ -8,19 +8,9 @@
 // ECDSA Implementation for curve P-256
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
 
-#[cfg(feature="WEIERSTRASS")]
 mod weierstrass;
-#[cfg(feature="WEIERSTRASS")]
 use weierstrass::*;
-#[cfg(feature="WEIERSTRASS")]
 use weierstrass::ECP;
-
-#[cfg(feature="EDWARDS")]
-mod edwards;
-#[cfg(feature="EDWARDS")]
-use edwards::*;
-#[cfg(feature="EDWARDS")]
-use edwards::ECP;
 
 mod hash;
 use hash::*;
