@@ -8,13 +8,24 @@
 // EdDSA Implementation for curve ED448
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
 
+
+// to include in library..
+/*
+use crate::edwards;
+use crate::edwards::*;
+use crate::edwards::ECP;
+
+use crate::hash;
+use crate::hash::*;
+use crate::hash::SHA3;
+*/
+
 mod edwards;
 use edwards::*;
 use edwards::ECP;
 
 mod hash;
 use hash::*;
-use hash::SHA3;
 
 /*** Insert code automatically generated in group.rs here ***/
 /* Note that much of this code is not needed and can be deleted */
@@ -24,50 +35,11 @@ use hash::SHA3;
 /*** End of automatically generated code ***/
 
 // number of limbs and bytes in representation
-const BYTES:usize = NBYTES;
+pub const BYTES:usize = NBYTES;
 const LIMBS:usize= NLIMBS;
 type GEL = [SPINT; LIMBS];
 
-// Some utility functions for I/O and debugging
 
-fn char2int(inp: u8) -> u8 {
-    if inp>='0' as u8 && inp <='9' as u8 {
-        return inp-'0' as u8;
-    }
-    if inp>='A' as u8 && inp <='F' as u8 {
-        return inp-('A' as u8) +10;
-    }
-    if inp>='a' as u8 && inp <='f' as u8 {
-        return inp-('a' as u8) +10;
-    }
-    return 0;
-}
-
-// string s better have even number of characters!
-fn from_hex(ilen:usize,s: &str,x: &mut[u8]) {
-    let mut pad:[u8;128]=[0;128];
-    let c=s.as_bytes();
-    let len=c.len();
-    let mut lz=2*ilen-len;
-    if 2*ilen<len {lz=0;}
-    for i in 0..lz {
-        pad[i]='0' as u8;
-    }
-    for i in lz..2*ilen {
-        pad[i]=c[i-lz];
-    }
-
-    for i in 0..ilen {
-        x[i]=char2int(pad[2*i])*16+char2int(pad[2*i+1]);
-    }
-}
-
-fn printhex(len:usize,array: &[u8]) {
-    for i in 0..len {
-        print!("{:02X}", array[i])
-    }
-    println!("")
-}
 
 // reduce 114 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^440.(2^440 + y) + z, where x,y and z < q (z is bottom 55 bytes, y is next 55 bytes, x is top 4 bytes)
@@ -125,7 +97,7 @@ fn H(ilen:usize,olen:usize,s:&[u8],digest: &mut [u8])
 
 // Input private key - 57 random bytes
 // Output public key - 57 bytes
-pub fn ED448_KEY_GEN(prv: &[u8],public: &mut [u8]) {
+pub fn ED448_KEY_PAIR(prv: &[u8],public: &mut [u8]) {
     let mut P=ECP::new();
     ecngen(&mut P);
     let mut s:[u8;BYTES]=[0;BYTES]; 
@@ -298,8 +270,50 @@ pub fn ED448_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
 }
 
 
+
+// Some utility functions for I/O and debugging
+
+fn char2int(inp: u8) -> u8 {
+    if inp>='0' as u8 && inp <='9' as u8 {
+        return inp-'0' as u8;
+    }
+    if inp>='A' as u8 && inp <='F' as u8 {
+        return inp-('A' as u8) +10;
+    }
+    if inp>='a' as u8 && inp <='f' as u8 {
+        return inp-('a' as u8) +10;
+    }
+    return 0;
+}
+
+// string s better have even number of characters!
+fn from_hex(ilen:usize,s: &str,x: &mut[u8]) {
+    let mut pad:[u8;128]=[0;128];
+    let c=s.as_bytes();
+    let len=c.len();
+    let mut lz=2*ilen-len;
+    if 2*ilen<len {lz=0;}
+    for i in 0..lz {
+        pad[i]='0' as u8;
+    }
+    for i in lz..2*ilen {
+        pad[i]=c[i-lz];
+    }
+
+    for i in 0..ilen {
+        x[i]=char2int(pad[2*i])*16+char2int(pad[2*i+1]);
+    }
+}
+
+fn printhex(len:usize,array: &[u8]) {
+    for i in 0..len {
+        print!("{:02X}", array[i])
+    }
+    println!("")
+}
+
 fn main() {
-    const sk:&str="c4eab05d357007c632f3dbb48489924d552b08fe0c353a0d4a1f00acda2c463afbea67c5e8d2877c5e3bc397a659949ef8021e954e0a12274e";
+    const SK:&str="c4eab05d357007c632f3dbb48489924d552b08fe0c353a0d4a1f00acda2c463afbea67c5e8d2877c5e3bc397a659949ef8021e954e0a12274e";
 
     let mut prv:[u8;BYTES+1]=[0;BYTES+1];
     let mut public:[u8;BYTES+1]=[0;BYTES+1];
@@ -308,9 +322,9 @@ fn main() {
 
     println!("Run RFC8032 test vector");
 
-    from_hex(BYTES+1,&sk,&mut prv); 
+    from_hex(BYTES+1,&SK,&mut prv); 
     println!("private key= "); printhex(BYTES+1,&prv);
-    ED448_KEY_GEN(&prv,&mut public);
+    ED448_KEY_PAIR(&prv,&mut public);
     print!("Public key= "); printhex(BYTES+1,&public);
 
     m[0]=0x03; // message to be signed

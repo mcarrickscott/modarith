@@ -10,6 +10,8 @@ For both languages there are two scripts, one specialised for pseudo-Mersenne mo
 
 The code generated includes functions for modular addition, subtraction, multiplication, inversion, quadratic residuosity and square roots. In other words all of the requirements to implement field arithmetic in the context of elliptic curve cryptography.
 
+The code produced by these scripts was used to create the TLSECC library of C and Rust functions which implement all of the elliptic curve cryptography required by the TLS1.3 protocol. See https://github.com/mcarrickscott/TLSECC
+
 # Dependencies
 
 As dependencies it is required that an appropriate C compiler (*gcc/clang/icx*) and/or the Rust compiler (*rustc*) is included in the path. For the C code also ensure that the *clang-format* and *cppcheck* utilities are installed.
