@@ -938,8 +938,8 @@ def modcmp() :
     str+="\tlet mut c:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tlet mut d:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tlet mut eq=1;\n"
-    str+="\tmodcpy(a,&mut c);\n"
-    str+="\tmodcpy(b,&mut d);\n"
+    str+="\tmodcpy(a,&mut c); redc(&mut c);\n"
+    str+="\tmodcpy(b,&mut d); redc(&mut d);\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\teq&=(((c[i]^d[i])-1)>>{})&1;\n\t}}\n".format(base)
     str+="\treturn eq==1;\n"

@@ -275,9 +275,8 @@ fn setxy(s: usize,x: Option<&[SPINT]>,y: Option<&[SPINT]>,P: &mut ECP) {
         modcpy(&o,&mut u); modsub(&sy,&mut u);
         if CONSTANT_A == -1 {
             modneg(&mut o);
-        } else {
-            modcpy(&sy,&mut v);
-        }
+        } 
+        modcpy(&sy,&mut v);
     }
     if CONSTANT_B>0 {
         modmli(CONSTANT_B as usize,&mut v);
