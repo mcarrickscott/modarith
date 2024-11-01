@@ -1273,34 +1273,34 @@ def redc(n) :
     return str 
 
 #Reduce double length mod p
-def modred(n) :
-    str="//reduce double length input to n-residue \n"
-    if makestatic :
-        str+="static "
-    str+="void modred{}(const spint *n,spint *b) {{\n".format(DECOR)
-    str+="\tint i;\n"
-    if E :
-        str+="\tconst spint h[{}]={{".format(N)
-        for i in range(0,N-1) :
-            str+=hex(twopn[i])
-            str+="u,"
-        str+=hex(twopn[N-1])
-        str+="u};\n"
-    str+="\tspint t[{}];\n".format(N)
-    str+="\tfor (i=0;i<{};i++) {{\n".format (N)
-    str+="\t\tb[i]=n[i];\n"
-    str+="\t\tt[i]=n[i+{}];\n".format(N)
-    str+="\t}\n"
-    str+="\tnres{}(t,t);\n".format(DECOR)
-    if E:
-        str+="\tmodmul{}(t,h,t);\n".format(DECOR)
-        str+="\tnres{}(b,b);\n".format(DECOR)
-        str+="\tmodadd{}(b,t,b);\n".format(DECOR)
-    else :
-        str+="\tmodadd{}(b,t,b);\n".format(DECOR)
-        str+="\tnres{}(b,b);\n".format(DECOR)
-    str+="}\n"
-    return str 
+#def modred(n) :
+#    str="//reduce double length input to n-residue \n"
+#    if makestatic :
+#        str+="static "
+#    str+="void modred{}(const spint *n,spint *b) {{\n".format(DECOR)
+#    str+="\tint i;\n"
+#    if E :
+#        str+="\tconst spint h[{}]={{".format(N)
+#        for i in range(0,N-1) :
+#            str+=hex(twopn[i])
+#            str+="u,"
+#        str+=hex(twopn[N-1])
+#        str+="u};\n"
+#    str+="\tspint t[{}];\n".format(N)
+#    str+="\tfor (i=0;i<{};i++) {{\n".format (N)
+#    str+="\t\tb[i]=n[i];\n"
+#    str+="\t\tt[i]=n[i+{}];\n".format(N)
+#    str+="\t}\n"
+#    str+="\tnres{}(t,t);\n".format(DECOR)
+#    if E:
+#        str+="\tmodmul{}(t,h,t);\n".format(DECOR)
+#        str+="\tnres{}(b,b);\n".format(DECOR)
+#        str+="\tmodadd{}(b,t,b);\n".format(DECOR)
+#    else :
+#        str+="\tmodadd{}(b,t,b);\n".format(DECOR)
+#        str+="\tnres{}(b,b);\n".format(DECOR)
+#    str+="}\n"
+#    return str 
 
 #conditional swap
 def modcsw() :
@@ -1708,7 +1708,7 @@ def functions() :
     print(modinv())
     print(nres(n))
     print(redc(n))
-    print(modred(n))
+    #print(modred(n))
     print(modis1(n))
     print(modis0(n))
     print(modzer())
