@@ -110,6 +110,28 @@ const n1:&str=   "C20347457078878f77b707c070707077a07707b7b070707072232523571342
 #[cfg(feature="NIST256")]
 const n2:&str=  "D35279279432f249b298a876788d86294e02842092769136c086038b1812383a"; // random
 
+#[cfg(feature="NIST384")]
+const ORDER:&str="ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973"; // order
+#[cfg(feature="NIST384")]
+const r1:&str=  "bd9c66b3ad3c2d6d1a3d1fa7bc8960a923b8c1e9392456de3eb13b9046685257bdd640fb06671ad11c80317fa3b1799d"; // random
+#[cfg(feature="NIST384")]
+const r2:&str=   "4263994c52c3d292e5c2e05843769f56dc473e16c6dba92188b211f1adcedb879a43ccb742498ca9d06be7eb2913afd6"; // order-r1
+#[cfg(feature="NIST384")]
+const n1:&str=   "9a1de644815ef6d13b8faa1837f8a88b17fc695a07a0ca6e0822e8f36c031199972a846916419f828b9d2434e465e150"; // random
+#[cfg(feature="NIST384")]
+const n2:&str=  "4737819096da1dac72ff5d2a386ecbe06b65a6a48b8148f6b38a088ca65ed389b74d0fb132e706298fadc1a606cb0fb3"; // random
+
+#[cfg(feature="NIST521")]
+const ORDER:&str="1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409"; // order
+#[cfg(feature="NIST521")]
+const r1:&str=  "d8972a846916419f828b9d2434e465e150bd9c66b3ad3c2d6d1a3d1fa7bc8960a923b8c1e9392456de3eb13b9046685257bdd640fb06671ad11c80317fa3b1799d"; // random
+#[cfg(feature="NIST521")]
+const r2:&str=   "12768d57b96e9be607d7462dbcb1b9a1eaf4263994c52c3d292e5c2e05843769f512dcdc59a860b3f8d411ac5b8b0a153787ddf88bd83352cdd9eef859eed86ea6c"; // order-r1
+#[cfg(feature="NIST521")]
+const n1:&str=   "e5386ecbe06b65a6a48b8148f6b38a088ca65ed389b74d0fb132e706298fadc1a606cb0fb39a1de644815ef6d13b8faa1837f8a88b17fc695a07a0ca6e0822e8f3"; // random
+#[cfg(feature="NIST521")]
+const n2:&str=  "acc37459eef50bea63371ecd7b27cd813047229389571aa8766c307511b2b9437a28df6ec4ce4a2bbdc241330b01a9e71fde8a774bcf36d58b4737819096da1dac"; // random
+
 #[cfg(feature="NUMS256W")]
 const ORDER:&str="FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE43C8275EA265C6020AB20294751A825";
 #[cfg(feature="NUMS256W")]    
