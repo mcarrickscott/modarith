@@ -123,8 +123,9 @@ pub fn ED448_KEY_PAIR(prv: &[u8],public: &mut [u8]) {
 const dom4:[u8;10]=[b'S',b'i',b'g',b'E',b'd',b'4',b'4',b'8',0,0];
 
 // input private key, public key, message to be signed. Output signature
-pub fn ED448_SIGN(prv:&[u8],public:&[u8],m:&[u8],sig:&mut [u8]) {
+pub fn ED448_SIGN(prv:&[u8],public: Option<&[u8]>,m:&[u8],sig:&mut [u8]) {
     let mut h:[u8;2*BYTES+2]=[0;2*BYTES+2];  
+    let mut ipub:[u8;BYTES+1]=[0;BYTES+1];
     let mut sh:[u8;BYTES]=[0;BYTES];
     let mut s:GEL=[0;LIMBS];
     let mut r:GEL=[0;LIMBS];
@@ -134,6 +135,14 @@ pub fn ED448_SIGN(prv:&[u8],public:&[u8],m:&[u8],sig:&mut [u8]) {
 
     let mut R=ECP::new();
     ecngen(&mut R);
+
+    if let Some(pb) = public {
+        for i in 0..BYTES+1 {
+            ipub[i]=pb[i];
+        }
+    } else {
+        ED448_KEY_PAIR(prv,&mut ipub);
+    }
 
     H(BYTES+1,2*BYTES+2,&prv,&mut h);
 
@@ -180,7 +189,7 @@ pub fn ED448_SIGN(prv:&[u8],public:&[u8],m:&[u8],sig:&mut [u8]) {
         sha3.process(sig[i]);  // R
     }
     for i in 0..BYTES+1 {
-        sha3.process(public[i]);  // Q
+        sha3.process(ipub[i]);  // Q
     }
     for i in 0..m.len() {
         sha3.process(m[i]);
@@ -328,7 +337,7 @@ fn main() {
     print!("Public key= "); printhex(BYTES+1,&public);
 
     m[0]=0x03; // message to be signed
-    ED448_SIGN(&prv,&mut public,&m[0..1],&mut sig);
+    ED448_SIGN(&prv,Some(&public),&m[0..1],&mut sig);
     print!("signature=  "); printhex(2*BYTES+2,&sig); 
 
     let res=ED448_VERIFY(&public,&m[0..1],&sig);

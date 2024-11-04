@@ -193,10 +193,19 @@ void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
 {
     int i,sign;
     char h[2*BYTES+2];
+    char ipub[BYTES+1];
     gel r,s,d;
     sha3 SHA3;
     point R;
     ecngen(&R);
+
+    if (pub!=NULL)
+    {
+        for (i=0;i<BYTES+1;i++)
+            ipub[i]=pub[i];
+    } else {
+        ED448_KEY_PAIR(prv,ipub);
+    }
 
     SHA3_init(&SHA3,SHAKE256);
     H(BYTES+1,2*BYTES+2,prv,h);
@@ -229,7 +238,7 @@ void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
     for (i=0;i<BYTES+1;i++ )
         SHA3_process(&SHA3,sig[i]);  // R
     for (i=0;i<BYTES+1;i++)
-        SHA3_process(&SHA3,pub[i]);  // Q
+        SHA3_process(&SHA3,ipub[i]);  // Q
     for (i=0;i<mlen;i++)
         SHA3_process(&SHA3,m[i]);   // M
     SHA3_shake(&SHA3,h,2*BYTES+2); 
