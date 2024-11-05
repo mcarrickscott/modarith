@@ -141,7 +141,7 @@ pub fn SIGN(prv:&[u8],public: Option<&[u8]>,m:&[u8],sig:&mut [u8]) {
             ipub[i]=pb[i];
         }
     } else {
-        ED448_KEY_PAIR(prv,&mut ipub);
+        KEY_PAIR(prv,&mut ipub);
     }
 
     H(BYTES+1,2*BYTES+2,&prv,&mut h);
