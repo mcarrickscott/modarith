@@ -97,7 +97,7 @@ fn H(ilen:usize,olen:usize,s:&[u8],digest: &mut [u8])
 
 // Input private key - 57 random bytes
 // Output public key - 57 bytes
-pub fn ED448_KEY_PAIR(prv: &[u8],public: &mut [u8]) {
+pub fn KEY_PAIR(prv: &[u8],public: &mut [u8]) {
     let mut P=ECP::new();
     ecngen(&mut P);
     let mut s:[u8;BYTES]=[0;BYTES]; 
@@ -123,7 +123,7 @@ pub fn ED448_KEY_PAIR(prv: &[u8],public: &mut [u8]) {
 const dom4:[u8;10]=[b'S',b'i',b'g',b'E',b'd',b'4',b'4',b'8',0,0];
 
 // input private key, public key, message to be signed. Output signature
-pub fn ED448_SIGN(prv:&[u8],public: Option<&[u8]>,m:&[u8],sig:&mut [u8]) {
+pub fn SIGN(prv:&[u8],public: Option<&[u8]>,m:&[u8],sig:&mut [u8]) {
     let mut h:[u8;2*BYTES+2]=[0;2*BYTES+2];  
     let mut ipub:[u8;BYTES+1]=[0;BYTES+1];
     let mut sh:[u8;BYTES]=[0;BYTES];
@@ -208,7 +208,7 @@ pub fn ED448_SIGN(prv:&[u8],public: Option<&[u8]>,m:&[u8],sig:&mut [u8]) {
     sig[2*BYTES+1]=0;           // second part of signature
 }
 
-pub fn ED448_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
+pub fn VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut buff:[u8;BYTES]=[0;BYTES]; 
     let mut sh:[u8;BYTES]=[0;BYTES];
     let mut G=ECP::new();
@@ -333,14 +333,14 @@ fn main() {
 
     from_hex(BYTES+1,&SK,&mut prv); 
     println!("private key= "); printhex(BYTES+1,&prv);
-    ED448_KEY_PAIR(&prv,&mut public);
+    KEY_PAIR(&prv,&mut public);
     print!("Public key= "); printhex(BYTES+1,&public);
 
     m[0]=0x03; // message to be signed
-    ED448_SIGN(&prv,Some(&public),&m[0..1],&mut sig);
+    SIGN(&prv,Some(&public),&m[0..1],&mut sig);
     print!("signature=  "); printhex(2*BYTES+2,&sig); 
 
-    let res=ED448_VERIFY(&public,&m[0..1],&sig);
+    let res=VERIFY(&public,&m[0..1],&sig);
     if res {
         println!("Signature is valid");
     } else {
