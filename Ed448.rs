@@ -332,7 +332,7 @@ fn main() {
     println!("Run RFC8032 test vector");
 
     from_hex(BYTES+1,&SK,&mut prv); 
-    println!("private key= "); printhex(BYTES+1,&prv);
+    print!("private key= "); printhex(BYTES+1,&prv);
     KEY_PAIR(&prv,&mut public);
     print!("Public key= "); printhex(BYTES+1,&public);
 
