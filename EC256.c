@@ -205,6 +205,7 @@ void NIST256_SIGN(char *prv,char *ran,int mlen,char *m,char *sig)
 }
 
 // input public key, message and signature
+// NOTE signatures that are of the wrong length should be rejected prior to calling this function
 int NIST256_VERIFY(char *pub,int mlen,char *m,char *sig) 
 {
     point G,Q;

@@ -149,6 +149,7 @@ pub fn SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
 }
 
 // input public key, message and signature
+// NOTE signatures that are of the wrong length should be rejected prior to calling this function
 pub fn VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut G=ECP::new();
     let mut Q=ECP::new();

@@ -252,6 +252,8 @@ void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
     sig[2*BYTES+1]=0;           // second part of signature
 }
 
+// input public key, message and signature
+// NOTE signatures that are of the wrong length should be rejected prior to calling this function
 int ED448_VERIFY(char *pub,int mlen,char *m,char *sig) 
 {
     int i;

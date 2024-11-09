@@ -208,6 +208,8 @@ pub fn SIGN(prv:&[u8],public: Option<&[u8]>,m:&[u8],sig:&mut [u8]) {
     sig[2*BYTES+1]=0;           // second part of signature
 }
 
+// input public key, message and signature
+// NOTE signatures that are of the wrong length should be rejected prior to calling this function
 pub fn VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut buff:[u8;BYTES]=[0;BYTES]; 
     let mut sh:[u8;BYTES]=[0;BYTES];

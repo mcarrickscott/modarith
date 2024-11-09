@@ -5,19 +5,17 @@
 // Elliptic curve based digital signature template
 // See for example https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
 
-#[cfg(feature="WEIERSTRASS")]
+// uncomment one or the other
+/*
 mod weierstrass;
-#[cfg(feature="WEIERSTRASS")]
 use weierstrass::*;
-#[cfg(feature="WEIERSTRASS")]
 use weierstrass::ECP;
-
-#[cfg(feature="EDWARDS")]
+*/
+/*
 mod edwards;
-#[cfg(feature="EDWARDS")]
 use edwards::*;
-#[cfg(feature="EDWARDS")]
 use edwards::ECP;
+*/
 
 mod hash;
 use hash::*;

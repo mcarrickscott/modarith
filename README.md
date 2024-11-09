@@ -201,3 +201,8 @@ Provide a main program in *signature.c* which implements some test vectors and c
 
 	gcc -O2 signature.c <weierstrass.c or edwards.c> hash.c -o signature
 
+# Testing
+
+Any implementation should be tested using test vectors. A good source are the test vectors provided by the Wycheproof project - see https://github.com/C2SP/wycheproof
+
+A short python script *parse.py* is provided which converts the JSON formatted test vectors for ECDSA and EdDSA to a form more easily digestible by a C or Rust program.
