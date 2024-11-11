@@ -1,6 +1,6 @@
-# Modarith - python scripts for generation of code for multi-precision modular arithmetic
+# Modarith - python scripts for generation of code for finite field arithmetic
 
-Script generated finite field arithmetic for elliptic curve cryptography
+Script generated finite field arithmetic for "fast enough" elliptic curve cryptography
 
 This repository contains Python 3 scripts for the automatic generation of efficent code for multi-precision modular arithmetic, for 16, 32 and 64-bit architectures, in C and in Rust. 
 

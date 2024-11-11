@@ -1542,6 +1542,7 @@ with open('test.c', 'w') as f:
 f.close()
 
 #maybe -march=rv64gc for RISC-V
+#maybe -fPIC
 subprocess.call(compiler + " -march=native -mtune=native -O3 -shared -o test.so test.c", shell=True)
 
 import ctypes
@@ -1716,6 +1717,8 @@ with open('time.c', 'w') as f:
 
 f.close()
 
+#maybe -march=rv64gc for RISC-V
+#maybe -fPIC
 if not embedded :   # Create timing program for this processor
     if cyclescounter :
         subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -lcpucycles -o time", shell=True)
@@ -1772,7 +1775,7 @@ if formatted :
     subprocess.call("clang-format -i field.c", shell=True)  # tidy up the format
 
 if check:
-    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem field.c", shell=True) 
+    subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem field.c", shell=True) 
 
 print("Field code is in field.c")
 

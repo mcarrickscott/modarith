@@ -2092,7 +2092,8 @@ with open('test.c', 'w') as f:
         functions()
 f.close()
 
-#maybe -march=rv64gc for RISC-V
+#maybe -march=rv64gc for RISC-V 
+#maybe -fPIC
 subprocess.call(compiler+" -march=native -mtune=native -O3 -shared -o test.so test.c", shell=True)
 
 import ctypes
@@ -2263,6 +2264,7 @@ with open('time.c', 'w') as f:
 f.close()
 
 #maybe -march=rv64gc for RISC-V
+#maybe -fPIC
 if not embedded :
     if cyclescounter :
         subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -lcpucycles -o time", shell=True)
@@ -2326,7 +2328,7 @@ if formatted :
     subprocess.call("clang-format -i "+fnamec, shell=True)  # tidy up the format
 
 if check: 
-    subprocess.call("cppcheck --enable=all --addon=misc --addon=cert  --suppress=unusedFunction --suppress=missingIncludeSystem "+fnamec, shell=True)  # tidy up the format
+    subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem "+fnamec, shell=True)  # tidy up the format
 
 
 if field :
