@@ -40,8 +40,8 @@ def replacefromfile(namefile,oldtext,newfile):
 
 if len(sys.argv)!=3 :
     print("Syntax error")
-    print("Valid syntax - python curve_rust.py <word length> <curve>")
-    print("For example - python curve_rust.py 64 ED25519")
+    print("Valid syntax - python3 curve_rust.py <word length> <curve>")
+    print("For example - python3 curve_rust.py 64 ED25519")
     exit(0);
 
 WL=int(sys.argv[1])
@@ -167,9 +167,9 @@ if p==0:
 
 radix=0
 if prime_type==PSEUDO :
-    radix=subprocess.run("python pseudo_rust.py "+str(WL)+" "+curve, shell=True).returncode
+    radix=subprocess.run("python3 pseudo_rust.py "+str(WL)+" "+curve, shell=True).returncode
 if prime_type==MONTY :
-    radix=subprocess.run("python monty_rust.py "+str(WL)+" "+curve, shell=True).returncode
+    radix=subprocess.run("python3 monty_rust.py "+str(WL)+" "+curve, shell=True).returncode
 
 if radix==0 :
     print("Bad curve");
@@ -309,7 +309,7 @@ with open('point.rs', 'w') as f:
         print("}")
         f.close()
 
-subprocess.run("python monty_rust.py "+str(WL)+" "+curve.lower(), shell=True)
+subprocess.run("python3 monty_rust.py "+str(WL)+" "+curve.lower(), shell=True)
 
 print("field code is in field.rs")
 print("curve definition is in curve.rs")

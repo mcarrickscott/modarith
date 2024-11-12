@@ -39,8 +39,8 @@ def replacefromfile(namefile,oldtext,newfile):
 
 if len(sys.argv)!=3 :
     print("Syntax error")
-    print("Valid syntax - python curve.py <word length> <curve>")
-    print("For example - python curve.py 64 ED25519")
+    print("Valid syntax - python3 curve.py <word length> <curve>")
+    print("For example - python3 curve.py 64 ED25519")
     exit(0);
 
 WL=int(sys.argv[1])
@@ -162,9 +162,9 @@ if p==0:
 
 radix=0
 if prime_type==PSEUDO :
-    radix=subprocess.run("python pseudo.py "+str(WL)+" "+curve, shell=True).returncode
+    radix=subprocess.run("python3 pseudo.py "+str(WL)+" "+curve, shell=True).returncode
 if prime_type==MONTY :
-    radix=subprocess.run("python monty.py "+str(WL)+" "+curve, shell=True).returncode
+    radix=subprocess.run("python3 monty.py "+str(WL)+" "+curve, shell=True).returncode
 
 if radix==0 :
     print("Bad curve");
@@ -270,7 +270,7 @@ with open('point.h', 'w') as f:
         print("typedef struct xyz point;")
         f.close()
 
-subprocess.run("python monty.py "+str(WL)+" "+curve.lower(), shell=True)
+subprocess.run("python3 monty.py "+str(WL)+" "+curve.lower(), shell=True)
 
 print("field code is in field.c")
 print("curve definition is in curve.c")
