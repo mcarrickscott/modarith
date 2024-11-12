@@ -2328,7 +2328,7 @@ if formatted :
     subprocess.call("clang-format -i "+fnamec, shell=True)  # tidy up the format
 
 if check: 
-    subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem "+fnamec, shell=True)  # tidy up the format
+    subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem --suppress=checkersReport "+fnamec, shell=True)  # tidy up the format
 
 
 if field :

@@ -1775,7 +1775,7 @@ if formatted :
     subprocess.call("clang-format -i field.c", shell=True)  # tidy up the format
 
 if check:
-    subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem field.c", shell=True) 
+    subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem --suppress=checkersReport field.c", shell=True) 
 
 print("Field code is in field.c")
 
