@@ -803,12 +803,12 @@ def redc(n,base) :
     str+="\treturn;\n}\n"
     return str 
 
-#conditional swap
+#conditional swap - see Loiseau et al. 2021
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     if makepublic :
         str+="pub "
-    str+="fn modcsw(d: usize,g: &mut [SPINT],f: &mut [SPINT]) -> SPINT {\n"
+    str+="fn modcsw(d: usize,g: &mut [SPINT],f: &mut [SPINT]) {\n"
     str+="\tlet r0=f[0]^g[1];\n"
     str+="\tlet r1=f[1]^g[0];\n"
     str+="\tlet dd = d as SPINT;\n"
@@ -816,7 +816,7 @@ def modcsw() :
     str+="\t\tlet t=f[i];\n"
     str+="\t\tf[i]=f[i]*(1-(dd-r0))+g[i]*(dd+r1)-r0*f[i]-r1*g[i];\n"
     str+="\t\tg[i]=g[i]*(1-(dd-r0))+t*(dd+r1)-r0*g[i]-r1*t;\n\t}\n"
-    str+="\treturn 0;\n}\n"
+    str+="\treturn;\n}\n"
     return str
 
 #conditional move
@@ -824,13 +824,13 @@ def modcmv() :
     str="//conditional move g to f if d=1\n"
     if makepublic :
         str+="pub "
-    str+="fn modcmv(d: usize,g: &[SPINT],f: &mut [SPINT]) -> SPINT {\n"
+    str+="fn modcmv(d: usize,g: &[SPINT],f: &mut [SPINT]) {\n"
     str+="\tlet r0=f[0]^g[1];\n"
     str+="\tlet r1=f[1]^g[0];\n"
     str+="\tlet dd = d as SPINT;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tf[i]=f[i]*(1-(dd-r0))+g[i]*(dd+r1)-r0*f[i]-r1*g[i];\n\t}\n"
-    str+="\treturn 0;\n}\n"
+    str+="\treturn;\n}\n"
     return str
 
 #shift left

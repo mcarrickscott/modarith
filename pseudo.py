@@ -38,7 +38,7 @@ formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
 generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
 allow_asr=True # Allow Arithmetic Shift Right. Maybe set to False to silence MISRA warnings
-check=True # run cppcheck on the output
+check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 
 import sys
@@ -769,10 +769,10 @@ def modsqrt() :
         str+="\t\tmodnsqr{}(b,k-2);\n".format(DECOR)
         str+="\t\tint d=1-modis1{}(b);\n".format(DECOR)
         str+="\t\tmodmul{}(s,z,v);\n".format(DECOR)
-        str+="\t\t(void)modcmv{}(d,v,s);\n".format(DECOR)
+        str+="\t\tmodcmv{}(d,v,s);\n".format(DECOR)
         str+="\t\tmodsqr{}(z,z);\n".format(DECOR)
         str+="\t\tmodmul{}(t,z,v);\n".format(DECOR)
-        str+="\t\t(void)modcmv{}(d,v,t);\n".format(DECOR)
+        str+="\t\tmodcmv{}(d,v,t);\n".format(DECOR)
         str+="\t}\n" 
     str+="\tmodcpy{}(s,r);\n".format(DECOR)
     str+="}\n"
@@ -885,7 +885,7 @@ def modcsw() :
     str="//conditional swap g and f if d=1\n"
     if makestatic :
         str+="static "
-    str+="int modcsw{}(int d,spint *g,spint *f) {{\n".format(DECOR)
+    str+="void modcsw{}(int d,spint *g,spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint r0=f[0]^g[1];\n"
     str+="\tspint r1=f[1]^g[0];\n"
@@ -893,7 +893,7 @@ def modcsw() :
     str+="\t\tspint t=f[i];\n"
     str+="\t\tf[i]=f[i]*(1-(d-r0))+g[i]*(d+r1)-r0*f[i]-r1*g[i];\n"
     str+="\t\tg[i]=g[i]*(1-(d-r0))+t*(d+r1)-r0*g[i]-r1*t;\n\t}\n"
-    str+="\treturn 0;\n}\n"
+    str+="}\n"
     return str
 
 #conditional move
@@ -901,13 +901,13 @@ def modcmv() :
     str="//conditional move g to f if d=1\n"
     if makestatic :
         str+="static "
-    str+="int modcmv{}(int d,const spint *g,spint *f) {{\n".format(DECOR)
+    str+="void modcmv{}(int d,const spint *g,spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint r0=f[0]^g[1];\n"
     str+="\tspint r1=f[1]^g[0];\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tf[i]=f[i]*(1-(d-r0))+g[i]*(d+r1)-r0*f[i]-r1*g[i];\n\t}\n"
-    str+="\treturn 0;\n}\n"
+    str+="}\n"
     return str
 
 #shift left
