@@ -1209,18 +1209,14 @@ def modcsw() :
     if makepublic :
         str+="pub "
     str+="fn modcsw(d: usize,g: &mut [SPINT],f: &mut [SPINT]) -> SPINT {\n"
-    str+="\tlet c=-(d as isize) as SPINT;\n"
-    str+="\tlet mut w=0 as SPINT;\n"
-    str+="\tlet r=f[0]^g[1];\n"
-    str+="\tlet mut ra=r.wrapping_add(r); ra>>=1;\n"
+    str+="\tlet r0=f[0]^g[1];\n"
+    str+="\tlet r1=f[1]^g[0];\n"
+    str+="\tlet dd = d as SPINT;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
-    str+="\t\tlet mut t=(f[i]^g[i])&c;\n"
-    str+="\t\tt^=r;\n"
-    str+="\t\tlet mut e=f[i]^t; w^=e;\n"
-    str+="\t\tf[i]=e^ra;\n"
-    str+="\t\te=g[i]^t; w^=e;\n"
-    str+="\t\tg[i]=e^ra;\n\t}\n"
-    str+="\treturn w;\n}\n"
+    str+="\t\tlet t=f[i];\n"
+    str+="\t\tf[i]=f[i]*(1-(dd-r0))+g[i]*(dd+r1)-r0*f[i]-r1*g[i];\n"
+    str+="\t\tg[i]=g[i]*(1-(dd-r0))+t*(dd+r1)-r0*g[i]-r1*t;\n\t}\n"
+    str+="\treturn 0;\n}\n"
     return str
 
 #conditional move
@@ -1229,16 +1225,12 @@ def modcmv() :
     if makepublic :
         str+="pub "
     str+="fn modcmv(d: usize,g: &[SPINT],f: &mut [SPINT]) -> SPINT {\n"
-    str+="\tlet c=-(d as isize) as SPINT;\n"
-    str+="\tlet mut w=0 as SPINT;\n"
-    str+="\tlet r=f[0]^g[1];\n"
-    str+="\tlet mut ra=r.wrapping_add(r); ra>>=1;\n"
+    str+="\tlet r0=f[0]^g[1];\n"
+    str+="\tlet r1=f[1]^g[0];\n"
+    str+="\tlet dd = d as SPINT;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
-    str+="\t\tlet mut t=(f[i]^g[i])&c;\n"
-    str+="\t\tt^=r;\n"
-    str+="\t\tlet e=f[i]^t; w^=e;\n"
-    str+="\t\tf[i]=e^ra;\n\t}\n"
-    str+="\treturn w;\n}\n"
+    str+="\t\tf[i]=f[i]*(1-(dd-r0))+g[i]*(dd+r1)-r0*f[i]-r1*g[i];\n\t}\n"
+    str+="\treturn 0;\n}\n"
     return str
 
 #shift left

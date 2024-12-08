@@ -1302,25 +1302,20 @@ def redc(n) :
 #    str+="}\n"
 #    return str 
 
-#conditional swap
+#conditional swap -  see Loiseau et al. 2021
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     if makestatic :
         str+="static "
     str+="int modcsw{}(int d,spint *g,spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c=(-d);\n"
-    str+="\tspint w=0;\n"
-    str+="\tspint r=f[0]^g[1];\n"
-    str+="\tspint ra=r+r; ra>>=1;\n"
+    str+="\tspint r0=f[0]^g[1];\n"
+    str+="\tspint r1=f[1]^g[0];\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\tspint t=(f[i]^g[i])&c;\n"
-    str+="\t\tt^=r;\n"
-    str+="\t\tspint e=f[i]^t; w^=e;\n"
-    str+="\t\tf[i]=e^ra;\n"
-    str+="\t\te=g[i]^t; w^=e;\n"
-    str+="\t\tg[i]=e^ra;\n\t}\n"
-    str+="\treturn w;\n}\n"
+    str+="\t\tspint t=f[i];\n"
+    str+="\t\tf[i]=f[i]*(1-(d-r0))+g[i]*(d+r1)-r0*f[i]-r1*g[i];\n"
+    str+="\t\tg[i]=g[i]*(1-(d-r0))+t*(d+r1)-r0*g[i]-r1*t;\n\t}\n"
+    str+="\treturn 0;\n}\n"
     return str
 
 #conditional move
@@ -1330,16 +1325,11 @@ def modcmv() :
         str+="static "
     str+="int modcmv{}(int d,const spint *g,spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c=(-d);\n"
-    str+="\tspint w=0;\n"
-    str+="\tspint r=f[0]^g[1];\n"
-    str+="\tspint ra=r+r; ra>>=1;\n"
+    str+="\tspint r0=f[0]^g[1];\n"
+    str+="\tspint r1=f[1]^g[0];\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\tspint t=(f[i]^g[i])&c;\n"
-    str+="\t\tt^=r;\n"
-    str+="\t\tspint e=f[i]^t; w^=e;\n"
-    str+="\t\tf[i]=e^ra;\n\t}\n"
-    str+="\treturn w;\n}\n"
+    str+="\t\tf[i]=f[i]*(1-(d-r0))+g[i]*(d+r1)-r0*f[i]-r1*g[i];\n\t}\n"
+    str+="\treturn 0;\n}\n"
     return str
 
 #shift left
