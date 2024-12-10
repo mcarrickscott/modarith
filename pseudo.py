@@ -889,10 +889,12 @@ def modcsw() :
     str+="\tint i;\n"
     str+="\tspint r0=f[0]^g[1];\n"
     str+="\tspint r1=f[1]^g[0];\n"
+    str+="\tspint c0=(1 - (d - ((r0<<1)>>1)));\n"
+    str+="\tspint c1=d+((r1<<1)>>1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\tspint t=f[i];\n"
-    str+="\t\tf[i]=f[i]*(1-(d-r0))+g[i]*(d+r1)-r0*f[i]-r1*g[i];\n"
-    str+="\t\tg[i]=g[i]*(1-(d-r0))+t*(d+r1)-r0*g[i]-r1*t;\n\t}\n"
+    str+="\t\tf[i] = t*c0 + g[i]*c1 - r0*((t<<1)>>1) - r1*((g[i]<<1)>>1);\n"
+    str+="\t\tg[i] = g[i]*c0 + t*c1 - r0*((g[i]<<1)>>1) - r1*((t<<1)>>1);\n\t}\n"
     str+="}\n"
     return str
 
@@ -905,8 +907,10 @@ def modcmv() :
     str+="\tint i;\n"
     str+="\tspint r0=f[0]^g[1];\n"
     str+="\tspint r1=f[1]^g[0];\n"
+    str+="\tspint c0=(1 - (d - ((r0<<1)>>1)));\n"
+    str+="\tspint c1=d+((r1<<1)>>1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\tf[i]=f[i]*(1-(d-r0))+g[i]*(d+r1)-r0*f[i]-r1*g[i];\n\t}\n"
+    str+="\t\tf[i] = f[i]*c0 + g[i]*c1 - r0*((f[i]<<1)>>1) - r1*((g[i]<<1)>>1);\n\t}\n"
     str+="}\n"
     return str
 
