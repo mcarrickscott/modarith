@@ -532,7 +532,7 @@ void ecnmul(const char *e,point *P)
 // not constant time
 void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
 {
-    int i;
+    int i,j;
     point T,W[5];
     signed char w[8*Nbytes+8];
     ecninf(&W[0]);     // O
@@ -549,10 +549,9 @@ void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
     while (i>=1)
     {
         ecndbl(R);
-        if (w[i]!=0) {
-            select(w[i],W,&T);
-            ecnadd(&T,R);
-        }
+        j=w[i];
+        if (j>0) ecnadd(&W[j],R);
+        if (j<0) ecnsub(&W[-j],R);
         i--;
     }
 }
