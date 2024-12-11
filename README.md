@@ -109,7 +109,7 @@ It is strongly recommended that the generated assembly language be closely studi
 
 The API interface is as indicated in *curve.h*. The API is completely implemented in *edwards.c* or *weierstrass.c*
 
-Make sure to copy fresh copies of *edwards.c* *weierstrass.c* and *curve.h* from source after each test
+MAKE SURE to copy fresh copies of *edwards.c* *weierstrass.c* and *curve.h* from source after each test 
 
 Support for standard SHA2 and SHA3 hashing algorithms is provided in *hash.c* and *hash.h*
 
