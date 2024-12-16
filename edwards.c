@@ -427,6 +427,7 @@ void ecnmul(const char *e,point *P)
     point Q,W[9];
     signed char w[2*Nbytes+1];
 
+    ecninf(&Q);
     ecninf(&W[0]);                         // O
     ecncpy(P,&W[1]);                       // P
     ecncpy(P,&W[2]); ecndbl(&W[2]);        // 2P
@@ -474,7 +475,7 @@ void ecnmul(const char *e,point *P)
 void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
 {
     int i,j;
-    point T,W[5];
+    point W[5];
     signed char w[8*Nbytes+8];
     ecninf(&W[0]);     // O
     ecncpy(P,&W[1]);   // P
