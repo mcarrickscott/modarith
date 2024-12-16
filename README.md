@@ -115,7 +115,7 @@ Support for standard SHA2 and SHA3 hashing algorithms is provided in *hash.c* an
 
 ## Quickstart 1:-
 
-	python curve.py 64 ED25519
+	python3 curve.py 64 ED25519
 	gcc -O2 testcurve.c edwards.c -lcpucycles -o testcurve
 	./testcurve
 
@@ -123,7 +123,7 @@ Note that this intermediate API only provides the elliptic curve functionality. 
 
 ## Quickstart 2:-
 
-	python curve.py 64 ED448
+	python3 curve.py 64 ED448
 Drop *group.c* into *Ed448.c* (EdDSA using ED448) where indicated
 
 	gcc -O2 Ed448.c edwards.c hash.c -o Ed448
@@ -131,7 +131,7 @@ Drop *group.c* into *Ed448.c* (EdDSA using ED448) where indicated
 
 ## Quickstart 3:-
 
-	python curve.py 64 NIST256
+	python3 curve.py 64 NIST256
 Drop *group.c* into *EC256.c* (ECDSA using P-256) where indicated
 
 	gcc -O2 EC256.c weierstrass.c hash.c -o EC256
@@ -149,7 +149,7 @@ Copy *testcurve.rs* and *hash.rs* into the rust project src subdirectory. Delete
 
 In the working directory
 
-	python curve_rust.py 64 ED25519
+	python3 curve_rust.py 64 ED25519
 Copy *edwards.rs* into the rust project src subdirectory. 
 
 	cd ecc
@@ -157,7 +157,7 @@ Copy *edwards.rs* into the rust project src subdirectory.
 
 Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
 
-	python curve_rust.py 64 NIST256
+	python3 curve_rust.py 64 NIST256
 
 Drop *group.rs* into *EC256.rs* (ECDSA using P-256) where indicated. Copy *EC256.rs* and *weierstrass.rs* to the rust src subdirectory
 	
@@ -166,7 +166,7 @@ Drop *group.rs* into *EC256.rs* (ECDSA using P-256) where indicated. Copy *EC256
 
 Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
 
-	python curve_rust.py 64 ED448
+	python3 curve_rust.py 64 ED448
 
 Drop *group.rs* into *Ed448.rs* (EdDSA using ED448) where indicated. Copy *Ed448.rs* and *edwards.rs* to the rust src subdirectory
 	
@@ -191,7 +191,7 @@ Next ensure that the elliptic curve modulus is named (upper case) and supported 
 
 Make sure the various elliptic curve constants are given in *curve.py* under the upper case curve name. Then for a 64-bit build
 
-	python curve.py 64 <Upper Case Name>
+	python3 curve.py 64 <Upper Case Name>
 
 This will automatically modify or create the files *curve.h*, *group.c* and either *edwards.c* or *weierstrass.c*. 
 

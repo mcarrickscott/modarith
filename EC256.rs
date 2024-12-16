@@ -41,8 +41,6 @@ const LIMBS:usize= NLIMBS;
 type GEL = [SPINT; LIMBS];
 
 const COMPRESS:bool = false;
-const PREHASHED:bool = true;  // true only for test vector
-
 
 // reduce 40 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^248.x + y, where x and y < q (x is top 9 bytes, y is bottom 31 bytes)
@@ -103,7 +101,32 @@ pub fn KEY_PAIR(compress: bool,prv: &[u8],public: &mut [u8]) {
     public[0]=fb;
 }
 
-pub fn SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
+pub fn PREHASH(sha: usize,m: &[u8]) -> [u8; BYTES] {
+    let mut thm: [u8; BYTES] = [0; BYTES];
+    if sha==32 {
+        let mut sh256 = SHA256::new();
+        for i in 0..m.len() {
+            sh256.process(m[i]);
+        }
+        let h=sh256.hash();
+        for i in 0..BYTES {
+            thm[i]=h[i];
+        } 
+    }
+    if sha==48 {
+        let mut sh384 = SHA384::new();
+        for i in 0..m.len() {
+            sh384.process(m[i]);
+        }
+        let h=sh384.hash();
+        for i in 0..BYTES {
+            thm[i]=h[i];
+        }
+    }
+    return thm;
+}
+
+pub fn SIGN(prv: &[u8],ran: &[u8],thm:&[u8],sig: &mut [u8]) {
     let mut rb:[u8;BYTES]=[0;BYTES];
     let mut sb:[u8;BYTES]=[0;BYTES];
     let mut R=ECP::new();
@@ -112,16 +135,7 @@ pub fn SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
     let mut s:GEL=[0;LIMBS];
     let mut k:GEL=[0;LIMBS];
 
-    if PREHASHED {
-        modimp(m,&mut e);
-    } else {
-        let mut sh256 = SHA256::new();
-        for i in 0..m.len() {
-            sh256.process(m[i]);
-        }
-        let h=sh256.hash();
-        modimp(&h,&mut e);
-    }
+    modimp(thm,&mut e);
 
     ecngen(&mut R);
     modimp(prv,&mut s);
@@ -148,9 +162,9 @@ pub fn SIGN(prv: &[u8],ran: &[u8],m:&[u8],sig: &mut [u8]) {
     }
 }
 
-// input public key, message and signature
+// input public key, hashed message and signature
 // NOTE signatures that are of the wrong length should be rejected prior to calling this function
-pub fn VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
+pub fn VERIFY(public: &[u8],thm:&[u8],sig:&[u8]) -> bool {
     let mut G=ECP::new();
     let mut Q=ECP::new();
 
@@ -164,16 +178,8 @@ pub fn VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut s:GEL=[0;LIMBS];
     let mut rds:GEL=[0;LIMBS];
     
-    if PREHASHED {
-        modimp(m,&mut e);
-    } else {
-        let mut sh256 = SHA256::new();
-        for i in 0..m.len() {
-            sh256.process(m[i]);
-        }
-        let h=sh256.hash();
-        modimp(&h,&mut e);
-    }
+    modimp(thm,&mut e);
+
     ecngen(&mut G);
 
 // import from signature
