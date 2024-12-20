@@ -887,14 +887,18 @@ def modcsw() :
         str+="static "
     str+="void modcsw{}(int d,spint *g,spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
+    str+="\tspint t,s,st,ss;\n"
     str+="\tspint r0=f[0]^g[1];\n"
     str+="\tspint r1=f[1]^g[0];\n"
     str+="\tspint c0=(1 - (d - ((r0<<1)>>1)));\n"
     str+="\tspint c1=d+((r1<<1)>>1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\tspint t=f[i];\n"
-    str+="\t\tf[i] = t*c0 + g[i]*c1 - r0*((t<<1)>>1) - r1*((g[i]<<1)>>1);\n"
-    str+="\t\tg[i] = g[i]*c0 + t*c1 - r0*((g[i]<<1)>>1) - r1*((t<<1)>>1);\n\t}\n"
+    str+="\t\tt=f[i]; s=g[i]; f[i]=0; g[i]=0; \n"
+    str+="\t\tst=((t<<1)>>1);\n"
+    str+="\t\tss=((s<<1)>>1);\n"
+    str+="\t\tif (st!=t) break;\n"
+    str+="\t\tf[i] = t*c0 + s*c1 - r0*st - r1*ss;\n"
+    str+="\t\tg[i] = s*c0 + t*c1 - r0*ss - r1*st;\n\t}\n"
     str+="}\n"
     return str
 
@@ -905,12 +909,16 @@ def modcmv() :
         str+="static "
     str+="void modcmv{}(int d,const spint *g,spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
+    str+="\tspint t,st;\n"
     str+="\tspint r0=f[0]^g[1];\n"
     str+="\tspint r1=f[1]^g[0];\n"
     str+="\tspint c0=(1 - (d - ((r0<<1)>>1)));\n"
     str+="\tspint c1=d+((r1<<1)>>1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\tf[i] = f[i]*c0 + g[i]*c1 - r0*((f[i]<<1)>>1) - r1*((g[i]<<1)>>1);\n\t}\n"
+    str+="\t\tt=f[i]; f[i]=0;\n"
+    str+="\t\tst=((t<<1)>>1);\n"
+    str+="\t\tif (st!=t) break;\n"
+    str+="\t\tf[i] = t*c0 + g[i]*c1 - r0*st - r1*((g[i]<<1)>>1);\n\t}\n"
     str+="}\n"
     return str
 
