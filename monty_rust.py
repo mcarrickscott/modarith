@@ -1212,15 +1212,14 @@ def modcsw() :
     str+="\tlet r0=f[0]^g[1];\n"
     str+="\tlet r1=f[1]^g[0];\n"
     str+="\tlet dd = d as SPINT;\n"
-    str+="\tlet c0=1-(dd-((r0<<1)>>1));\n"
-    str+="\tlet c1=dd+((r1<<1)>>1);\n"
+    str+="\tlet c0=1-(dd-r0);\n"
+    str+="\tlet c1=dd+r1;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
-    str+="\t\tlet t=f[i]; f[i]=0; let s=g[i]; g[i]=0;\n"
-    str+="\t\tlet st=(t<<1)>>1;\n"
-    str+="\t\tlet ss=(s<<1)>>1;\n"
-    str+="\t\tif st!=t {break;}\n"
-    str+="\t\tf[i]=t*c0+s*c1-r0*st-r1*ss;\n"
-    str+="\t\tg[i]=s*c0+t*c1-r0*ss-r1*st;\n\t}\n"
+    str+="\t\tlet t=f[i]; let s=g[i];\n"
+    str+="\t\tf[i] =c0*t+c1*s;\n"
+    str+="\t\tg[i] =c0*s+c1*t;\n"
+    str+="\t\tf[i]-=r0*t+r1*s;\n"
+    str+="\t\tg[i]-=r0*s+r1*t;\n\t}\n"
     str+="\treturn;\n}\n"
     return str
 
@@ -1233,13 +1232,12 @@ def modcmv() :
     str+="\tlet r0=f[0]^g[1];\n"
     str+="\tlet r1=f[1]^g[0];\n"
     str+="\tlet dd = d as SPINT;\n"
-    str+="\tlet c0=1-(dd-((r0<<1)>>1));\n"
-    str+="\tlet c1=dd+((r1<<1)>>1);\n"
+    str+="\tlet c0=1-(dd-r0);\n"
+    str+="\tlet c1=dd+r1;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
-    str+="\t\tlet t=f[i]; f[i]=0;\n"
-    str+="\t\tlet st=(t<<1)>>1;\n"
-    str+="\t\tif st!=t {break;}\n"
-    str+="\t\tf[i]=t*c0+g[i]*c1-r0*st-r1*((g[i]<<1)>>1);\n\t}\n"
+    str+="\t\tlet t=f[i];\n"
+    str+="\t\tf[i] =c0*t+c1*g[i];\n"
+    str+="\t\tf[i]-=r0*t+r1*g[i];\n\t}\n"
     str+="\treturn;\n}\n"
     return str
 
