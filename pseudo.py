@@ -885,7 +885,7 @@ def modcsw() :
     str="//conditional swap g and f if d=1\n"
     if makestatic :
         str+="static "
-    str+="void modcsw{}(int d,spint *g,spint *f) {{\n".format(DECOR)
+    str+="void modcsw{}(int d,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint t,s;\n"
     str+="\tspint r0=f[0]^g[1];\n"
@@ -906,7 +906,7 @@ def modcmv() :
     str="//conditional move g to f if d=1\n"
     if makestatic :
         str+="static "
-    str+="void modcmv{}(int d,const spint *g,spint *f) {{\n".format(DECOR)
+    str+="void modcmv{}(int d,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint t;\n"
     str+="\tspint r0=f[0]^g[1];\n"

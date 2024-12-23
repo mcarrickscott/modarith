@@ -1216,8 +1216,8 @@ def modcsw() :
     str+="\tlet c1=dd+r1;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tlet t=f[i]; let s=g[i];\n"
-    str+="\t\tf[i] =c0*t+c1*s;\n"
-    str+="\t\tg[i] =c0*s+c1*t;\n"
+    str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*s);}\n"
+    str+="\t\tunsafe{core::ptr::write_volatile(&mut g[i],c0*s+c1*t);}\n"
     str+="\t\tf[i]-=r0*t+r1*s;\n"
     str+="\t\tg[i]-=r0*s+r1*t;\n\t}\n"
     str+="\treturn;\n}\n"
@@ -1236,7 +1236,7 @@ def modcmv() :
     str+="\tlet c1=dd+r1;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tlet t=f[i];\n"
-    str+="\t\tf[i] =c0*t+c1*g[i];\n"
+    str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*g[i]);}\n"
     str+="\t\tf[i]-=r0*t+r1*g[i];\n\t}\n"
     str+="\treturn;\n}\n"
     return str
