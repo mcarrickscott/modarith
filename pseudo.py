@@ -885,19 +885,19 @@ def modcsw() :
     str="//conditional swap g and f if d=1\n"
     if makestatic :
         str+="static "
-    str+="void modcsw{}(int d,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
+    str+="void modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint t,s;\n"
-    str+="\tspint r0=f[0]^g[1];\n"
-    str+="\tspint r1=f[1]^g[0];\n"
-    str+="\tspint c0=(1 - (d - r0));\n"
-    str+="\tspint c1=d+r1;\n"
+    str+="\tspint c0,c1,r,s,t;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\tt=f[i]; s=g[i];\n"
+    str+="\t\ts=g[i]; t=f[i];\n"
+    str+="\t\tr=s^t;\n"
+    str+="\t\tc0=1-b+r;\n"
+    str+="\t\tc1=b+r;\n"
+    str+="\t\tr*=(t+s);\n"
     str+="\t\tf[i] =c0*t+c1*s;\n"
+    str+="\t\tf[i]-=r;\n"
     str+="\t\tg[i] =c0*s+c1*t;\n"
-    str+="\t\tf[i]-=r0*t+r1*s;\n"
-    str+="\t\tg[i]-=r0*s+r1*t;\n\t}\n"
+    str+="\t\tg[i]-=r;\n\t}\n"
     str+="}\n"
     return str
 
@@ -906,19 +906,20 @@ def modcmv() :
     str="//conditional move g to f if d=1\n"
     if makestatic :
         str+="static "
-    str+="void modcmv{}(int d,const spint *g,volatile spint *f) {{\n".format(DECOR)
+    str+="void modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint t;\n"
-    str+="\tspint r0=f[0]^g[1];\n"
-    str+="\tspint r1=f[1]^g[0];\n"
-    str+="\tspint c0=(1 - (d - r0));\n"
-    str+="\tspint c1=d+r1;\n"
+    str+="\tspint c0,c1,r,s,t;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\tt=f[i];\n"
-    str+="\t\tf[i] =c0*t+c1*g[i];\n"
-    str+="\t\tf[i]-=r0*t+r1*g[i];\n\t}\n"
+    str+="\t\ts=g[i]; t=f[i];\n"
+    str+="\t\tr=s^t;\n"
+    str+="\t\tc0=1-b+r;\n"
+    str+="\t\tc1=b+r;\n"
+    str+="\t\tr*=(t+s);\n"
+    str+="\t\tf[i] =c0*t+c1*s;\n"
+    str+="\t\tf[i]-=r;\n\t}\n"
     str+="}\n"
     return str
+
 
 #shift left
 def modshl(n) :

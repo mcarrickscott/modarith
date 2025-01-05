@@ -153,7 +153,7 @@ In the working directory
 Copy *edwards.rs* into the rust project src subdirectory. 
 
 	cd ecc
-	cargo run --release --bin testcurve
+	cargo run --release --features ED25519 --bin testcurve
 
 Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
 
