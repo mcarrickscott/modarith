@@ -559,36 +559,41 @@ def modmli(n,base) :
     if makepublic :
         str+="pub "
     str+="fn modmli(b: usize,c: &mut [SPINT]) {\n"
-    str+="\tlet mut t=0 as UDPINT;\n"
-    str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
+    if trin>0 :
+        str+="\tlet mut t=0 as UDPINT;\n"
+        str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
 
-    for i in range(0,N) :
-        str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(i)
-        str+="c[{}]=(t as SPINT) & mask; t=t>>{};\n".format(i,base)
+        for i in range(0,N) :
+            str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(i)
+            str+="c[{}]=(t as SPINT) & mask; t=t>>{};\n".format(i,base)
 
-    str+="// reduction pass\n\n"  
-    str+="\tlet s=t as SPINT;\n"  
+        str+="// reduction pass\n\n"  
+        str+="\tlet s=t as SPINT;\n"  
 
-    if xcess>0 :
-        smask=(1<<(base-xcess))-1
-        str+= "\ts=(s<<{})+(c[{}]>>{}u); c[{}]&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+        if xcess>0 :
+            smask=(1<<(base-xcess))-1
+            str+= "\ts=(s<<{})+(c[{}]>>{}u); c[{}]&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
-    str+="\tc[0]+=s;\n"
-    str+="\tc[{}]+=s;\n".format(trin)
+        str+="\tc[0]+=s;\n"
+        str+="\tc[{}]+=s;\n".format(trin)
+    else :
+        str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
+        str+="\tmodint(b,&mut t);\n"
+        str+="\tmodmul(&t,c);\n"
 
     str+="\treturn;\n}\n"
     return str
 
-def dummymodmli(n,base) :
-    str="// Modular multiplication by an integer, c=c*b mod 2p\n"
-    str+="#[allow(dead_code)]\n"
-    if inline :
-        str+="#[inline]\n"
-    if makepublic :
-        str+="pub "
-    str+="fn modmli(_b: usize,_c: &mut [SPINT]) {\n"
-    str+="\treturn;\n}\n"
-    return str
+#def dummymodmli(n,base) :
+#    str="// Modular multiplication by an integer, c=c*b mod 2p\n"
+#    str+="#[allow(dead_code)]\n"
+#    if inline :
+#        str+="#[inline]\n"
+#    if makepublic :
+#        str+="pub "
+#    str+="fn modmli(_b: usize,_c: &mut [SPINT]) {\n"
+#    str+="\treturn;\n}\n"
+#    return str
 
 # modular multiplication, modulo p. Exploits 0 digits in p.
 # Note that allowing inlining gives significant speed-up
@@ -1853,10 +1858,11 @@ with open('time.rs', 'w') as f:
         print(prop(n,base))
         print(flat(n,base))
         print(modfsb(n,base))
-        if trin>0 :
-            print(modmli(n,base))
-        else :
-            print(dummymodmli(n,base))
+        print(modint())
+        #if trin>0 :
+        print(modmli(n,base))
+        #else :
+        #    print(dummymodmli(n,base))
         print(modmul(n,base))
         print(modsqr(n,base))
         print(modcpy())
@@ -1905,10 +1911,10 @@ with open(fname, 'w') as f:
         print(modadd(n,base))
         print(modsub(n,base))
         print(modneg(n,base))
-        if trin>0 :
-            print(modmli(n,base))
-        else :
-            print(dummymodmli(n,base))
+        #if trin>0 :
+        print(modmli(n,base))
+        #else :
+        #    print(dummymodmli(n,base))
         print(modmul(n,base))
         print(modsqr(n,base))
         print(modcpy())

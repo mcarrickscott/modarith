@@ -43,6 +43,14 @@ pub fn ecncpy(Q: &ECP,P: &mut ECP) {
     modcpy(&Q.z,&mut P.z);
 }
 
+pub fn ecnran(r: usize,P: &mut ECP) {
+    if r>1 {
+        modmli(r,&mut P.x);
+        modmli(r,&mut P.y);
+        modmli(r,&mut P.z);
+    }
+}
+
 pub fn ecnneg(P: &mut ECP) {
     modneg(&mut P.y);
 }

@@ -21,6 +21,7 @@ extern void ecnadd(point *Q,point *P); // add Q to P
 extern void ecnsub(point *Q,point *P); // subtract Q from P
 extern void ecndbl(point *P);          // double P
 extern void ecngen(point *P);          // create generator point
+extern void ecnran(int r,point *P);    // randomize projective point (side channel noise)
 extern void ecnmul(const char *e,point *P); // multiply P by e
 extern void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R); // R=eP+fQ
 extern int ecncmp(point *P,point *Q);  // compare points for equality

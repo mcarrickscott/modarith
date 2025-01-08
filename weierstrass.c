@@ -47,6 +47,17 @@ void ecncpy(point *Q,point *P)
     modcpy(Q->z,P->z);
 }
 
+// randomize projective point
+void ecnran(int r,point *P)
+{
+    if (r>1)
+    {
+        modmli(P->x,r,P->x);
+        modmli(P->y,r,P->y);
+        modmli(P->z,r,P->z);
+    }
+}
+
 // negate P
 void ecnneg(point *P)
 {

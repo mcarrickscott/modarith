@@ -576,44 +576,6 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
         gone_neg=True
     return str,gone_neg
 
-
-
-# multiply by an integer
-def modmli(n) :
-    N=getN(n)
-    mask=(1<<base)-1
-    xcess=N*base-n
-    str="// Modular multiplication by an integer, c=a*b mod 2p\n"
-    if makestatic :
-        str+="static "
-    if inline and makestatic:
-        str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
-    else :
-        str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
-    str+="\tudpint t=0;\n"
-
-    #str+="\tspint carry;\n"
-    str+="\tspint s;\n"
-    str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
-
-    for i in range(0,N) :
-        str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
-        str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
-
-    str+="// reduction pass\n\n"  
-    str+="\ts=(spint)t;\n"  
-
-    if xcess>0 :
-        smask=(1<<(base-xcess))-1
-        str+= "\ts=(s<<{})+(c[{}]>>{}u); c[{}]&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
-
-    str+="\tc[0]+=s;\n"
-    str+="\tc[{}]+=s;\n".format(trin)
-    str+="}\n"
-    return str
-
-
-
 # modular multiplication, modulo p. Exploits 0 digits in p.
 # Note that allowing inlining gives significant speed-up
 def modmul(n) :
@@ -824,6 +786,46 @@ def modmul(n) :
             else :
                 str+="\tt-=(dpint)1u;"
         str+="\tc[{}] = (spint)t;\n".format(N-1)
+    str+="}\n"
+    return str
+
+
+# multiply by an integer
+def modmli(n) :
+    N=getN(n)
+    mask=(1<<base)-1
+    xcess=N*base-n
+    str="// Modular multiplication by an integer, c=a*b mod 2p\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic:
+        str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+    else :
+        str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+    if trin>0 :
+        str+="\tudpint t=0;\n"
+
+        #str+="\tspint carry;\n"
+        str+="\tspint s;\n"
+        str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
+
+        for i in range(0,N) :
+            str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+            str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
+
+        str+="// reduction pass\n\n"  
+        str+="\ts=(spint)t;\n"  
+
+        if xcess>0 :
+            smask=(1<<(base-xcess))-1
+            str+= "\ts=(s<<{})+(c[{}]>>{}u); c[{}]&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+
+        str+="\tc[0]+=s;\n"
+        str+="\tc[{}]+=s;\n".format(trin)
+    else :
+        str+="\tspint t[{}];\n".format(N)
+        str+="\tmodint(b,t);\n"
+        str+="\tmodmul(a,t,c);\n"
     str+="}\n"
     return str
 
@@ -1698,8 +1700,6 @@ def functions() :
     print(modadd(n))
     print(modsub(n))
     print(modneg(n))
-    if trin>0 :
-        print(modmli(n))
     print(modmul(n))
     print(modsqr(n))
     print(modcpy())
@@ -1714,6 +1714,7 @@ def functions() :
     print(modzer())
     print(modone())
     print(modint())
+    print(modmli(n))
     print(modqr())
     print(modcmv())
     print(modcsw())
@@ -2246,16 +2247,16 @@ with open('time.c', 'w') as f:
         print(prop(n))
         print(flat(n))
         print(modfsb(n))
-        if trin>0 :
-            print(modmli(n))
         print(modmul(n))
+        print(nres(n))
+        print(redc(n))
+        print(modint())
+        print(modmli(n))
         print(modsqr(n))
         print(modcpy())
         print(modnsqr())
         print(modpro())
         print(modinv())
-        print(nres(n))
-        print(redc(n))
         print(time_modmul(n,ra,rb))
         print(time_modsqr(n,rs))
         print(time_modinv(n,ri))
