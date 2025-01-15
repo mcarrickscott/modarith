@@ -883,6 +883,7 @@ def redc(n) :
 #conditional swap -  see Loiseau et al. 2021
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
+    str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
     if makestatic :
         str+="static "
     str+="void modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
@@ -909,6 +910,7 @@ def modcsw() :
 #conditional move
 def modcmv() :
     str="//conditional move g to f if d=1\n"
+    str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
     if makestatic :
         str+="static "
     str+="void modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)

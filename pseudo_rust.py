@@ -806,6 +806,7 @@ def redc(n,base) :
 #conditional swap - see Loiseau et al. 2021
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
+    str+="#[inline(never)]\n"
     if makepublic :
         str+="pub "
     str+="fn modcsw(b: usize,g: &mut [SPINT],f: &mut [SPINT]) {\n"
@@ -832,6 +833,7 @@ def modcsw() :
 #conditional move
 def modcmv() :
     str="//conditional move g to f if d=1\n"
+    str+="#[inline(never)]\n"
     if makepublic :
         str+="pub "
     str+="fn modcmv(b: usize,g: &[SPINT],f: &mut [SPINT]) {\n"
