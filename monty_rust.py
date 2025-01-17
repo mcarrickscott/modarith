@@ -1059,6 +1059,9 @@ def modqr() :
         str+="pub "
     str+="fn modqr(h: Option<&[SPINT]>,x: &[SPINT]) -> bool {\n"
     str+="\tlet mut r: [SPINT; {}] = [0; {}];\n".format(N,N)
+    str+="\tif modis0(x) {\n"
+    str+="\t\treturn true;\n"
+    str+="\t}\n"
     str+="\tif let Some(hint) = h {\n"
     str+="\t\tmodcpy(&hint,&mut r);\n"
     str+="\t} else {\n"

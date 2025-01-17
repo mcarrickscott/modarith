@@ -723,6 +723,7 @@ def modqr() :
         str+="static "
     str+="int modqr{}(const spint *h,const spint *x) {{\n".format(DECOR)
     str+="\tspint r[{}];\n".format(N)
+    str+="\tif (modis0(x)) return 1;\n"
     str+="\tif (h==NULL) {\n"
     str+="\t\tmodpro{}(x,r);\n".format(DECOR)
     str+="\t\tmodsqr{}(r,r);\n".format(DECOR)
