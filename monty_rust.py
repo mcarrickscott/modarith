@@ -1059,9 +1059,6 @@ def modqr() :
         str+="pub "
     str+="fn modqr(h: Option<&[SPINT]>,x: &[SPINT]) -> bool {\n"
     str+="\tlet mut r: [SPINT; {}] = [0; {}];\n".format(N,N)
-    str+="\tif modis0(x) {\n"
-    str+="\t\treturn true;\n"
-    str+="\t}\n"
     str+="\tif let Some(hint) = h {\n"
     str+="\t\tmodcpy(&hint,&mut r);\n"
     str+="\t} else {\n"
@@ -1071,7 +1068,7 @@ def modqr() :
     str+="\tmodmul(&x,&mut r);\n"
     if PM1D2>1 :
         str+="\tmodnsqr(&mut r,{});\n".format(PM1D2-1)
-    str+="\treturn modis1(&r);\n}\n"
+    str+="\treturn modis1(&r) || modis0(x) ;\n}\n"
     return str
 
 def modsqrt() :

@@ -1113,7 +1113,6 @@ def modqr() :
         str+="static "
     str+="int modqr{}(const spint *h,const spint *x) {{\n".format(DECOR)
     str+="\tspint r[{}];\n".format(N)
-    str+="\tif (modis0(x)) return 1;\n"
     str+="\tif (h==NULL) {\n"
     str+="\t\tmodpro{}(x,r);\n".format(DECOR)
     str+="\t\tmodsqr{}(r,r);\n".format(DECOR)
@@ -1123,9 +1122,7 @@ def modqr() :
     str+="\tmodmul{}(r,x,r);\n".format(DECOR)
     if PM1D2>1 :
         str+="\tmodnsqr{}(r,{});\n".format(DECOR,PM1D2-1)
-        #str+="\tfor (i=0;i<{}-1;i++) {{\n".format(PM1D2)
-        #str+="\t\tmodsqr{}(r,r);\n\t}}\n".format(DECOR)
-    str+="\treturn modis1{}(r);\n}}\n".format(DECOR)
+    str+="\treturn modis1{}(r) | modis0{}(x);\n}}\n".format(DECOR,DECOR)
     return str
 
 #modular square root
