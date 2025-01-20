@@ -817,8 +817,8 @@ def modcsw() :
         str+="let r=0x5aa5a55a;\n"
     if WL==64 :
         str+="let r=0x3cc3c33c5aa5a55a;\n"
-    str+="\t\tlet c0=(1-bb)+r;\n"
-    str+="\t\tlet c1=bb+r;\n"
+    str+="\t\tlet c0=(!bb)&(r+1);\n"
+    str+="\t\tlet c1=bb|r;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tlet s=g[i];\n"
     str+="\t\tlet t=f[i];\n"
@@ -844,8 +844,8 @@ def modcmv() :
     if WL==64 :
         str+="let r=0x3cc3c33c5aa5a55a;\n"
     str+="\tlet bb = b as SPINT;\n"
-    str+="\t\tlet c0=(1-bb)+r;\n"
-    str+="\t\tlet c1=bb+r;\n"
+    str+="\t\tlet c0=(!bb)&(r+1);\n"
+    str+="\t\tlet c1=bb|r;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tlet s=g[i];\n"
     str+="\t\tlet t=f[i];\n"
