@@ -1671,7 +1671,9 @@ def time_modinv(n,r) :
     return str
 
 def header() :
-    print("\n//Command line : python {} {} {}\n".format(sys.argv[0], sys.argv[1], sys.argv[2]))
+    print("\n//Automatically generated modular arithmetic C code")
+    print("//Command line : python {} {} {}".format(sys.argv[0], sys.argv[1], sys.argv[2]))
+    print("//Python Script by Mike Scott (Technology Innovation Institute, UAE, 2025)\n")
     print("#include <stdio.h>")
     print("#include <stdint.h>\n")
     print("#define sspint int{}_t".format(WL))

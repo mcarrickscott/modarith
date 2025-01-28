@@ -1362,6 +1362,9 @@ print("For timings run ./time")
 # output code in final form
 with open('field.rs', 'w') as f:
     with redirect_stdout(f):
+        print("\n//Automatically generated modular arithmetic Rust code for pseudo-Mersenne primes")
+        print("//Command line : python {} {} {}".format(sys.argv[0], sys.argv[1], sys.argv[2]))
+        print("//Python Script by Mike Scott (Technology Innovation Institute, UAE, 2025)\n")
         if makepublic :
             print("pub type SPINT = u{};".format(WL))
             print("pub type SSPINT = i{};".format(WL))
