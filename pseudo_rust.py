@@ -112,7 +112,7 @@ def prop(n,base) :
     str+="\t\tcarry>>={};\n".format(base)
     str+="\t}\n"
     str+="\tn[{}]+=carry as SPINT;\n".format(N-1)
-    str+="\treturn ((n[{}] as SSPINT)>>{}) as SPINT;\n}}\n".format(N-1,WL-1);
+    str+="\treturn ((n[{}] as SSPINT)>>{}) as SPINT;\n}}\n".format(N-1,WL-1)
     return str
 
 #propagate carries and add p if negative, propagate carries again
@@ -983,7 +983,7 @@ def time_modmul(n,base,ra,rb) :
     str+="\tnres(&mut x);\n"
     str+="\tnres(&mut y);\n"
     if cyclesorsecs:
-        str+="\tunsafe {\n";
+        str+="\tunsafe {\n"
         str+="\tlet pre = std::arch::x86_64::_rdtsc();\n"
     str+="\tlet begin = Instant::now();\n"
     str+="\tfor _i in 0..{} {{\n".format(100000//scale)
@@ -1030,7 +1030,7 @@ def time_modsqr(n,base,r) :
 
     str+="\tnres(&mut x);\n"
     if cyclesorsecs:
-        str+="\tunsafe {\n";
+        str+="\tunsafe {\n"
         str+="\tlet pre = std::arch::x86_64::_rdtsc();\n"
     str+="\tlet begin = Instant::now();\n"
     str+="\tfor _i in 0..{} {{\n".format(100000//scale)
@@ -1071,7 +1071,7 @@ def time_modinv(n,base,r) :
 
     str+="\tnres(&mut x);\n"
     if cyclesorsecs:
-        str+="\tunsafe {\n";
+        str+="\tunsafe {\n"
         str+="\tlet pre = std::arch::x86_64::_rdtsc();\n"
     str+="\tlet begin = Instant::now();\n"
     str+="\tfor _i in 0..{} {{\n".format(50000//scale)
@@ -1107,12 +1107,12 @@ if len(sys.argv)!=3 :
     print("Valid syntax - python pseudo_rust.py <word length> <prime> OR <prime> OR <prime expression>")
     print("For example - python pseudo_rust.py 64 X25519")
     print("For example - python pseudo_rust.py 64 2**255-19")
-    exit(0);
+    exit(2)
 
 WL=int(sys.argv[1])
 if WL !=16 and WL != 32 and WL !=64 :
     print("Only 16, 32 and 64-bit word lengths supported")
-    exit(0)
+    exit(2)
 
 prime=sys.argv[2]
 
@@ -1195,17 +1195,17 @@ if p==0 :
         p=eval(prime)
     else :
         print("This named prime not supported (not a pseudo-Mersenne?)")
-        exit(0)
+        exit(2)
 
 ### End of user editable area
 
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
-    exit(0)
+    exit(2)
 #if n>360 and WL==16 :
 #	print("Modulus probably too big for 16-bit processor")
-#	exit(0)
+#	exit(1)
 
 if base==0 :
     base=getbase(n)   # use default radix
@@ -1223,7 +1223,7 @@ PE=(p-1-e)//(2*e)
 
 if m>=b : 
     print("Not an exploitable pseudo-Mersenne - Use Montgomery method instead")
-    exit(0)
+    exit(1)
 
 # get number of limbs
 N=getN(n,base)
@@ -1236,7 +1236,7 @@ if N>9 :
 # check for excess too large
 if mm >= 2**(WL-1) : #or m*((N+2)*2**(2*WL)) >= 2**(2*base+WL-1-xcess) :
     print("Unfortunate choice of radix - excess",xcess,"too large - try using smaller radix")
-    exit(0)
+    exit(1)
 
 if (n%base)==0 :
     TW=b
@@ -1252,14 +1252,14 @@ if (n%8)!=0 :
 qnr=0
 roi=0
 if PM1D2==1: 
-    roi=p-1;
+    roi=p-1
 if PM1D2==2:
     roi=pow(2,(p-1)//4,p)
 if PM1D2>2 : 
-    qnr=2;
+    qnr=2
     while pow(qnr,(p-1)//2,p)==1 :
-        qnr+=1;
-    roi=pow(qnr,(p-1)//e,p);
+        qnr+=1
+    roi=pow(qnr,(p-1)//e,p)
 
 # convert to radix representation
 ROI=makebig(roi,base,N)
@@ -1267,15 +1267,15 @@ ROI=makebig(roi,base,N)
 mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
 if karatsuba :
-    print("Using Karatsuba for modmul");
+    print("Using Karatsuba for modmul")
 else : 
-    print("Using standard Comba for modmul");
+    print("Using standard Comba for modmul")
 
 overflow=False
 bad_overflow=False
 if (b-1)*(b-1)*mm*N >= 2**(2*WL) :
     overflow=True
-    print("Possibility of overflow... using alternate method");
+    print("Possibility of overflow... using alternate method")
     if karatsuba :
         if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
             bad_overflow=True
@@ -1286,7 +1286,7 @@ if bad_overflow :
     print("Overflow requires extra resource")
 
 # faster reduction
-fred=False;
+fred=False
 if bits(N+1)+base+bits(mm)<WL :
     fred=True
     print("Tighter reduction")
@@ -1433,4 +1433,4 @@ if formatted :
     subprocess.call("rustfmt field.rs", shell=True)
 print("Field code is in field.rs")
 
-sys.exit(base)
+sys.exit(0)

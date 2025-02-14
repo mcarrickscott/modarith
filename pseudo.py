@@ -171,7 +171,7 @@ def prop(n) :
         str+="\t\tcarry>>={}u;\n".format(base)
     str+="\t}\n"
     str+="\tn[{}]+=(spint)carry;\n".format(N-1)
-    str+="\treturn -((n[{}]>>1)>>{}u);\n}}\n".format(N-1,WL-2);
+    str+="\treturn -((n[{}]>>1)>>{}u);\n}}\n".format(N-1,WL-2)
     return str
 
 
@@ -1333,12 +1333,12 @@ if len(sys.argv)!=3 :
     print("Valid syntax - python pseudo.py <word length> <prime> OR <prime name>")
     print("For example - python pseudo.py 64 X25519")
     print("For example - python pseudo.py 64 2**255-19")
-    exit(0);
+    exit(2)
 
 WL=int(sys.argv[1])
 if WL!=16 and WL != 32 and WL !=64 :
     print("Only 16, 32 and 64-bit word lengths supported")
-    exit(0)
+    exit(2)
 
 prime=sys.argv[2]
 
@@ -1426,15 +1426,15 @@ if p==0 :
         noname=True    # unnamed prime
     else :
         print("This named modulus not supported (not a pseudo-Mersenne?)")
-        exit(0)
+        exit(2)
 
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
-    exit(0)
+    exit(2)
 #if n>360 and WL==16 :
 #	print("Modulus probably too big for 16-bit processor")
-#	exit(0)
+#	exit(1)
 
 if base==0 :
     base=getbase(n)   # use default radix
@@ -1452,7 +1452,7 @@ PE=(p-1-e)//(2*e)                # exponent for use in inversion, QR check, and 
 
 if m>=b :
     print("Not an exploitable pseudo-Mersenne - Use Montgomery method instead")
-    exit(0)
+    exit(1)
 
 # get number of limbs
 N=getN(n)
@@ -1465,7 +1465,7 @@ if N>9 :
 # check for excess too large
 if mm >= 2**(WL-1) : #or m*((N+2)*2**(2*WL)) >= 2**(2*base+WL-1-xcess) :
     print("Unfortunate choice of radix - excess",xcess,"too large - try using smaller radix")
-    exit(0)
+    exit(1)
 
 if (n%base)==0 :
     TW=b
@@ -1481,14 +1481,14 @@ if (n%8)!=0 :
 qnr=0
 roi=0
 if PM1D2==1: 
-    roi=p-1;
+    roi=p-1
 if PM1D2==2:
     roi=pow(2,(p-1)//4,p)
 if PM1D2>2 : 
-    qnr=2;
+    qnr=2
     while pow(qnr,(p-1)//2,p)==1 :
-        qnr+=1;
-    roi=pow(qnr,(p-1)//e,p);
+        qnr+=1
+    roi=pow(qnr,(p-1)//e,p)
 
 # convert to radix representation
 ROI=makebig(roi,base,N)
@@ -1497,15 +1497,15 @@ mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
 print("Compiler is "+compiler)
 if karatsuba :
-    print("Using Karatsuba for modmul");
+    print("Using Karatsuba for modmul")
 else : 
-    print("Using standard Comba for modmul");
+    print("Using standard Comba for modmul")
 
 overflow=False
 bad_overflow=False
 if (b-1)*(b-1)*mm*N >= 2**(2*WL) :
     overflow=True
-    print("Possibility of overflow... using alternate method");
+    print("Possibility of overflow... using alternate method")
     if karatsuba :
         if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
             bad_overflow=True
@@ -1516,7 +1516,7 @@ if bad_overflow :
     print("Overflow requires extra resource")
 
 # faster reduction
-fred=False;
+fred=False
 if bits(N+1)+base+bits(mm)<WL :
     fred=True
     print("Tighter reduction")
@@ -1688,7 +1688,7 @@ for i in range(0,1000) :
         print("Failed")
         #print(hex(z))
         #print(hex(rz))
-        exit(0)
+        exit(1)
 print("Passed - OK")
 subprocess.call("rm test.c", shell=True)
 subprocess.call("rm test.so", shell=True)
@@ -1793,4 +1793,4 @@ if check:
 
 print("Field code is in field.c")
 
-sys.exit(base)
+sys.exit(0)
