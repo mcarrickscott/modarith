@@ -1433,4 +1433,4 @@ if formatted :
     subprocess.call("rustfmt field.rs", shell=True)
 print("Field code is in field.rs")
 
-sys.exit(0)
+sys.exit(base)

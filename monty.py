@@ -2348,4 +2348,4 @@ if field :
 else :
     print("group code is in group.c")
 
-sys.exit(0)
+sys.exit(base)

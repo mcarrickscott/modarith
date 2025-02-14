@@ -1988,4 +1988,4 @@ if field :
 else :
     print("group code is in group.rs")
 
-sys.exit(0)
+sys.exit(base)

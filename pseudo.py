@@ -1793,4 +1793,4 @@ if check:
 
 print("Field code is in field.c")
 
-sys.exit(0)
+sys.exit(base)
