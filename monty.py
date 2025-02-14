@@ -62,7 +62,7 @@ import subprocess
 
 def ispowerof2(n) :
     if (n & (n-1) == 0) and n>0 :
-        e=0;
+        e=0
         while n>0 :
             if (n&1)!=0 :
                 return e
@@ -212,9 +212,9 @@ def process_prime(p,base,N) :
             else :
                 if pw[i] == b-1 :
                     ppw[i]=-1
-                    carry=1;
+                    carry=1
         i=i+1
-    E=False;
+    E=False
     if carry==1 :
         E=True
         ppw.append(carry)
@@ -225,7 +225,7 @@ def caddp(x) :
     str=""
     for i in range(0,N) :
         if ppw[i]==0 :
-            continue;
+            continue
         if ppw[i]==-1:
             str+="\tn[{}]-=(spint){}u&carry;\n".format(i,x)
             continue
@@ -242,7 +242,7 @@ def addp(x) :
     str=""
     for i in range(0,N) :
         if ppw[i]==0 :
-            continue;
+            continue
         if ppw[i]==-1:
             str+="\tn[{}]-=(spint){};\n".format(i,x)
             continue
@@ -259,7 +259,7 @@ def subp(x) :
     str=""
     for i in range(0,N) :
         if ppw[i]==0 :
-            continue;
+            continue
         if ppw[i]==-1:
             str+="\tn[{}]+=(spint){}u;\n".format(i,x)
             continue
@@ -299,7 +299,7 @@ def prop(n) :
         str+="\t\tcarry>>={}u;\n".format(base)
     str+="\t}\n"
     str+="\tn[{}]+=(spint)carry;\n".format(N-1)
-    str+="\treturn -((n[{}]>>1)>>{}u);\n}}\n".format(N-1,WL-2);
+    str+="\treturn -((n[{}]>>1)>>{}u);\n}}\n".format(N-1,WL-2)
     return str
 
 #propagate carries and add p if negative, propagate carries again
@@ -415,15 +415,15 @@ def getZMU(str,i) :
     if karatsuba :
         if i==0 :
             str+="\tu=d0; t = u;"
-            maxnum+=maxdigit*maxdigit;
+            maxnum+=maxdigit*maxdigit
         else :
             str+="\tu+=d{}; t+=u;".format(i)
             for m in range(i,int(i/2),-1) :
                 str+=" t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i - m, i - m, m)
-                maxnum+=maxdigit*maxdigit;
+                maxnum+=maxdigit*maxdigit
         return str
 
-    k=0;
+    k=0
     while (k<=i) :
         if first :
             str+="\tt+=(dpint)a[{}]*b[{}];".format(k,i-k)
@@ -431,7 +431,7 @@ def getZMU(str,i) :
         else :
             str+=" t+=(dpint)a[{}]*b[{}];".format(k,i-k)
         k+=1
-        maxnum+=maxdigit*maxdigit;
+        maxnum+=maxdigit*maxdigit
     return str
 
 # add column of partial products from multiplication on way down
@@ -459,7 +459,7 @@ def getZSU(str,i) :
     first=True
     k=0
     j=i
-    hap=False;
+    hap=False
     while k<j :
         hap=True
         if first :
@@ -487,7 +487,7 @@ def getZSD(str,i) :
     first=True
     k=i-(N-1)
     j=N
-    hap=False;
+    hap=False
     while k<i-k :
         hap=True
         if first :
@@ -608,7 +608,7 @@ def modmul(n) :
     str+="\tspint q=((spint)1<<{}u); // q is unsaturated radix \n".format(base)
     str+="\tspint mask=(spint)(q-(spint)1);\n"
     if fullmonty :
-        str+="\tspint ndash=0x{:x}u;\n".format(ndash);
+        str+="\tspint ndash=0x{:x}u;\n".format(ndash)
     maxnum=0
     str=getZMU(str,0)
     gone_neg=False 
@@ -680,7 +680,7 @@ def modmul(n) :
         if i<N-1 :
             str= getZMU(str,i+1)
      
-    str=getZMD(str,N);
+    str=getZMD(str,N)
     if gone_neg :
         if PM :
             str+=" t+=(dpint)(spint)((spint){}*mask);".format(M)
@@ -765,7 +765,7 @@ def modmul(n) :
                 mask_set=False   
 
             if i==2*N-1 :
-                break;
+                break
             str+=" c[{}]=((spint)t & mask); ".format(i-N)
             str+=" t>>={};\n".format(base)
             if i<=2*N-3 :
@@ -912,7 +912,7 @@ def modsqr(n) :
         if i<N-1 :
             str= getZSU(str,i+1)
      
-    str=getZSD(str,N);
+    str=getZSD(str,N)
     if gone_neg :
         if PM :
             str+=" t+=(udpint)(spint)((spint){}*mask);".format(M)
@@ -992,7 +992,7 @@ def modsqr(n) :
                 str+=" t+=(udpint)s;"
                 mask_set=False   
             if i==2*N-1 :
-                break;
+                break
             str+=" c[{}]=((spint)t & mask); ".format(i-N)
             str+=" t>>={};\n".format(base)
             if i<=2*N-3 :
@@ -1263,7 +1263,7 @@ def redc(n) :
     str+="void redc{}(const spint *n,spint *m) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
-    str+="\tc[0]=1;\n";
+    str+="\tc[0]=1;\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
     str+="\t\tc[i]=0;\n"
     str+="\t}\n"
@@ -1755,7 +1755,7 @@ if len(sys.argv)!=3 :
     print("Valid syntax - python monty.py <word length> <prime> OR <prime name>")
     print("For example - python monty.py 64 NIST256")
     print("For example - python monty.py 64 0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409")
-    exit(0);
+    exit(0)
 
 WL=int(sys.argv[1])
 if WL != 16 and WL != 32 and WL !=64 :
@@ -2011,7 +2011,7 @@ if (n%8)!=0 :
 qnr=0
 roi=0
 if PM1D2==1: 
-    roi=p-1;
+    roi=p-1
 if PM1D2==2:
     roi=pow(2,(p-1)//4,p)
 if PM1D2>2 : 
@@ -2027,15 +2027,15 @@ mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
 print("Compiler is "+compiler)
 if karatsuba :
-    print("Using Karatsuba for modmul");
+    print("Using Karatsuba for modmul")
 else : 
-    print("Using standard Comba for modmul");
+    print("Using standard Comba for modmul")
 
 # process prime, check if "virtual" extra limb required
 ppw,E=process_prime(p,base,N)
 
 # get M for pseudo-Mersenne 2^n-M
-M=0;
+M=0
 if PM :
     M=-ppw[0]
 
@@ -2325,7 +2325,7 @@ if decoration :
     else :
         if noname :
             print("Modulus must have a name - unable to make one for you")
-            exit(0);
+            exit(0)
         DECOR="_"+prime+"_ct"
 
 makestatic=True

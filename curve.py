@@ -41,7 +41,7 @@ if len(sys.argv)!=3 :
     print("Syntax error")
     print("Valid syntax - python3 curve.py <word length> <curve>")
     print("For example - python3 curve.py 64 ED25519")
-    exit(0);
+    exit(0)
 
 WL=int(sys.argv[1])
 if WL !=16 and WL != 32 and WL !=64 :
@@ -81,7 +81,7 @@ if curve=="ED25519" :
 
 if curve=="ED448" :
     p=2**448-2**224-1
-    q=(p + 1 - 28312320572429821613362531907042076847709625476988141958474579766324) // 4;
+    q=(p + 1 - 28312320572429821613362531907042076847709625476988141958474579766324) // 4
     cof=2
     A=1
     prime_type=MONTY
@@ -167,7 +167,7 @@ if prime_type==MONTY :
     radix=subprocess.run("python3 monty.py "+str(WL)+" "+curve, shell=True).returncode
 
 if radix==0 :
-    print("Bad curve");
+    print("Bad curve")
     exit(0)
 
 base=2**radix
@@ -278,9 +278,9 @@ print("point definition is in point.h")
 
 if curve_type==WEIERSTRASS :
     replacefromfile("weierstrass.c","@field@","field.c")
-    replacefromfile("weierstrass.c","@curve@","curve.c");
+    replacefromfile("weierstrass.c","@curve@","curve.c")
     replacefromfile("curve.h","@point@","point.h")
 if curve_type==EDWARDS:
     replacefromfile("edwards.c","@field@","field.c")
-    replacefromfile("edwards.c","@curve@","curve.c");
+    replacefromfile("edwards.c","@curve@","curve.c")
     replacefromfile("curve.h","@point@","point.h")

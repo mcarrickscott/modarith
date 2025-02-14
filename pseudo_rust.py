@@ -112,7 +112,7 @@ def prop(n,base) :
     str+="\t\tcarry>>={};\n".format(base)
     str+="\t}\n"
     str+="\tn[{}]+=carry as SPINT;\n".format(N-1)
-    str+="\treturn ((n[{}] as SSPINT)>>{}) as SPINT;\n}}\n".format(N-1,WL-1);
+    str+="\treturn ((n[{}] as SSPINT)>>{}) as SPINT;\n}}\n".format(N-1,WL-1)
     return str
 
 #propagate carries and add p if negative, propagate carries again
@@ -983,7 +983,7 @@ def time_modmul(n,base,ra,rb) :
     str+="\tnres(&mut x);\n"
     str+="\tnres(&mut y);\n"
     if cyclesorsecs:
-        str+="\tunsafe {\n";
+        str+="\tunsafe {\n"
         str+="\tlet pre = std::arch::x86_64::_rdtsc();\n"
     str+="\tlet begin = Instant::now();\n"
     str+="\tfor _i in 0..{} {{\n".format(100000//scale)
@@ -1030,7 +1030,7 @@ def time_modsqr(n,base,r) :
 
     str+="\tnres(&mut x);\n"
     if cyclesorsecs:
-        str+="\tunsafe {\n";
+        str+="\tunsafe {\n"
         str+="\tlet pre = std::arch::x86_64::_rdtsc();\n"
     str+="\tlet begin = Instant::now();\n"
     str+="\tfor _i in 0..{} {{\n".format(100000//scale)
@@ -1071,7 +1071,7 @@ def time_modinv(n,base,r) :
 
     str+="\tnres(&mut x);\n"
     if cyclesorsecs:
-        str+="\tunsafe {\n";
+        str+="\tunsafe {\n"
         str+="\tlet pre = std::arch::x86_64::_rdtsc();\n"
     str+="\tlet begin = Instant::now();\n"
     str+="\tfor _i in 0..{} {{\n".format(50000//scale)
@@ -1107,7 +1107,7 @@ if len(sys.argv)!=3 :
     print("Valid syntax - python pseudo_rust.py <word length> <prime> OR <prime> OR <prime expression>")
     print("For example - python pseudo_rust.py 64 X25519")
     print("For example - python pseudo_rust.py 64 2**255-19")
-    exit(0);
+    exit(0)
 
 WL=int(sys.argv[1])
 if WL !=16 and WL != 32 and WL !=64 :
@@ -1252,14 +1252,14 @@ if (n%8)!=0 :
 qnr=0
 roi=0
 if PM1D2==1: 
-    roi=p-1;
+    roi=p-1
 if PM1D2==2:
     roi=pow(2,(p-1)//4,p)
 if PM1D2>2 : 
-    qnr=2;
+    qnr=2
     while pow(qnr,(p-1)//2,p)==1 :
-        qnr+=1;
-    roi=pow(qnr,(p-1)//e,p);
+        qnr+=1
+    roi=pow(qnr,(p-1)//e,p)
 
 # convert to radix representation
 ROI=makebig(roi,base,N)
@@ -1267,15 +1267,15 @@ ROI=makebig(roi,base,N)
 mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
 if karatsuba :
-    print("Using Karatsuba for modmul");
+    print("Using Karatsuba for modmul")
 else : 
-    print("Using standard Comba for modmul");
+    print("Using standard Comba for modmul")
 
 overflow=False
 bad_overflow=False
 if (b-1)*(b-1)*mm*N >= 2**(2*WL) :
     overflow=True
-    print("Possibility of overflow... using alternate method");
+    print("Possibility of overflow... using alternate method")
     if karatsuba :
         if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
             bad_overflow=True
@@ -1286,7 +1286,7 @@ if bad_overflow :
     print("Overflow requires extra resource")
 
 # faster reduction
-fred=False;
+fred=False
 if bits(N+1)+base+bits(mm)<WL :
     fred=True
     print("Tighter reduction")
