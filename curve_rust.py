@@ -42,12 +42,12 @@ if len(sys.argv)!=3 :
     print("Syntax error")
     print("Valid syntax - python3 curve_rust.py <word length> <curve>")
     print("For example - python3 curve_rust.py 64 ED25519")
-    exit(0)
+    exit(2)
 
 WL=int(sys.argv[1])
 if WL !=16 and WL != 32 and WL !=64 :
     print("Only 16, 32 and 64-bit word lengths supported")
-    exit(0)
+    exit(2)
 
 curve=sys.argv[2]
 
@@ -173,7 +173,7 @@ if prime_type==MONTY :
 
 if radix==0 :
     print("Bad curve")
-    exit(0)
+    exit(1)
 
 base=2**radix
 

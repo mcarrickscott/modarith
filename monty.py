@@ -1755,12 +1755,12 @@ if len(sys.argv)!=3 :
     print("Valid syntax - python monty.py <word length> <prime> OR <prime name>")
     print("For example - python monty.py 64 NIST256")
     print("For example - python monty.py 64 0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409")
-    exit(0)
+    exit(2)
 
 WL=int(sys.argv[1])
 if WL != 16 and WL != 32 and WL !=64 :
     print("Only 16, 32 and 64-bit word lengths supported")
-    exit(0)
+    exit(2)
 
 prime=sys.argv[2]
 p=0
@@ -1953,7 +1953,7 @@ if p==0 :
         noname=True    # unnamed prime
     else :
         print("This named prime not supported")
-        exit(0)
+        exit(2)
 else :
     if prime.islower() :
         field=False
@@ -1968,7 +1968,7 @@ n=p.bit_length()
 if n<120 or pow(3,p-1,p)!=1 :
 #if pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
-    exit(0)
+    exit(2)
 
 PM=False
 
@@ -2048,7 +2048,7 @@ for i in range(0,len(ppw)) :
 
 if minus_ones>1 :
     print("Sorry - too many -1s for this script to handle")
-    exit(0)
+    exit(1)
 
 # get Montgomery modulus R
 if E :
@@ -2064,7 +2064,7 @@ twopn=makebig(((1<<n)*R)%p,base,N)  # nres(2^n)
 # should only be an issue for bad user choice of radix
 if xcess<2 and (not E) :
     print("Error - Excess is only one bit, consider change of radix")
-    exit(0)
+    exit(1)
 
 # calculate ndash constant
 b=2**base
@@ -2231,7 +2231,7 @@ for i in range(0,1000) :
             z+=arr_z[j]
     if z!=rz :
         print("Failed")
-        exit(0)
+        exit(1)
 print("Passed - OK")
 subprocess.call("rm test.c", shell=True)
 subprocess.call("rm test.so", shell=True)
@@ -2325,7 +2325,7 @@ if decoration :
     else :
         if noname :
             print("Modulus must have a name - unable to make one for you")
-            exit(0)
+            exit(1)
         DECOR="_"+prime+"_ct"
 
 makestatic=True
@@ -2348,4 +2348,4 @@ if field :
 else :
     print("group code is in group.c")
 
-sys.exit(base)
+sys.exit(0)

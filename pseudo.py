@@ -1333,12 +1333,12 @@ if len(sys.argv)!=3 :
     print("Valid syntax - python pseudo.py <word length> <prime> OR <prime name>")
     print("For example - python pseudo.py 64 X25519")
     print("For example - python pseudo.py 64 2**255-19")
-    exit(0)
+    exit(2)
 
 WL=int(sys.argv[1])
 if WL!=16 and WL != 32 and WL !=64 :
     print("Only 16, 32 and 64-bit word lengths supported")
-    exit(0)
+    exit(2)
 
 prime=sys.argv[2]
 
@@ -1426,15 +1426,15 @@ if p==0 :
         noname=True    # unnamed prime
     else :
         print("This named modulus not supported (not a pseudo-Mersenne?)")
-        exit(0)
+        exit(2)
 
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
-    exit(0)
+    exit(2)
 #if n>360 and WL==16 :
 #	print("Modulus probably too big for 16-bit processor")
-#	exit(0)
+#	exit(1)
 
 if base==0 :
     base=getbase(n)   # use default radix
@@ -1452,7 +1452,7 @@ PE=(p-1-e)//(2*e)                # exponent for use in inversion, QR check, and 
 
 if m>=b :
     print("Not an exploitable pseudo-Mersenne - Use Montgomery method instead")
-    exit(0)
+    exit(1)
 
 # get number of limbs
 N=getN(n)
@@ -1465,7 +1465,7 @@ if N>9 :
 # check for excess too large
 if mm >= 2**(WL-1) : #or m*((N+2)*2**(2*WL)) >= 2**(2*base+WL-1-xcess) :
     print("Unfortunate choice of radix - excess",xcess,"too large - try using smaller radix")
-    exit(0)
+    exit(1)
 
 if (n%base)==0 :
     TW=b
@@ -1688,7 +1688,7 @@ for i in range(0,1000) :
         print("Failed")
         #print(hex(z))
         #print(hex(rz))
-        exit(0)
+        exit(1)
 print("Passed - OK")
 subprocess.call("rm test.c", shell=True)
 subprocess.call("rm test.so", shell=True)
@@ -1793,4 +1793,4 @@ if check:
 
 print("Field code is in field.c")
 
-sys.exit(base)
+sys.exit(0)

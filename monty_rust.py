@@ -1515,12 +1515,12 @@ if len(sys.argv)!=3 :
     print("Valid syntax - python monty_rust.py <word length> <prime> OR <prime> OR <prime expression>")
     print("For example - python monty_rust.py 64 NIST256")
     print("For example - python monty_rust.py 64 0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409")
-    exit(0)
+    exit(2)
 
 WL=int(sys.argv[1])
 if WL !=16 and WL != 32 and WL !=64 :
     print("Only 16, 32 and 64-bit word lengths supported")
-    exit(0)
+    exit(2)
 
 prime=sys.argv[2]
 p=0
@@ -1719,7 +1719,7 @@ if p==0 :
         p=eval(prime)
     else :
         print("This named prime not supported")
-        exit(0)
+        exit(2)
 else :
     if prime.islower() :
         field=False
@@ -1727,7 +1727,7 @@ else :
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
-    exit(0)
+    exit(2)
 
 PM=False
 
@@ -1805,7 +1805,7 @@ for i in range(0,len(ppw)) :
 
 if minus_ones>1 :
     print("Sorry - too many -1s for this script to handle")
-    exit(0)
+    exit(1)
 
 if E :
     print("Extra virtual limb added")
@@ -1816,7 +1816,7 @@ else :
 # should only be an issue for bad user choice of radix
 if xcess<2 and (not E) :
     print("Error - Excess is only one bit, consider change of radix")
-    exit(0)
+    exit(1)
 
 
 # detect if Montgomery-friendly, or not
@@ -1988,4 +1988,4 @@ if field :
 else :
     print("group code is in group.rs")
 
-sys.exit(base)
+sys.exit(0)

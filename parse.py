@@ -26,7 +26,7 @@ if inputfile[0:5]=="ecdsa" :
 elif inputfile[0:2]=="ed" :
     pubkey='"pk"'           # NOTE: Could be "pk" or "uncompressed"
 else :
-    sys.exit(0)
+    sys.exit(1)
 
 while not finished :
     pk,ptr=extract(data,ptr,pubkey) # ptr points to public key. 
