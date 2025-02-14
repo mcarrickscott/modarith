@@ -166,7 +166,7 @@ if prime_type==PSEUDO :
 if prime_type==MONTY :
     radix=subprocess.run("python3 monty.py "+str(WL)+" "+curve, shell=True).returncode
 
-if radix==0 :
+if radix<3 :
     print("Bad curve")
     exit(1)
 
