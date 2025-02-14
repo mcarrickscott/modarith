@@ -1310,7 +1310,7 @@ def modcsw() :
         str+="static "
     str+="void modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w;\n"
+    str+="\tspint c0,c1,s,t,w,aux;\n"
     if WL==16 :
         str+="\tspint r=0xa55au;\n"
     if WL==32 :
@@ -1322,10 +1322,10 @@ def modcsw() :
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ts=g[i]; t=f[i];\n"
     str+="\t\tw=r*(t+s);\n"
-    str+="\t\tf[i] =c0*t+c1*s;\n"
-    str+="\t\tf[i]-=w;\n"
-    str+="\t\tg[i] =c0*s+c1*t;\n"
-    str+="\t\tg[i]-=w;\n\t}\n"
+    str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+    str+="\t\tf[i] = aux - w;\n"
+    str+="\t\tg[i] = aux = c0*s+c1*t;\n"
+    str+="\t\tg[i] = aux - w;\n\t}\n"
     str+="}\n"
     return str
 
@@ -1337,7 +1337,7 @@ def modcmv() :
         str+="static "
     str+="void modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t;\n"
+    str+="\tspint c0,c1,s,t,aux;\n"
     if WL==16 :
         str+="\tspint r=0xa55au;\n"
     if WL==32 :
@@ -1348,8 +1348,8 @@ def modcmv() :
     str+="\t\tc1=b|r;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tf[i] =c0*t+c1*s;\n"
-    str+="\t\tf[i]-=r*(t+s);\n\t}\n"
+    str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+    str+="\t\tf[i] = aux - r*(t+s);\n\t}\n"
     str+="}\n"
     return str
 
