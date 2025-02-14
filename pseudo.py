@@ -971,7 +971,7 @@ def mod2r() :
     str+="void mod2r{}(unsigned int r,spint *a) {{\n".format(DECOR)
     str+="\tunsigned int n=r/{}u;\n".format(base)
     str+="\tunsigned int m=r%{}u;\n".format(base)
-    str+="\tmodzer(a);\n"
+    str+="\tmodzer{}(a);\n".format(DECOR)
     str+="\tif (r>={}*8) return;\n".format(Nbytes)
     str+="\ta[n]=1; a[n]<<=m;\n}\n"
     return str
@@ -1004,7 +1004,7 @@ def modimp() :
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
     str+="\t\ta[0]+=(spint)(unsigned char)b[i];\n\t}\n"
-    str+="\tres=modfsb(a);\n"
+    str+="\tres=modfsb{}(a);\n".format(DECOR)
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="\treturn res;\n"
     str+="}\n"

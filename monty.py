@@ -824,8 +824,8 @@ def modmli(n) :
         str+="\tc[{}]+=s;\n".format(trin)
     else :
         str+="\tspint t[{}];\n".format(N)
-        str+="\tmodint(b,t);\n"
-        str+="\tmodmul(a,t,c);\n"
+        str+="\tmodint{}(b,t);\n".format(DECOR)
+        str+="\tmodmul{}(a,t,c);\n".format(DECOR)
     str+="}\n"
     return str
 
@@ -1392,10 +1392,10 @@ def mod2r() :
     str+="void mod2r{}(unsigned int r,spint *a) {{\n".format(DECOR)
     str+="\tunsigned int n=r/{}u;\n".format(base)
     str+="\tunsigned int m=r%{}u;\n".format(base)
-    str+="\tmodzer(a);\n"
+    str+="\tmodzer{}(a);\n".format(DECOR)
     str+="\tif (r>={}*8) return;\n".format(Nbytes)
     str+="\ta[n]=1; a[n]<<=m;\n"
-    str+="nres(a,a);\n}\n"
+    str+="nres{}(a,a);\n}}\n".format(DECOR)
     return str
 
 #export to byte array
