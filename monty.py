@@ -1318,7 +1318,7 @@ def modcsw() :
     if WL==64 :
         str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
     str+="\t\tc0=(~b)&(r+1);\n"
-    str+="\t\tc1=b|r;\n"
+    str+="\t\tc1=b+r;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ts=g[i]; t=f[i];\n"
     str+="\t\tw=r*(t+s);\n"
@@ -1345,7 +1345,7 @@ def modcmv() :
     if WL==64 :
         str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
     str+="\t\tc0=(~b)&(r+1);\n"
-    str+="\t\tc1=b|r;\n"
+    str+="\t\tc1=b+r;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ts=g[i]; t=f[i];\n"
     str+="\t\tf[i] = aux = c0*t+c1*s;\n"
