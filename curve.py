@@ -7,6 +7,8 @@
 import sys
 import subprocess
 
+microsoft=False  # set to True if using Microsoft C 64-bit compiler
+
 # is it a lucky trinomial?
 def trinomial(p,base) :
     n=p.bit_length()
@@ -161,10 +163,17 @@ if p==0:
     print("This curve not supported")
 
 radix=0
-if prime_type==PSEUDO :
-    radix=subprocess.run("python3 pseudo.py "+str(WL)+" "+curve, shell=True).returncode
-if prime_type==MONTY :
-    radix=subprocess.run("python3 monty.py "+str(WL)+" "+curve, shell=True).returncode
+
+if WL==64 and microsoft :
+    if prime_type==PSEUDO :
+        radix=subprocess.run("python3 pseudoms64.py "+curve, shell=True).returncode
+    if prime_type==MONTY :
+        radix=subprocess.run("python3 montyms64.py "+curve, shell=True).returncode
+else :
+    if prime_type==PSEUDO :
+        radix=subprocess.run("python3 pseudo.py "+str(WL)+" "+curve, shell=True).returncode
+    if prime_type==MONTY :
+        radix=subprocess.run("python3 monty.py "+str(WL)+" "+curve, shell=True).returncode
 
 if radix<3 :
     print("Bad curve")
@@ -270,7 +279,10 @@ with open('point.h', 'w') as f:
         print("typedef struct xyz point;")
         f.close()
 
-subprocess.run("python3 monty.py "+str(WL)+" "+curve.lower(), shell=True)
+if WL==64 and microsoft :
+    subprocess.run("python3 montyms64.py "+curve.lower(), shell=True)
+else :
+    subprocess.run("python3 monty.py "+str(WL)+" "+curve.lower(), shell=True)
 
 print("field code is in field.c")
 print("curve definition is in curve.c")

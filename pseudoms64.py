@@ -1,6 +1,7 @@
 # Python program to generate reasonably efficient C/C++ modular arithmetic code for pseudo-mersenne primes on a 16, 32 or 64-bit processor
 # Modulus should be a pseudo-mersenne of the form 2^n-m
 # uses unsaturated radix
+# Special version for Microsoft 64-bit C compiler (no 128 bit integers!)
 #
 # In particular this script generates code for primes like
 #
@@ -13,26 +14,13 @@
 # Execute this program as: python pseudo.py 64 X25519
 # Production code is output to file field.c or group.c
 # 
-# Mike Scott 22nd April 2024
+# Mike Scott 19th February 2025
 # TII
 #
 
 # Some default settings
 
-embedded=False  # If True then functions to start and stop a performance counter (cycles or micro-seconds) must be made available
-                # If True no timing executable is created
-cyclesorsecs=True     # if embedded, count cycles otherwise seconds
-arduino=False   # set True if embedded and using arduino for timings
-if arduino :    # If arduino, count microseconds
-    cyclesorsecs=False 
-compiler="gcc" # gcc, clang or icx (inlining can sometimes cause icx to hang)
-cyclescounter=True # use Bernstein's cpucycle counter, otherwise just provide timings
-use_rdtsc=False # override cpucycle and use rdtsc directly, x86 only, for better comparison with other implementations
-if use_rdtsc :
-    cyclescounter=False
-if cyclescounter :
-    use_rdtsc=False
-karatsuba=False  # default setting
+use_rdtsc=False # use rdtsc directly, x86 only, for better comparison with other implementations
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
@@ -48,8 +36,6 @@ import subprocess
 def getbase(n) :
     limbs=int(n/WL)
     limit=2*WL
-    if karatsuba :
-        limit=2*WL-1
     while (True) :
         limbs=limbs+1
         if limbs==1 :   # must be at least 2 limbs
@@ -121,6 +107,170 @@ def makebig(p,base,N) :
         tp=tp>>base
         i=i+1
     return pw
+
+def intrinsics() :
+    str="#include <intrin.h>\n\n"
+
+    str+="#define ARCH_X86_64 // remove for other architectures like ARM64 - Note umulh() intrinsic is still required \n"
+    str+="#ifndef ARCH_X86_64\n"
+    
+    str+="// t+=a*b\n"
+    str+="static inline void accum(spint *tl,spint *th,spint a,spint b) {\n"
+    str+="\tspint wl, wh;\n"
+    str+="\twl=a*b;\n"
+    str+="\twh=__umulh(a,b);\n"
+    str+="\t*tl+=wl;\n"
+    str+="\t*th+=(*tl<wl);\n"
+    str+="\t*th+=wh;\n"
+    str+="}\n\n"
+
+    str+="// t+=(a+b)*c\n"
+    str+="static inline void accumx(spint *tl,spint *th,spint a,spint bl,spint bh,spint c) {\n"
+    str+="\tspint wl, wh, l, h;\n"
+    str+="\tl=a;\n"
+    str+="\tl+=bl;\n"
+    str+="\th=bh+(l<bl);\n"
+    str+="\twl=l*c;\n"
+    str+="\twh=__umulh(l,c)+h*c;\n"
+    str+="\t*tl+=wl;\n"
+    str+="\t*th+=(*tl<wl);\n"
+    str+="\t*th+=wh;\n"
+    str+="}\n\n"
+
+    str+="// t>>s\n"
+    str+="static inline void shiftr(spint *tl,spint *th,char s){\n"
+    str+="\t*tl=((*tl)>>s)|((*th)<<(64-s));\n"
+    str+="\t*th=(*th)>>s;\n"
+    str+="}\n\n"
+
+    str+="// t<<s\n"
+    str+="static inline void shiftl(spint *tl,spint *th,char s){\n"
+    str+="\t*th = ((*th)<<s)|((*tl)>>(64-s));\n"
+    str+="\t*tl = (*tl) << s;\n"
+    str+="}\n\n"
+
+    str+="// t+= (v<<s)\n"
+    str+="static inline void accumsl(spint *tl,spint *th,spint v,char s) {\n"
+    str+="\tspint wl, wh;\n"
+    str+="\twh = v>>(64-s);\n"
+    str+="\twl = v << s;\n"      
+    str+="\t*tl+=wl;\n"
+    str+="\t*th+=(*tl<wl);\n"
+    str+="\t*th+=wh;\n"
+    str+="}\n\n"
+
+    str+="// r=t>>s\n"
+    str+="static inline spint shiftout(spint tl,spint th,char s) {\n"
+    str+="\treturn (tl>>s)|(th<<(64-s));\n"
+    str+="}\n\n"
+
+    str+="// t+=s\n"
+    str+="static inline void add(spint *tl,spint *th,spint sl,spint sh) {\n"
+    str+="\t*tl+=sl;\n"
+    str+="\t*th+=(*tl<sl);\n"
+    str+="\t*th+=sh;\n"
+    str+="}\n\n"
+
+    str+="// t-=s\n"
+    str+="static inline void sub(spint *tl,spint *th,spint sl,spint sh) {\n"
+    str+="\tpint l=*tl;\n"
+    str+="\t*tl-=sl;\n"
+    str+="\t*th-=((*tl)>l);\n"
+    str+="\t*th-=sh;\n"
+    str+="}\n\n"
+
+    str+="// t=a*b\n"
+    str+="static inline void mul(spint *tl,spint *th,spint a,spint b) {\n"
+    str+="\t*tl=a*b;\n"
+    str+="\t*th=__umulh(a,b);\n"
+    str+="}\n\n"
+
+    str+="// t*=m\n"
+    str+="static inline void muli(spint *tl,spint *th,spint m) {\n"
+    str+="\tspint w=__umulh(*tl,m);\n"
+    str+="\t*tl = *tl*m;\n"
+    str+="\t*th = w + (*th) * m;\n"
+    str+="}\n"
+
+    str+="#else\n"
+
+    str+="// t+=a*b\n"
+    str+="static inline void accum(spint *tl,spint *th,spint a,spint b) {\n"
+    str+="\tunsigned char carry;\n"
+    str+="\tspint wl,wh;\n"
+    str+="\twl=_mulx_u64(a,b,&wh);\n"
+    str+="\tcarry=_addcarryx_u64(0,wl,*tl,tl);\n"
+    str+="\t_addcarryx_u64(carry,wh,*th,th);\n"
+    str+="}\n\n"
+
+    str+="// t+=(a+b)*c\n"
+    str+="static inline void accumx(spint *tl,spint *th,spint a,spint bl,spint bh,spint c) {\n"
+    str+="\tunsigned char carry;\n"
+    str+="\tspint wl,wh,l,h;\n"
+    str+="\tcarry=_addcarry_u64(0,a,bl,&l);\n"
+    str+="\t_addcarry_u64(carry,0,bh,&h);\n"
+    str+="\twl=_mulx_u64(l,c,&wh);\n"
+    str+="\twh+=h*c;\n"
+    str+="\tcarry=_addcarryx_u64(0,wl,*tl,tl);\n" 
+    str+="\t_addcarryx_u64(carry,wh,*th,th);\n"
+    str+="}\n\n"
+
+    str+="// t>>s\n"
+    str+="static inline void shiftr(spint *tl,spint *th,char s){\n"
+    str+="\t*tl=__shiftright128(*tl,*th,s);\n"
+    str+="\t*th=(*th>>s);\n"
+    str+="}\n\n"
+
+    str+="// t<<s\n"
+    str+="static inline void shiftl(spint *tl,spint *th,char s){\n"
+    str+="\t*th=__shiftleft128(*tl,*th,s);\n"
+    str+="\t*tl=(*tl<<s);\n"
+    str+="}\n\n"
+
+    str+="// t+= (v<<s)\n"
+    str+="static inline void accumsl(spint *tl,spint *th,spint v,char s) {\n"
+    str+="\tunsigned char carry;\n"
+    str+="\tspint l,h;\n"
+    str+="\th=__shiftleft128(v,0,s);\n"
+    str+="\tl=(v<<s);\n"
+    str+="\tcarry=_addcarry_u64(0,l,*tl,tl);\n"
+    str+="\t_addcarry_u64(carry,h,*th,th);\n"
+    str+="}\n\n"
+
+    str+="// r=t>>s\n"
+    str+="static inline spint shiftout(spint tl,spint th,char s) {\n"
+    str+="\treturn __shiftright128(tl,th,s);\n"
+    str+="}\n\n"
+
+    str+="// t+=s\n"
+    str+="static inline void add(spint *tl,spint *th,spint sl,spint sh) {\n"
+    str+="\tunsigned char carry;\n"
+    str+="\tcarry=_addcarryx_u64(0,*tl,sl,tl);\n"
+    str+="\t_addcarryx_u64(carry,*th,sh,th);\n"
+    str+="}\n\n"
+
+    str+="// t-=s\n"
+    str+="static inline void sub(spint *tl,spint *th,spint sl,spint sh) {\n"
+    str+="\tunsigned char carry;\n"
+    str+="\tcarry=_subborrow_u64(0,*tl,sl,tl);\n"
+    str+="\t_subborrow_u64(carry,*th,sh,th);\n"
+    str+="}\n\n"
+
+    str+="// t=a*b\n"
+    str+="static inline void mul(spint *tl,spint *th,spint a,spint b) {\n"
+    str+="\t*tl=_mulx_u64(a,b,th);\n"
+    str+="}\n\n"
+    
+    str+="// t*=m\n"
+    str+="static inline void muli(spint *tl,spint *th,spint m) {\n"
+    str+="\tunsigned char carry;\n"
+    str+="\tspint w;\n"
+    str+="\t*tl=_mulx_u64(*tl,m,&w);\n"
+    str+="\t*th=w+(*th)*m;\n"
+    str+="}\n\n"
+
+    str+="#endif\n\n"
+    return str
 
 #conditional add of p
 def caddp(x) :
@@ -273,38 +423,6 @@ def getZM(str,row,n,m) :
     mm=m*2**xcess
     k=row+1
     L=N-1
-    if karatsuba :
-        i=row+N
-        if row<N-1 :
-            str+="\ttt=d{}-d{}; ".format(N-1,row)
-            for m in range(N-1,int(i/2),-1) :
-                str+="tt+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i-m, i-m, m)
-            if overflow :
-                str+=" lo=(spint)tt & mask;"
-                if row==0 :
-                    str+=" t+=d{}+(dpint)lo*(dpint)0x{:x};".format(row,mm)
-                else :
-                    if bad_overflow :
-                        str+=" t+=d{}+(hi+(dpint)lo)*(dpint)0x{:x};".format(row,mm)
-                    else :
-                        str+=" t+=d{}+(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(row,mm)
-                if bad_overflow :
-                    str+=" hi=(dpint)(udpint)((udpint)tt>>{}u);".format(base)
-                else :
-                    str+=" hi=(spint)(udpint)((udpint)tt>>{}u);".format(base)
-            else :
-                str+="tt*=0x{:x};".format(mm)
-                str+=" t+=d{}+tt;".format(row)
-        else :
-            str+="\tt+=d{};".format(N-1)
-
-        i=row
-        for m in range(i,int(i/2),-1) :
-           str+=" t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i - m, i - m, m) 
-        if row==N-1 and overflow :
-            str+=" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
-        str+=" spint v{}=(spint)t & mask; t=(dpint)(udpint)((udpint)t>>{}u);\n".format(row,base)
-        return str
 
     first=True
     while k<N :
@@ -313,47 +431,47 @@ def getZM(str,row,n,m) :
                 str+="\t"
             else :
                 str+=" "
-            str+="t+=(dpint)ma{}*(dpint)b[{}];".format(k,L)
+            str+="accum(&tl,&th,ma{},b[{}]);".format(k,L)   #"t+=(dpint)ma{}*(dpint)b[{}];".format(k,L)
         else :
             if first :
-                str+="\ttt=(dpint)a[{}]*(dpint)b[{}];".format(k,L)
+                str+="\tmul(&ttl,&tth,a[{}],b[{}]);".format(k,L)    #"\ttt=(dpint)a[{}]*(dpint)b[{}];".format(k,L)
                 first=False
             else :
-                str+=" tt+=(dpint)a[{}]*(dpint)b[{}];".format(k,L)
+                str+=" accum(&ttl,&tth,a[{}],b[{}]);".format(k,L)     #" tt+=(dpint)a[{}]*(dpint)b[{}];".format(k,L)
         L-=1
         k+=1
     if row<N-1:
         if overflow :
-            str+=" lo=(spint)tt & mask;"
+            str+=" lo=ttl & mask;"    #" lo=(spint)tt & mask;"
             if row==0 :
-                str+=" t+=(dpint)lo*(dpint)0x{:x};".format(mm)
+                str+=" accum(&tl,&th,lo,0x{:x});".format(mm)     #" t+=(dpint)lo*(dpint)0x{:x};".format(mm)
             else :
                 if bad_overflow :
-                    str+=" t+=(hi+(dpint)lo)*(dpint)0x{:x};".format(mm)
+                    str+=" accumx(&tl,&th,lo,hil,hih,0x{:x});".format(mm)   #" t+=(hi+(dpint)lo)*(dpint)0x{:x};".format(mm)
                 else :
-                    str+=" t+=(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(mm)
+                    str+=" accum(&tl,&th,lo+hi,0x{:x});".format(mm)   #" t+=(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(mm)
             if bad_overflow :
-                str+=" hi=tt>>{}u;".format(base)
+                str+=" hil=ttl; hih=tth; shiftr(&hil,&hih,{}u);".format(base)    #" hi=tt>>{}u;".format(base)
             else :
-                str+=" hi=(spint)(tt>>{}u);".format(base)
+                str+=" hi=shiftout(ttl,tth,{}u);".format(base)  #" hi=(spint)(tt>>{}u);".format(base)
         else :
             if not EPM :
-                str+=" tt*=0x{:x};".format(mm)
-                str+=" t+=tt;"
+                str+=" muli(&ttl,&tth,0x{:x});".format(mm)  #" tt*=0x{:x};".format(mm)
+                str+=" add(&tl,&th,ttl,tth);"   #" t+=tt;"
     else :
         first=True
     
     k=0
     while k<=row :
         if first :
-            str+="\tt+=(dpint)a[{}]*(dpint)b[{}];".format(k,row-k)
+            str+="\taccum(&tl,&th,a[{}],b[{}]);".format(k,row-k)    #"\tt+=(dpint)a[{}]*(dpint)b[{}];".format(k,row-k)
             first=False
         else :
-            str+=" t+=(dpint)a[{}]*(dpint)b[{}];".format(k,row-k)
+            str+=" accum(&tl,&th,a[{}],b[{}]);".format(k,row-k)   #" t+=(dpint)a[{}]*(dpint)b[{}];".format(k,row-k)
         k+=1
     if row==N-1 and overflow :
-        str+=" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
-    str+=" spint v{}=(spint)t & mask; t=t>>{}u;\n".format(row,base)
+        str+=" accum(&tl,&th,hi,0x{:x});".format(mm)   #" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
+    str+=" spint v{}=tl & mask; shiftr(&tl,&th,{}u);\n".format(row,base)    #" spint v{}=(spint)t & mask; t=t>>{}u;\n".format(row,base)
     return str
 
 #squaring macro
@@ -374,46 +492,46 @@ def getZS(str,row,n,m) :
                     str+="\t"
                 else :
                     str+=" "                
-                str+="t+=(udpint)ma{}*(udpint)ta{};".format(k,L)
+                str+="accum(&tl,&th,ma{},ta{});".format(k,L)    #"t+=(udpint)ma{}*(udpint)ta{};".format(k,L)
             else :
                 if first :
-                    str+="\tt+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                    str+="\taccum(&tl,&th,ma{},a[{}]);".format(k,L)   #"\tt+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
                     first=False
                 else :
-                    str+=" t+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                    str+=" accum(&tl,&th,ma{},a[{}]);".format(k,L)   #" t+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
         else :
             if first :
-                str+="\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+="\tmul(&ttl,&tth,a[{}],a[{}]);".format(k,L)    #"\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
                 first=False
             else :
-                str+=" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+=" accum(&ttl,&tth,a[{}],a[{}]);".format(k,L)    #" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
 
         L-=1
         k+=1
     if dble :
         if not EPM :
-            str+=" tt*=2;"
+            str+=" add(&ttl,&tth,ttl,tth);"      #" tt*=2;"
     if k==L :
         if EPM :
             if first :
                 str+="\t"
             else :
                 str+=" "  
-            str+="t+=(udpint)ma{}*(udpint)a[{}];".format(k,k)
+            str+="accum(&tl,&th,ma{},a[{}]);".format(k,k)    #"t+=(udpint)ma{}*(udpint)a[{}];".format(k,k)
         else :
             if first :
-                str+="\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+="\tmul(&ttl,&tth,a[{}],a[{}]);".format(k,k)     #"\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
                 first=False
             else :
-                str+=" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+=" accum(&ttl,&tth,a[{}],a[{}]);".format(k,k)   #" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
     first=True
     if row<N-1:
         if overflow :
-            str+=" lo=(spint)tt & mask;"
+            str+=" lo=tl & mask;"
         else :
             if not EPM :
-                str+=" tt*=0x{:x};".format(mm)
-                str+=" t+=tt;"
+                str+=" muli(&ttl,&tth,0x{:x});".format(mm)  #" tt*=0x{:x};".format(mm)
+                str+=" add(&tl,&th,ttl,tth);"   #" t+=tt;"
         str+=" "
     else: 
         str+="\t"
@@ -428,48 +546,48 @@ def getZS(str,row,n,m) :
 
     while k<L :
         if EPM and dble :
-            str+="t+=(udpint)a[{}]*(udpint)ta{};".format(k,L)
+            str+="accum(&tl,&th,a[{}],ta{});".format(k,L)   #"t+=(udpint)a[{}]*(udpint)ta{};".format(k,L)
         else :
             if first :
-                str+="t2=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+="mul(&t2l,&t2h,a[{}],a[{}]);".format(k,L)    #"t2=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
                 first=False
             else :
-                str+=" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+=" accum(&t2l,&t2h,a[{}],a[{}]);".format(k,L)   #" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
         k+=1
         L-=1
 
     if dble :
         if not EPM :
-            str+=" t2*=2;"
+            str+=" add(&t2l,&t2h,t2l,t2h);"  #" t2*=2;"
     if k==L :
         if EPM :
-            str+=" t+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+            str+=" accum(&tl,&th,a[{}],a[{}]);".format(k,k)   #" t+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
         else :
             if first :
-                str+="t2=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+="mul(&t2l,&t2h,a[{}],a[{}]);".format(k,k)   #"t2=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
                 first=False
             else :
-                str+=" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+=" accum(&t2l,&t2h,a[{}],a[{}]);".format(k,k)  #" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
  
 
     if overflow :
         if row==N-1 : 
-            str+=" t+=(udpint)hi*(udpint)0x{:x};".format(mm)
+            str+=" accum(&tl,&th,hi,0x{:x});".format(mm)   #" t+=(udpint)hi*(udpint)0x{:x};".format(mm)
         else :
             if row==0 :
-                str+=" t2+=(udpint)lo*(udpint)0x{:x};".format(mm)
+                str+=" accum(&t2l,&t2h,lo,0x{:x});".format(mm)     #" t2+=(udpint)lo*(udpint)0x{:x};".format(mm)
             else :
                 if bad_overflow :
-                    str+=" t2+=(hi+(udpint)lo)*(udpint)0x{:x};".format(mm)
+                    str+=" accumx(&t2l,&t2h,lo,hil,hih,0x{:x});".format(mm)    #" t2+=(hi+(udpint)lo)*(udpint)0x{:x};".format(mm)
                 else :
-                    str+=" t2+=(udpint)(spint)(lo+hi)*(udpint)0x{:x};".format(mm)
+                    str+=" accum(&t2l,&t2h,lo+hi,0x{:x});".format(mm)    #" t2+=(udpint)(spint)(lo+hi)*(udpint)0x{:x};".format(mm)
             if bad_overflow :
-                str+=" hi=tt>>{}u;".format(base)
+                str+=" hil=ttl; hih=tth; shiftr(&hil,&hih,{}u);".format(base)  #" hi=tt>>{}u;".format(base)
             else :
-                str+=" hi=(spint)(tt>>{}u);".format(base)
+                str+=" hi=shiftout(ttl,tth,{}u);".format(base)  #" hi=(spint)(tt>>{}u);".format(base)
     if not EPM :
-        str+=" t+=t2;"
-    str+=" spint v{}=(spint)t & mask; t=t>>{}u;\n".format(row,base)
+        str+=" add(&tl,&th,t2l,t2h);"    #" t+=t2;"
+    str+=" spint v{}=tl&mask; shiftr(&tl,&th,{}u);\n".format(row,base)     #" spint v{}=(spint)t & mask; t=t>>{}u;\n".format(row,base)
     return str
 
 # second reduction pass
@@ -480,26 +598,42 @@ def second_pass(str,n,m) :
 # second reduction pass
     str+="// second reduction pass\n\n"  
     if fred :
-        str+="\tspint ut=(spint)t;\n"  
-    else :
-        str+="\tudpint ut=(udpint)t;\n"    
-    if xcess>0 :
-        smask=(1<<(base-xcess))-1
-        str+= "\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+        str+="\tspint ut=tl;\n"  
+        if xcess>0 :
+            smask=(1<<(base-xcess))-1
+            str+= "\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
-    k=0
-    if m>1 :
-        str+= "\tut*=0x{:x};\n".format(m)
-    str+= "\ts=v0+((spint)ut & mask);\n"
-    str+= "\tc[0]=(spint)(s&mask);\n"
+        k=0
+        if m>1 :
+            str+= "\tut*=0x{:x};\n".format(m)
+        str+= "\ts=v0+(ut & mask);\n"
+        str+= "\tc[0]=(s&mask);\n"
 
-    if carry_on :
-        str+="\tut=(udpint)(s>>{})+(ut>>{});\n".format(base,base)
-        str+="\ts=v1+((spint)ut & mask);\n"
-        str+= "\tc[1]=(spint)(s&mask);\n"
-        k+=1
+        if carry_on :
+            str+="\tut=(s>>{})+(ut>>{});\n".format(base,base)
+            str+="\ts=v1+(ut & mask);\n"
+            str+= "\tc[1]=(s&mask);\n"
+            k+=1
 
-    str+= "\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
+        str+= "\tcarry=(s>>{})+(ut>>{});\n".format(base,base)
+    else : 
+        if xcess>0 :
+            smask=(1<<(base-xcess))-1
+            str+= "\tshiftl(&tl,&th,{}); add(&tl,&th,(v{}>>{}u),0); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)   #"\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+
+        k=0
+        if m>1 :
+            str+= "\tmuli(&tl,&th,0x{:x});\n".format(m)  #"\tut*=0x{:x};\n".format(m)
+        str+= "\ts=v0+(tl & mask);\n"
+        str+= "\tc[0]=(spint)(s&mask);\n"
+
+        if carry_on :
+            str+="\tshiftr(&tl,&th,{}); add(&tl,&th,s>>{},0);\n".format(base,base)       #"\tut=(udpint)(s>>{})+(ut>>{});\n".format(base,base)
+            str+="\ts=v1+(tl & mask);\n"
+            str+= "\tc[1]=(spint)(s&mask);\n"
+            k+=1
+
+        str+= "\tcarry=(s>>{})+shiftout(tl,th,{});\n".format(base,base)    #"\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
     k=k+1
 
 
@@ -526,23 +660,18 @@ def modmul(n,m) :
     else :
         str+="void modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
 
-    str+="\tdpint t=0;\n"
-    if karatsuba :
-        str+="\tdpint tt;\n"
-        str+="\tdpint d0=(dpint)a[0]*(dpint)b[0];\n"
+    str+="\tspint tl=0, th=0;\n"
+
+    if  EPM  :
         for i in range(1,N) :
-            str+="\tdpint d{}=d{}+(dpint)a[{}]*(dpint)b[{}];\n".format(i, i-1, i, i)
+            str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
     else :
-        if  EPM  :
-            for i in range(1,N) :
-                str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
-        else :
-            str+="\tdpint tt;\n"
+        str+="\tspint ttl,tth;\n"
 
     if overflow :
         str+="\tspint lo;\n"
         if bad_overflow :
-            str+="\tdpint hi;\n"   # could overflow single type
+            str+="\tspint hil,hih;\n"   # could overflow single type
         else :
             str+="\tspint hi;\n"
     #str+="\tuspint carry,s,mask=((uspint)1<<{}u)-(uspint)1;\n".format(base)
@@ -572,7 +701,7 @@ def modsqr(n,m) :
     else :
         str+="void modsqr{}(const spint *a,spint *c) {{\n".format(DECOR)
     
-    str+="\tudpint t=0;\n"
+    str+="\tspint tl=0,th=0;\n"
 
     if  EPM  :
         for i in range(1,N) :
@@ -580,8 +709,8 @@ def modsqr(n,m) :
         for i in range(1,N) :
             str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
     else :
-        str+="\tudpint tt;\n"
-        str+="\tudpint t2;\n"
+        str+="\tspint ttl,tth;\n"
+        str+="\tspint t2l,t2h;\n"
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
     str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
@@ -589,7 +718,7 @@ def modsqr(n,m) :
     if overflow :
         str+="\tspint lo;\n"
         if bad_overflow :
-            str+="\tudpint hi;\n"
+            str+="\tspint hil,hih;\n"
         else :
             str+="\tspint hi;\n"
 
@@ -613,15 +742,15 @@ def modmli(n,m) :
         str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
     else :
         str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
-    str+="\tudpint t=0;\n"
+    str+="\tspint tl=0,th=0;\n"
 
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
     str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
     for i in range(0,N) :
-        str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
-        str+="spint v{}=(spint)t & mask; t=t>>{}u;\n".format(i,base)
+        str+="\taccum(&tl,&th,a[{}],b);".format(i)
+        str+="\tspint v{}=tl & mask; shiftr(&tl,&th,{}u);\n".format(i,base)
 
     str=second_pass(str,n,m)
 
@@ -889,12 +1018,8 @@ def modcsw() :
     str+="void modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint c0,c1,s,t,w,aux;\n"
-    if WL==16 :
-        str+="\tspint r=0xa55au;\n"
-    if WL==32 :
-        str+="\tspint r=0x5aa5a55au;\n"
-    if WL==64 :
-        str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
+
+    str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
     str+="\t\tc0=(~b)&(r+1);\n"
     str+="\t\tc1=b+r;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
@@ -916,12 +1041,8 @@ def modcmv() :
     str+="void modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint c0,c1,s,t,aux;\n"
-    if WL==16 :
-        str+="\tspint r=0xa55au;\n"
-    if WL==32 :
-        str+="\tspint r=0x5aa5a55au;\n"
-    if WL==64 :
-        str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
+
+    str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
     str+="\t\tc0=(~b)&(r+1);\n"
     str+="\t\tc1=b+r;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
@@ -1049,12 +1170,11 @@ def time_modmul(n,ra,rb) :
     str="void time_modmul{}() {{\n".format(DECOR)
     str+="\tspint x[{}],y[{}],z[{}];\n".format(N,N,N)
     str+="\tint i,j;\n"
-    if not embedded :
-        str+="\tuint64_t start,finish;\n"
-        str+="\tclock_t begin;\n"
-        str+="\tint elapsed;\n"
-    else :
-        str+="\tlong start,finish;\n"
+
+    str+="\tuint64_t start,finish;\n"
+    str+="\tclock_t begin;\n"
+    str+="\tint elapsed;\n"
+
     str+="\t"
     for i in range(0,N) :
         str+="x[{}]={}; ".format(i,hex(rap[i]))
@@ -1066,56 +1186,27 @@ def time_modmul(n,ra,rb) :
     str+="\tnres{}(x,x);\n".format(DECOR)
     str+="\tnres{}(y,y);\n".format(DECOR)
 
-    if embedded :
-        if arduino :
-            str+="\tstart=micros();\n"
-        else :
-            str+="\t//provide code to start counter, start=?;\n"
-        str+="\tfor (j=0;j<200;j++) {\n"
-        str+="\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t\tmodmul{}(y,z,x);\n".format(DECOR)
-        str+="\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t}\n"
-        if arduino :
-            str+="\tfinish=micros();\n"
-        else :
-            str+="\t//provide code to stop counter, finish=?;\n"
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if arduino :
-            str+='\tSerial.print("modmul usecs= "); Serial.println((finish-start)/1000);\n'
-        else :
-            if cyclesorsecs :
-                str+='\tprintf("modmul check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
-            else :
-                str+='\tprintf("modmul check %x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)));\n'
-        str+="}\n"
+    if use_rdtsc :
+        str+="\tstart=__rdtsc();\n"
+    str+="\tbegin=clock();\n"
+    str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
+    str+="\t\tfor (j=0;j<200;j++) {\n"
+    str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(y,z,x);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
+    str+="\t\t}\n"
+    if use_rdtsc :
+        str+="\tfinish=__rdtsc();\n"
+    str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
+    str+="\tredc{}(z,z);\n".format(DECOR)
+ 
+    if use_rdtsc :
+        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        if cyclescounter :
-            str+="\tstart=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tstart=__rdtsc();\n"
-        str+="\tbegin=clock();\n"
-        str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
-        str+="\t\tfor (j=0;j<200;j++) {\n"
-        str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(y,z,x);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t\t}\n"
-        if cyclescounter :
-            str+="\tfinish=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tfinish=__rdtsc();\n"
-        str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclescounter or use_rdtsc :
-            str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
-        else :
-            str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,elapsed);\n'
-        str+="}\n"
+        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,elapsed);\n'
+    str+="}\n"
     return str
 
 def time_modsqr(n,r) :
@@ -1127,12 +1218,10 @@ def time_modsqr(n,r) :
     str="void time_modsqr{}() {{\n".format(DECOR)
     str+="\tspint x[{}],z[{}];\n".format(N,N)
     str+="\tint i,j;\n"
-    if not embedded :
-        str+="\tuint64_t start,finish;\n"
-        str+="\tclock_t begin;\n"
-        str+="\tint elapsed;\n"
-    else :
-        str+="\tlong start,finish;\n"
+
+    str+="\tuint64_t start,finish;\n"
+    str+="\tclock_t begin;\n"
+    str+="\tint elapsed;\n"
 
     str+="\t"
     for i in range(0,N) :
@@ -1140,50 +1229,24 @@ def time_modsqr(n,r) :
     str+="\n"
 
     str+="\tnres{}(x,x);\n".format(DECOR)
-    if embedded :
-        if arduino :
-            str+="\tstart=micros();\n"
-        else :
-            str+="\t//provide code to start counter, start=?;\n"
-        str+="\tfor (j=0;j<500;j++) {\n"
-        str+="\t\tmodsqr{}(x,z);\n".format(DECOR)
-        str+="\t\tmodsqr{}(z,x);\n".format(DECOR)
-        str+="\t}\n"
-        if arduino :
-            str+="\tfinish=micros();\n"
-        else :
-            str+="\t//provide code to stop counter, finish=?;\n"
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if arduino :
-            str+='\tSerial.print("modsqr usecs= "); Serial.println((finish-start)/1000);\n'
-        else :
-            if cyclesorsecs :
-                str+='\tprintf("modsqr check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/1000));\n'
-            else :
-                str+='\tprintf("modsqr check %x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)));\n'
-        str+="}\n"
+    if use_rdtsc :
+        str+="\tstart=__rdtsc();\n" 
+    str+="\tbegin=clock();\n"
+    str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
+    str+="\t\tfor (j=0;j<500;j++) {\n"
+    str+="\t\t\tmodsqr{}(x,z);\n".format(DECOR)
+    str+="\t\t\tmodsqr{}(z,x);\n".format(DECOR)
+    str+="\t\t}\n"
+    if use_rdtsc :
+        str+="\tfinish=__rdtsc();\n"
+    str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
+    str+="\tredc{}(z,z);\n".format(DECOR)
+ 
+    if use_rdtsc :
+        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        if cyclescounter :
-            str+="\tstart=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tstart=__rdtsc();\n"
-        str+="\tbegin=clock();\n"
-        str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
-        str+="\t\tfor (j=0;j<500;j++) {\n"
-        str+="\t\t\tmodsqr{}(x,z);\n".format(DECOR)
-        str+="\t\t\tmodsqr{}(z,x);\n".format(DECOR)
-        str+="\t\t}\n"
-        if cyclescounter :
-            str+="\tfinish=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tfinish=__rdtsc();\n"
-        str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclescounter or use_rdtsc :
-            str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
-        else :
-            str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,elapsed);\n'
-        str+="}\n"
+        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,elapsed);\n'
+    str+="}\n"
     return str
 
 def time_modinv(n,r) :
@@ -1195,12 +1258,10 @@ def time_modinv(n,r) :
     str="void time_modinv{}() {{\n".format(DECOR)
     str+="\tspint x[{}],z[{}];\n".format(N,N)
     str+="\tint i,j;\n"
-    if not embedded :
-        str+="\tuint64_t start,finish;\n"
-        str+="\tclock_t begin;\n"
-        str+="\tint elapsed;\n"
-    else :
-        str+="\tlong start,finish;\n"
+ 
+    str+="\tuint64_t start,finish;\n"
+    str+="\tclock_t begin;\n"
+    str+="\tint elapsed;\n"
 
     str+="\t"
     for i in range(0,N) :
@@ -1208,70 +1269,34 @@ def time_modinv(n,r) :
     str+="\n"
 
     str+="\tnres{}(x,x);\n".format(DECOR)
-    if embedded :
-        if arduino :
-            str+="\tstart=micros();\n"
-        else :
-            str+="\t//provide code to start counter, start=?;\n"
-        str+="\tmodinv{}(x,NULL,z);\n".format(DECOR)
-        if arduino :
-            str+="\tfinish=micros();\n"
-        else :
-            str+="\t//provide code to stop counter, finish=?;\n"
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if arduino :
-            str+='\tSerial.print("modinv usecs= "); Serial.println(finish-start);\n'
-        else :
-            if cyclesorsecs :
-                str+='\tprintf("modinv check %x Clock cycles= %d\\n",(int)z[0]&0xFFFFFF,(int)(finish-start));\n'
-            else :
-                str+='\tprintf("modinv check %x Microsecs= %d\\n",(int)z[0]&0xFFFFFF,(int)(finish-start));\n'
-        str+="}\n"
+    if use_rdtsc :
+        str+="\tstart=__rdtsc();\n"
+    str+="\tbegin=clock();\n"
+    str+="\tfor (i=0;i<{};i++) {{\n".format(50000//scale)
+    str+="\t\t\tmodinv{}(x,NULL,z);\n".format(DECOR)
+    str+="\t\t\tmodinv{}(z,NULL,x);\n".format(DECOR)
+    str+="\t}\n"
+    if use_rdtsc :
+        str+="\tfinish=__rdtsc();\n"
+    str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
+    str+="\tredc{}(z,z);\n".format(DECOR)
+ 
+    if use_rdtsc:
+        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
     else :
-        if cyclescounter :
-            str+="\tstart=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tstart=__rdtsc();\n"
-        str+="\tbegin=clock();\n"
-        str+="\tfor (i=0;i<{};i++) {{\n".format(50000//scale)
-        str+="\t\t\tmodinv{}(x,NULL,z);\n".format(DECOR)
-        str+="\t\t\tmodinv{}(z,NULL,x);\n".format(DECOR)
-        str+="\t}\n"
-        if cyclescounter :
-            str+="\tfinish=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tfinish=__rdtsc();\n"
-        str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclescounter or use_rdtsc:
-            str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)z[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
-        else :
-            str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",(int)z[0]&0xFFFFFF,elapsed);\n'
-        str+="}\n"
+        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",(int)z[0]&0xFFFFFF,elapsed);\n'
+    str+="}\n"
     return str
 
 def header() :
     print("\n//Automatically generated modular arithmetic C code for pseudo-Mersenne primes")
-    print("//Command line : python {} {} {}".format(sys.argv[0], sys.argv[1], sys.argv[2]))
+    print("//Command line : python {} {}".format(sys.argv[0], sys.argv[1]))
     print("//Python Script by Mike Scott (Technology Innovation Institute, UAE, 2025)\n")
     print("#include <stdio.h>")
     print("#include <stdint.h>\n")
     print("#define sspint int{}_t".format(WL))
     print("#define spint uint{}_t".format(WL))
-    if WL==64 :
-        print("#define udpint __uint{}_t".format(2*WL))
-    else :
-        print("#define udpint uint{}_t".format(2*WL))
-    if karatsuba :
-        if WL==64 :
-            print("#define dpint __int{}_t\n".format(2*WL))
-        else:
-            print("#define dpint int{}_t\n".format(2*WL))
-    else :
-        if WL==64 :
-            print("#define dpint __uint{}_t\n".format(2*WL))
-        else:
-            print("#define dpint uint{}_t\n".format(2*WL))
+ 
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))
     print("#define Radix{} {}".format(DECOR,base))
@@ -1283,6 +1308,7 @@ def header() :
         print("#define",prime,"\n")
 
 def functions() :
+    print(intrinsics())
     print(prop(n))
     print(flat(n))
     print(modfsb(n))
@@ -1319,8 +1345,7 @@ def functions() :
 def main() :
     str="int main() {\n"
     str+='\tprintf("C code - timing some functions - please wait\\n");\n'
-    if cyclescounter :
-        str+='\tprintf("%s %s\\n",cpucycles_implementation(),cpucycles_version());\n'
+
     str+="\ttime_modmul();\n"
     str+="\ttime_modsqr();\n"
     str+="\ttime_modinv();\n"
@@ -1328,19 +1353,15 @@ def main() :
     str+="}\n"
     return str
 
-if len(sys.argv)!=3 :
+if len(sys.argv)!=2 :
     print("Syntax error")
-    print("Valid syntax - python pseudo.py <word length> <prime> OR <prime name>")
-    print("For example - python pseudo.py 64 X25519")
-    print("For example - python pseudo.py 64 2**255-19")
+    print("Valid syntax - python pseudoms64.py <prime> OR <prime name>")
+    print("For example - python pseudoms64.py X25519")
+    print("For example - python pseudoms64.py 2**255-19")
     exit(2)
 
-WL=int(sys.argv[1])
-if WL!=16 and WL != 32 and WL !=64 :
-    print("Only 16, 32 and 64-bit word lengths supported")
-    exit(2)
-
-prime=sys.argv[2]
+WL=64
+prime=sys.argv[1]
 
 n=0
 base=0
@@ -1355,10 +1376,6 @@ m=0
 
 
 ### Start of user editable area
-
-
-if WL!=64 :
-    inline=False
 
 # More named primes can be added here
 p=0
@@ -1376,10 +1393,7 @@ if prime=="NUMS256E" :
 
 if prime=="NIST521" :
     p=2**521-1
-    if WL==32 :
-        base=29
-    if WL==64 :
-        base=58
+    base=58
 
 if prime=="ED521" :
     p=2**521-1
@@ -1411,10 +1425,9 @@ if prime=="C41417" :
 
 if prime=="PM512" :
     p=2**512-569
-    if WL==16 :
-        base=12
 
-if prime=="SECP256K1" and WL==64:
+
+if prime=="SECP256K1" :
     p=2**256-2**32-977
 
 ### End of user editable area
@@ -1432,9 +1445,6 @@ n=p.bit_length()
 if n<120 or pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
     exit(2)
-#if n>360 and WL==16 :
-#	print("Modulus probably too big for 16-bit processor")
-#	exit(1)
 
 if base==0 :
     base=getbase(n)   # use default radix
@@ -1495,23 +1505,17 @@ ROI=makebig(roi,base,N)
 
 mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
-print("Compiler is "+compiler)
-if karatsuba :
-    print("Using Karatsuba for modmul")
-else : 
-    print("Using standard Comba for modmul")
+
+print("Using standard Comba for modmul")
 
 overflow=False
 bad_overflow=False
 if (b-1)*(b-1)*mm*N >= 2**(2*WL) :
     overflow=True
     print("Possibility of overflow... using alternate method")
-    if karatsuba :
-        if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
-            bad_overflow=True
-    else :
-        if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
-            bad_overflow=True
+
+    if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
+        bad_overflow=True
 if bad_overflow :
     print("Overflow requires extra resource")
 
@@ -1541,157 +1545,14 @@ if m*(2**(2*WL-base+xcess)+2**(base-xcess)) >= 2**(2*base) :
 from contextlib import redirect_stdout
 
 # Note that the accumulated partial products must not exceed the double precision limit. 
-# If NOT using karatsuba this limit can be 2**(2*WL), otherwise 2**(2*WL-1)
-# If NOT using karatsuba use unsigned integer types to store limbs, otherwise use signed types
+# this limit can be 2**(2*WL)
+# use unsigned integer types to store limbs
 
 makestatic=False
 DECOR=""
 modulus=p
 
 import random
-with open('test.c', 'w') as f:
-    with redirect_stdout(f):
-        header()
-        functions()
-f.close()
-
-#maybe -march=rv64gc for RISC-V
-#maybe -fPIC
-subprocess.call(compiler + " -march=native -mtune=native -O3 -shared -o test.so test.c", shell=True)
-
-import ctypes
-from ctypes import *
-lib = ctypes.CDLL('./test.so')
-
-if WL==16 :
-    lib.modadd.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
-    lib.modsub.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
-    lib.modmul.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
-    lib.modsqr.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
-    lib.modpro.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
-    lib.modinv.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
-    lib.modsqrt.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
-    lib.modcpy.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
-    lib.nres.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
-    lib.redc.argtypes =  [POINTER(c_uint16),POINTER(c_uint16)]
-
-if WL==32 :
-    lib.modadd.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
-    lib.modsub.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
-    lib.modmul.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
-    lib.modsqr.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
-    lib.modpro.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
-    lib.modinv.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
-    lib.modsqrt.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
-    lib.modcpy.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
-    lib.nres.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
-    lib.redc.argtypes =  [POINTER(c_uint32),POINTER(c_uint32)]
-if WL==64 :
-    lib.modadd.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
-    lib.modsub.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
-    lib.modmul.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
-    lib.modsqr.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
-    lib.modpro.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
-    lib.modinv.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
-    lib.modsqrt.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
-    lib.modcpy.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
-    lib.nres.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
-    lib.redc.argtypes =  [POINTER(c_uint64),POINTER(c_uint64)]
-print("Checking correctness.. ",end="")
-xa=[]
-ya=[]
-ta=[]
-za=[]
-for i in range(0,N) :
-    xa.append(0)
-    ya.append(0)
-    za.append(0)
-    ta.append(0)
-
-for i in range(0,1000) :
-    x=random.randint(0,2*modulus-1)
-    y=random.randint(0,2*modulus-1)
-    z=((x-y)*(x+y))%modulus                # typical of sequence of instructions that might arise in ECC
-    rz=(z*z)%modulus
-    rz=inverse(rz,p)
-
-    for j in range(0,N-1) :
-        xa[j]=(x%b)
-        ya[j]=(y%b)
-        x>>=base
-        y>>=base
-    xa[N-1]=x
-    ya[N-1]=y
-
-    if WL==16 :
-        arr_x = (c_uint16 * N)(*xa)
-        arr_y = (c_uint16 * N)(*ya)
-        arr_t = (c_uint16 * N)(*ta)
-        arr_z = (c_uint16 * N)(*za)
-        #arr_n = (c_uint16 * N)None
-        lib.nres(arr_x,arr_x)
-        lib.nres(arr_y,arr_y)
-        lib.modadd(arr_x,arr_y,arr_t)
-        lib.modsub(arr_x,arr_y,arr_z)
-        lib.modmul(arr_t,arr_z,arr_x)
-        lib.modsqr(arr_x,arr_z)
-        lib.modinv(arr_z,None,arr_z)
-        lib.modsqrt(arr_z,None,arr_z)   # get square root, and square it again
-        lib.modsqr(arr_z,arr_z)
-        lib.redc(arr_z,arr_z)
-        z=0
-        for j in range(N-1,-1,-1) :
-            z*=b
-            z+=arr_z[j]
-
-    if WL==32 :
-        arr_x = (c_uint32 * N)(*xa)
-        arr_y = (c_uint32 * N)(*ya)
-        arr_t = (c_uint32 * N)(*ta)
-        arr_z = (c_uint32 * N)(*za)
-        #arr_n = (c_uint32 * N)None
-        lib.nres(arr_x,arr_x)
-        lib.nres(arr_y,arr_y)
-        lib.modadd(arr_x,arr_y,arr_t)
-        lib.modsub(arr_x,arr_y,arr_z)
-        lib.modmul(arr_t,arr_z,arr_x)
-        lib.modsqr(arr_x,arr_z)
-        lib.modinv(arr_z,None,arr_z)
-        lib.modsqrt(arr_z,None,arr_z)   # get square root, and square it again
-        lib.modsqr(arr_z,arr_z)
-        lib.redc(arr_z,arr_z)
-        z=0
-        for j in range(N-1,-1,-1) :
-            z*=b
-            z+=arr_z[j]
-    if WL==64 :
-        arr_x = (c_uint64 * N)(*xa)
-        arr_y = (c_uint64 * N)(*ya)
-        arr_t = (c_uint64 * N)(*ta)
-        arr_z = (c_uint64 * N)(*za)
-        #arr_n = (c_uint64 * N)None
-        lib.nres(arr_x,arr_x)
-        lib.nres(arr_y,arr_y)
-        lib.modadd(arr_x,arr_y,arr_t)
-        lib.modsub(arr_x,arr_y,arr_z)
-        lib.modmul(arr_t,arr_z,arr_x)
-        lib.modsqr(arr_x,arr_z)
-        lib.modinv(arr_z,None,arr_z)
-        lib.modsqrt(arr_z,None,arr_z)   # get square root, and square it again
-        lib.modsqr(arr_z,arr_z)
-        lib.redc(arr_z,arr_z)
-        z=0
-        for j in range(N-1,-1,-1) :
-            z*=b
-            z+=arr_z[j]
-    if z!=rz :
-        print("Failed")
-        #print(hex(z))
-        #print(hex(rz))
-        exit(1)
-print("Passed - OK")
-subprocess.call("rm test.c", shell=True)
-subprocess.call("rm test.so", shell=True)
 
 makestatic=True
 random.seed(42)
@@ -1699,19 +1560,15 @@ ra=random.randint(0,modulus-1)
 rb=random.randint(0,modulus-1)
 rs=random.randint(0,modulus-1)
 ri=random.randint(0,modulus-1)
-#if embedded :
+
 subprocess.call("rm time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
         header()
-        if not embedded :
-            if cyclescounter :
-                print("#include <cpucycles.h>\n")
-            print("#include <time.h>\n")
-        if use_rdtsc :
-            print("#include <x86intrin.h>\n")
+        print("#include <time.h>\n")
 
+        print(intrinsics())
         print(prop(n))
         print(flat(n))
         print(modfsb(n))
@@ -1726,23 +1583,11 @@ with open('time.c', 'w') as f:
         print(time_modmul(n,ra,rb))
         print(time_modsqr(n,rs))
         print(time_modinv(n,ri))
-        if not embedded :
-            print(main())
+        print(main())
 
 f.close()
 
-#maybe -march=rv64gc for RISC-V
-#maybe -fPIC
-if not embedded :   # Create timing program for this processor
-    if cyclescounter :
-        subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -lcpucycles -o time", shell=True)
-    else :
-        subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -o time", shell=True)
-    print("For timings run ./time")
-    #subprocess.call("rm time.c", shell=True)
-else :
-    print("Timing code is in file time.c")
-
+print("Timing code is in file time.c")
 
 # to determine code size
 makestatic=False
@@ -1751,26 +1596,6 @@ with open('field.c', 'w') as f:
         header()
         functions()
 f.close()
-
-subprocess.call(compiler+" -O3 -c field.c",shell=True)
-subprocess.call("size field.o > size.txt",shell=True)
-
-f=open('size.txt')
-lines=f.readlines()
-info=lines[1].split()
-
-print("Code size using -O3 = ",info[0])
-
-subprocess.call(compiler+" -Os -c field.c",shell=True)
-subprocess.call("size field.o > size.txt",shell=True)
-
-f=open('size.txt')
-lines=f.readlines()
-info=lines[1].split()
-
-print("Code size using -Os = ",info[0])
-subprocess.call("rm size.txt",shell=True)     
-subprocess.call("rm field.o",shell=True)  
 
 if decoration :
     if noname :

@@ -401,7 +401,7 @@ static void select(int b,point W[],point *P)
 }
 
 // convert to double naf form
-static void dnaf(const char *e,const char *f, char *w)
+static void dnaf(const char *e,const char *f, signed char *w)
 {
     int i,j,t;
     unsigned char ce=0;

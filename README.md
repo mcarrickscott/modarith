@@ -206,3 +206,14 @@ Provide a main program in *signature.c* which implements some test vectors and c
 Any implementation should be tested using test vectors. A good source are the test vectors provided by the Wycheproof project - see https://github.com/C2SP/wycheproof
 
 A short python script *parse.py* is provided which converts the JSON formatted test vectors for ECDSA and EdDSA to a form more easily digestible by a C or Rust program.
+
+
+# Microsoft C 64-bit compiler support
+
+Inexcusably the Microsoft C 64 bit compiler MSVC does not support 128-bit integers (BTW you really should be using *clang-cl*). However relatively efficient implementation is still possible with MSVC using special intrinsic functions.
+
+The scripts *pseudoms64.py* and *montyms64.py* generate code which uses these intrinsics. By default x86-64 intrinsics are used. But generated code can also be configured for ARM64, or indeed any architecture which at a minimum allows access to the top 64 bits of a 128-bit product.
+
+A minor change is also required in the *curve.py* script where indicated.  
+
+
