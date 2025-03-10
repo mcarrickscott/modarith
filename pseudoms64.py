@@ -11,8 +11,8 @@
 #
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
-# Execute this program as: python pseudo.py 64 X25519
-# Production code is output to file field.c or group.c
+# Execute this program as: python3 pseudoms64.py X25519
+# Production code is output to file field.c
 # 
 # Mike Scott 19th February 2025
 # TII

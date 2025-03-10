@@ -14,13 +14,13 @@
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
 # How to use. 
-# (1) First execute this program: python monty_rust.py 64 NIST256. Output code is written to file field.rs or group.rs
+# (1) First execute this program: python3 monty_rust.py 64 NIST256. Output code is written to file field.rs or group.rs
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
 #
 # By convention if the curve name is entered in upper-case, the prime modulus is the field prime
 # If entered in lower-case, the prime modulus is the group order (a large prime factor of the number of points on the curve)
-# For example : python monty.py 64 nist256. This uses the prime 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+# For example : python3 monty_rust.py 64 nist256. This uses the prime 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
 #
 # Note that even though a modulus is represented to the base 2^29 rather than 2^32, it still retains some shape
 # For example on a 32-bit processor using a radix of 2^29 the NIST384 prime is

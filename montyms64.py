@@ -1,5 +1,6 @@
 # Python program to generate reasonably efficient C/C++ modular arithmetic code for any prime, on a 16, 32 or 64-bit processor
 # IMPORTANT:- Uses Montgomery representation. Uses unsaturated radix
+# Special version for Microsoft 64-bit C compiler (no 128 bit integers!)
 # 
 # In particular this script generates code for the NIST field primes
 #
@@ -13,13 +14,13 @@
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
 # How to use. 
-# (1) First execute this program: python monty.py 64 NIST256. Output code is written to file field.c or group.c
+# (1) First execute this program: python3 montyms64.py NIST256. Output code is written to file field.c or group.c
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
 #
 # By convention if the curve name is entered in upper-case, the prime modulus is the field prime
 # If entered in lower-case, the prime modulus is the group order (a large prime factor of the number of points on the curve)
-# For example : python monty.py 64 nist256. This uses the prime 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+# For example : python3 montyms64.py nist256. This uses the prime 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
 #
 # Note that even though a modulus is represented using an unsaturated base, it may still retains some shape
 # For example on a 32-bit processor using a radix of 2^29 the NIST384 prime is

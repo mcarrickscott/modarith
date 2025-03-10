@@ -10,8 +10,8 @@
 #
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
-# Execute this program as: python pseudo_rust.py 64 X25519
-# Code is output to file field.rs or group.rs
+# Execute this program as: python3 pseudo_rust.py 64 X25519
+# Code is output to file field.rs
 #
 # Mike Scott 22nd April 2024
 # TII
