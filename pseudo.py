@@ -886,24 +886,26 @@ def modcsw() :
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
     if makestatic :
         str+="static "
-    str+="void modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
+    str+="void __attribute__ ((noinline)) modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,aux;\n"
+    str+="\tspint c0,c1,s,t,w,v,aux;\n"
+    str+="\tstatic spint R=0;\n"
     if WL==16 :
-        str+="\tspint r=0xa55au;\n"
+        str+="\tR+=0xa55au;\n"
     if WL==32 :
-        str+="\tspint r=0x5aa5a55au;\n"
+        str+="\tR+=0x5aa5a55au;\n"
     if WL==64 :
-        str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
-    str+="\t\tc0=(~b)&(r+1);\n"
-    str+="\t\tc1=b+r;\n"
+        str+="\tR+=0x3cc3c33c5aa5a55au;\n"
+    str+="\tw=R;\n"
+    str+="\t\tc0=(~b)&(w+1);\n"
+    str+="\t\tc1=b+w;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tw=r*(t+s);\n"
+    str+="\t\tv=w*(t+s);\n"
     str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    str+="\t\tf[i] = aux - w;\n"
+    str+="\t\tf[i] = aux - v;\n"
     str+="\t\tg[i] = aux = c0*s+c1*t;\n"
-    str+="\t\tg[i] = aux - w;\n\t}\n"
+    str+="\t\tg[i] = aux - v;\n\t}\n"
     str+="}\n"
     return str
 
@@ -913,21 +915,23 @@ def modcmv() :
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
     if makestatic :
         str+="static "
-    str+="void modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)
+    str+="void __attribute__ ((noinline)) modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,aux;\n"
+    str+="\tspint c0,c1,s,t,w,aux;\n"
+    str+="\tstatic spint R=0;\n"
     if WL==16 :
-        str+="\tspint r=0xa55au;\n"
+        str+="\tR+=0xa55au;\n"
     if WL==32 :
-        str+="\tspint r=0x5aa5a55au;\n"
+        str+="\tR+=0x5aa5a55au;\n"
     if WL==64 :
-        str+="\tspint r=0x3cc3c33c5aa5a55au;\n"
-    str+="\t\tc0=(~b)&(r+1);\n"
-    str+="\t\tc1=b+r;\n"
+        str+="\tR+=0x3cc3c33c5aa5a55au;\n"
+    str+="\tw=R;\n"
+    str+="\t\tc0=(~b)&(w+1);\n"
+    str+="\t\tc1=b+w;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\ts=g[i]; t=f[i];\n"
     str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    str+="\t\tf[i] = aux - r*(t+s);\n\t}\n"
+    str+="\t\tf[i] = aux - w*(t+s);\n\t}\n"
     str+="}\n"
     return str
 

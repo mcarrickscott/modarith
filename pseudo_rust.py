@@ -811,22 +811,27 @@ def modcsw() :
         str+="pub "
     str+="fn modcsw(b: usize,g: &mut [SPINT],f: &mut [SPINT]) {\n"
     str+="\tlet bb = b as SPINT;\n"
+    str+="\tstatic mut R:SPINT=0;\n"
+    str+="\tlet w:SPINT;\n"
+    str+="\tunsafe {\n"
     if WL==16 :
-        str+="let r=0xa55a;\n"
+        str+="\t\tR+=0xa55a;\n"
     if WL==32 :
-        str+="let r=0x5aa5a55a;\n"
+        str+="\t\tR+=0x5aa5a55a;\n"
     if WL==64 :
-        str+="let r=0x3cc3c33c5aa5a55a;\n"
-    str+="\t\tlet c0=(!bb)&(r+1);\n"
-    str+="\t\tlet c1=bb+r;\n"
+        str+="\t\tR+=0x3cc3c33c5aa5a55a;\n"
+    str+="\t\tw=R;\n"
+    str+="}\n"
+    str+="\t\tlet c0=(!bb)&(w+1);\n"
+    str+="\t\tlet c1=bb+w;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tlet s=g[i];\n"
     str+="\t\tlet t=f[i];\n"
-    str+="\t\tlet w=r*(t+s);\n"
+    str+="\t\tlet v=w*(t+s);\n"
     str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*s);}\n"
-    str+="\t\tf[i]-=w;\n"
+    str+="\t\tf[i]-=v;\n"
     str+="\t\tunsafe{core::ptr::write_volatile(&mut g[i],c0*s+c1*t);}\n"
-    str+="\t\tg[i]-=w;\n\t}\n"
+    str+="\t\tg[i]-=v;\n\t}\n"
     str+="\treturn;\n}\n"
     return str
 
@@ -837,20 +842,25 @@ def modcmv() :
     if makepublic :
         str+="pub "
     str+="fn modcmv(b: usize,g: &[SPINT],f: &mut [SPINT]) {\n"
+    str+="\tstatic mut R:SPINT=0;\n"
+    str+="\tlet w:SPINT;\n"
+    str+="\tunsafe {\n"
     if WL==16 :
-        str+="let r=0xa55a;\n"
+        str+="\t\tR+=0xa55a;\n"
     if WL==32 :
-        str+="let r=0x5aa5a55a;\n"
+        str+="\t\tR+=0x5aa5a55a;\n"
     if WL==64 :
-        str+="let r=0x3cc3c33c5aa5a55a;\n"
+        str+="\t\tR+=0x3cc3c33c5aa5a55a;\n"
+    str+="\t\tw=R;\n"
+    str+="}\n"
     str+="\tlet bb = b as SPINT;\n"
-    str+="\t\tlet c0=(!bb)&(r+1);\n"
-    str+="\t\tlet c1=bb+r;\n"
+    str+="\t\tlet c0=(!bb)&(w+1);\n"
+    str+="\t\tlet c1=bb+w;\n"
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tlet s=g[i];\n"
     str+="\t\tlet t=f[i];\n"
     str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*s);}\n"
-    str+="\t\tf[i]-=r*(t+s);\n\t}\n"
+    str+="\t\tf[i]-=w*(t+s);\n\t}\n"
     str+="\treturn;\n}\n"
     return str
 
