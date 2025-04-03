@@ -102,12 +102,12 @@ static void output(spint *x) {
 // output a point (x,y)
 void outputxy(point *P)
 {
-    if (ecnisinf(P)) {
+    if (ecnXXXisinf(P)) {
         printf("P= O\n");
     } else {
         char x[BYTES],y[BYTES];
         char buff[(2*BYTES)+1];
-        ecnget(P,x,y);
+        ecnXXXget(P,x,y);
         toHex(BYTES,x,buff);
         printf("Px= "); puts(buff);
         toHex(BYTES,y,buff);
@@ -149,15 +149,15 @@ static void reduce(char *h,spint *r)
 void NIST256_KEY_PAIR(int compress,char *prv,char *pub)
 {
     point P;
-    ecngen(&P);
+    ecnXXXgen(&P);
 
-    ecnmul(prv,&P); 
+    ecnXXXmul(prv,&P); 
 
     if (compress) {
-        pub[0]=0x02+ecnget(&P,&pub[1],NULL); // 0x02 or 0x03
+        pub[0]=0x02+ecnXXXget(&P,&pub[1],NULL); // 0x02 or 0x03
     } else {
         pub[0]=0x04; // no compression
-        ecnget(&P,&pub[1],&pub[BYTES+1]);  // get x and y
+        ecnXXXget(&P,&pub[1],&pub[BYTES+1]);  // get x and y
     }
 }
 
@@ -199,15 +199,15 @@ void NIST256_SIGN(char *prv,char *ran,char *thm,char *sig)
 
     modimp(thm,e);
 
-    ecngen(&R);
+    ecnXXXgen(&R);
     modimp(prv,s);
 
     reduce(ran,k);
     modexp(k,h);
-    ecnmul(h,&R);
+    ecnXXXmul(h,&R);
     modinv(k,NULL,k);
 
-    ecnget(&R,h,NULL);
+    ecnXXXget(&R,h,NULL);
     modimp(h,r);
 
     modmul(s,r,s);
@@ -230,7 +230,7 @@ int NIST256_VERIFY(char *pub,char *thm,char *sig)
 
     modimp(thm,e);
 
-    ecngen(&G);
+    ecnXXXgen(&G);
 
 // import from signature
     if (!modimp(sig,r)) return 0; // if not in range
@@ -242,15 +242,15 @@ int NIST256_VERIFY(char *pub,char *thm,char *sig)
     modmul(s,e,s); modexp(s,u); 
 
     if (pub[0]==0x04) {
-        ecnset(0,&pub[1],&pub[BYTES+1],&Q);
+        ecnXXXset(0,&pub[1],&pub[BYTES+1],&Q);
     } else {
-        ecnset((int)pub[0]&1,&pub[1],NULL,&Q);
+        ecnXXXset((int)pub[0]&1,&pub[1],NULL,&Q);
     }
 
-    ecnmul2(u,&G,v,&Q,&Q);
-    if (ecnisinf(&Q)) return 0;
+    ecnXXXmul2(u,&G,v,&Q,&Q);
+    if (ecnXXXisinf(&Q)) return 0;
 
-    ecnget(&Q,rb,NULL);
+    ecnXXXget(&Q,rb,NULL);
 
     modimp(rb,e);
     if (modcmp(r,e)) return 1;

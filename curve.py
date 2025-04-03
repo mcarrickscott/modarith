@@ -40,6 +40,17 @@ def replacefromfile(namefile,oldtext,newfile):
     f.write(newdata)
     f.close()
 
+def replace(namefile,oldtext,newtext):
+    f = open(namefile,'r')
+    filedata = f.read()
+    f.close()
+
+    newdata = filedata.replace(oldtext,newtext)
+
+    f = open(namefile,'w')
+    f.write(newdata)
+    f.close()
+
 if len(sys.argv)!=3 :
     print("Syntax error")
     print("Valid syntax - python3 curve.py <word length> <curve>")
@@ -295,10 +306,16 @@ if curve_type==WEIERSTRASS :
     replacefromfile("weierstrass.c","@field@","field.c")
     replacefromfile("weierstrass.c","@curve@","curve.c")
     replacefromfile("curve.h","@point@","point.h")
+    replace("curve.h","XXX","_"+curve.lower()+"_")
+    replace("weierstrass.c","XXX","_"+curve.lower()+"_")
 if curve_type==EDWARDS:
     replacefromfile("edwards.c","@field@","field.c")
     replacefromfile("edwards.c","@curve@","curve.c")
     replacefromfile("curve.h","@point@","point.h")
+    replace("curve.h","XXX","_"+curve.lower()+"_")
+    replace("edwards.c","XXX","_"+curve.lower()+"_")
 cfile=curve.lower()+".c"
 if os.path.exists(cfile) :
     replacefromfile(cfile,"@group@","group.c")
+    replace(cfile,"XXX","_"+curve.lower()+"_")
+replace("testcurve.c","XXX","_"+curve.lower()+"_")

@@ -22,7 +22,7 @@
 # However if the modulus is entered in decimal with two leading 0s, it is instead assumed to be a group 
 # order (a large prime factor of the number of points on a curve)
 #
-# Note that even though a modulus is represented using an unsaturated base, it may still retains some shape
+# Note that even though a modulus is represented using an unsaturated base, it may still retain some shape
 # For example on a 32-bit processor using a radix of 2^29 the NIST384 prime is
 # {0x1FFFFFFF,0x7,0x0,0x1FFFFE00,0x1FFFEFFF,0x1FFFFFFF,0x1FFFFFFF,0x1FFFFFFF,0x1FFFFFFF,0x1FFFFFFF,0x1FFFFFFF,0x1FFFFFFF,0x1FFFFFFF,0x7F}
 # which can also be represented as

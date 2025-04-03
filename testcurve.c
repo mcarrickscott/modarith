@@ -142,12 +142,12 @@ static void fromHex(const char *src, char *dst)
 // output a point (x,y)
 void outputxy(point *P)
 {
-    if (ecnisinf(P)) {
+    if (ecnXXXisinf(P)) {
         printf("P= O\n");
     } else {
         char x[BYTES],y[BYTES];
         char buff[(2*BYTES)+1];
-        ecnget(P,x,y);
+        ecnXXXget(P,x,y);
         toHex(x,buff);
         printf("Px= "); puts(buff);
         toHex(y,buff);
@@ -183,28 +183,28 @@ int main() {
 
     //order=r1+r2
     printf("Generator= \n");
-    ecngen(&P);
+    ecnXXXgen(&P);
     outputxy(&P);
     
-    ecncpy(&P,&Q);
+    ecnXXXcpy(&P,&Q);
 
     // these should be the same
-    //ecnadd(&Q,&P);
+    //ecnXXXadd(&Q,&P);
     //printf("P+P=\n"); outputxy(&P);
-    //ecndbl(&Q);
+    //ecnXXXdbl(&Q);
     //printf("2P=\n"); outputxy(&Q);
 
     fromHex(order,r); // exponent is big endian byte array  
-    ecnmul(r,&P);
-    if (ecnisinf(&P))
+    ecnXXXmul(r,&P);
+    if (ecnXXXisinf(&P))
         printf("MUL test passed OK\n");
     else
         printf("MUL test FAILED\n");
 
     fromHex(r1,a);
     fromHex(r2,b);
-    ecnmul2(a,&Q,b,&Q,&P);
-    if (ecnisinf(&P))
+    ecnXXXmul2(a,&Q,b,&Q,&P);
+    if (ecnXXXisinf(&P))
         printf("MUL2 test passed OK\n");
     else
         printf("MUL2 test FAILED\n");
@@ -212,7 +212,7 @@ int main() {
     fromHex(n1,a); // random
     fromHex(n2,b);
 
-    ecncpy(&Q,&P);
+    ecnXXXcpy(&Q,&P);
 
     printf("Timing point multiplication\n");
 #ifdef COUNT_CLOCKS
@@ -224,7 +224,7 @@ int main() {
 #endif
     begin=clock();
     for (i=0;i<10000;i++) {
-        ecnmul(a,&P);
+        ecnXXXmul(a,&P);
     }
     elapsed=100*(clock() - begin) / CLOCKS_PER_SEC;
 #ifdef COUNT_CLOCKS
@@ -249,7 +249,7 @@ int main() {
 #endif
     begin=clock();
     for (i=0;i<10000;i++) {
-        ecnmul2(a,&P,b,&Q,&P);
+        ecnXXXmul2(a,&P,b,&Q,&P);
     }
     elapsed=100*(clock() - begin) / CLOCKS_PER_SEC;
 #ifdef COUNT_CLOCKS

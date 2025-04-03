@@ -44,7 +44,7 @@ static int teq(int b, int c)
 }
 
 // copy point
-void ecncpy(point *Q,point *P)
+void ecnXXXcpy(point *Q,point *P)
 {
     modcpy(Q->x,P->x);
     modcpy(Q->y,P->y);
@@ -52,7 +52,7 @@ void ecncpy(point *Q,point *P)
 }
 
 // randomize projective point
-void ecnran(int r,point *P)
+void ecnXXXran(int r,point *P)
 {
     if (r>1)
     {
@@ -63,14 +63,14 @@ void ecnran(int r,point *P)
 }
 
 // negate P
-void ecnneg(point *P)
+void ecnXXXneg(point *P)
 {
     modneg(P->x,P->x);
 }
 
 // add Q to P
 // standard projective method from EFD - https://www.hyperelliptic.org/EFD/
-void ecnadd(point *Q,point *P)
+void ecnXXXadd(point *Q,point *P)
 {
     spint A[Nlimbs],B[Nlimbs],C[Nlimbs],D[Nlimbs],E[Nlimbs],F[Nlimbs],G[Nlimbs];
     modmul(Q->z,P->z,A);
@@ -111,16 +111,16 @@ void ecnadd(point *Q,point *P)
 }
 
 // subtract Q from P
-void ecnsub(point *Q,point *P)
+void ecnXXXsub(point *Q,point *P)
 {
     point W;
-    ecncpy(Q,&W); ecnneg(&W);
-    ecnadd(&W,P);
+    ecnXXXcpy(Q,&W); ecnXXXneg(&W);
+    ecnXXXadd(&W,P);
 }
 
 // double P
 // standard projective method from EFD - https://www.hyperelliptic.org/EFD/
-void ecndbl(point *P)
+void ecnXXXdbl(point *P)
 {
     spint B[Nlimbs],C[Nlimbs],D[Nlimbs],E[Nlimbs],F[Nlimbs],H[Nlimbs],J[Nlimbs];
     modadd(P->x,P->y,B);
@@ -167,7 +167,7 @@ void ecndbl(point *P)
 */
 
 // set to infinity
-void ecninf(point *P)
+void ecnXXXinf(point *P)
 {
     modzer(P->x);
     modone(P->y);
@@ -175,17 +175,17 @@ void ecninf(point *P)
 }
 
 // test for infinity
-int ecnisinf(point *P)
+int ecnXXXisinf(point *P)
 {
     return (modis0(P->x) && modcmp(P->y,P->z));
 }
 
 // set to affine
-void ecnaffine(point *P)
+void ecnXXXaffine(point *P)
 {
     spint I[Nlimbs];
     if (modis0(P->z)) {
-        ecninf(P);
+        ecnXXXinf(P);
         return;
     }
     modinv(P->z,NULL,I);
@@ -195,7 +195,7 @@ void ecnaffine(point *P)
 }
 
 // move Q to P if d=1
-void ecncmv(int d,point *Q,point *P)
+void ecnXXXcmv(int d,point *Q,point *P)
 {
     modcmv(d,Q->x,P->x);
     modcmv(d,Q->y,P->y);
@@ -203,7 +203,7 @@ void ecncmv(int d,point *Q,point *P)
 }
 
 // return 1 if equal, else 0
-int ecncmp(point *P,point *Q)
+int ecnXXXcmp(point *P,point *Q)
 {
     spint a[Nlimbs],b[Nlimbs];
     modmul(P->x,Q->z,a);
@@ -216,10 +216,10 @@ int ecncmp(point *P,point *Q)
 }
 
 // extract (x,y) from point, if y is NULL compress and just return x and sign of y, if x is NULL compress and just return y and sign of x
-int ecnget(point *P,char *x,char *y)
+int ecnXXXget(point *P,char *x,char *y)
 {
     spint X[Nlimbs],Y[Nlimbs];
-    ecnaffine(P);
+    ecnXXXaffine(P);
     if (x!=NULL)
     {
         modcpy(P->x,X);
@@ -273,7 +273,7 @@ static void setxy(int s,const spint *x,const spint *y,point *P)
             modcpy(y,P->y);
             modone(P->z);
         } else {
-            ecninf(P);
+            ecnXXXinf(P);
         }
         return;
     }
@@ -313,7 +313,7 @@ static void setxy(int s,const spint *x,const spint *y,point *P)
     modpro(U,H);
     if (!modqr(H,U))
     { // point not on curve
-        ecninf(P);
+        ecnXXXinf(P);
         return;
     }
     modsqrt(U,H,V); // V=sqrt
@@ -335,16 +335,16 @@ static void setxy(int s,const spint *x,const spint *y,point *P)
 }
 
 // multiply point by small curve cofactor (here assumed to be 4 or 8)
-void ecncof(point *P)
+void ecnXXXcof(point *P)
 {
     int i;
     for (i=0;i<COF;i++)
-        ecndbl(P);
+        ecnXXXdbl(P);
 }
 
 // Is (x,y) of the right order? Must be checked by calling program!
 // api visible version, x and y are big endian byte arrays
-void ecnset(int s,const char *x,const char *y,point *P)
+void ecnXXXset(int s,const char *x,const char *y,point *P)
 {
     spint X[Nlimbs],Y[Nlimbs];
     if (x!=NULL && y!=NULL)
@@ -367,7 +367,7 @@ void ecnset(int s,const char *x,const char *y,point *P)
 }
 
 // set generator
-void ecngen(point *P)
+void ecnXXXgen(point *P)
 {
 #ifdef CONSTANT_X
     spint X[Nlimbs];
@@ -385,19 +385,19 @@ static void select(int b,point W[],point *P)
     int m = b >> TOPBIT;
     int babs = (b ^ m) - m;
 
-    ecncmv(teq(babs, 0),&W[0],P); // conditional move
-    ecncmv(teq(babs, 1),&W[1],P);
-    ecncmv(teq(babs, 2),&W[2],P);    
-    ecncmv(teq(babs, 3),&W[3],P);
-    ecncmv(teq(babs, 4),&W[4],P);
-    ecncmv(teq(babs, 5),&W[5],P);
-    ecncmv(teq(babs, 6),&W[6],P);    
-    ecncmv(teq(babs, 7),&W[7],P);
-    ecncmv(teq(babs, 8),&W[8],P);
+    ecnXXXcmv(teq(babs, 0),&W[0],P); // conditional move
+    ecnXXXcmv(teq(babs, 1),&W[1],P);
+    ecnXXXcmv(teq(babs, 2),&W[2],P);    
+    ecnXXXcmv(teq(babs, 3),&W[3],P);
+    ecnXXXcmv(teq(babs, 4),&W[4],P);
+    ecnXXXcmv(teq(babs, 5),&W[5],P);
+    ecnXXXcmv(teq(babs, 6),&W[6],P);    
+    ecnXXXcmv(teq(babs, 7),&W[7],P);
+    ecnXXXcmv(teq(babs, 8),&W[8],P);
 
-    ecncpy(P,&MP);
-    ecnneg(&MP);  // minus P
-    ecncmv((int)(m & 1),&MP,P);
+    ecnXXXcpy(P,&MP);
+    ecnXXXneg(&MP);  // minus P
+    ecnXXXcmv((int)(m & 1),&MP,P);
 }
 
 // convert to double naf form
@@ -432,22 +432,22 @@ static void dnaf(const char *e,const char *f, signed char *w)
 
 // multiply point by scalar
 // constant time
-void ecnmul(const char *e,point *P) 
+void ecnXXXmul(const char *e,point *P) 
 {
     int i,j;
     point Q,W[9];
     signed char w[2*Nbytes+1];
 
-    ecninf(&Q);
-    ecninf(&W[0]);                         // O
-    ecncpy(P,&W[1]);                       // P
-    ecncpy(P,&W[2]); ecndbl(&W[2]);        // 2P
-    ecncpy(&W[2],&W[3]); ecnadd(P,&W[3]);  // 3P
-    ecncpy(&W[2],&W[4]); ecndbl(&W[4]);    // 4P
-    ecncpy(&W[4],&W[5]); ecnadd(P,&W[5]);  // 5P
-    ecncpy(&W[3],&W[6]); ecndbl(&W[6]);    // 6P
-    ecncpy(&W[6],&W[7]); ecnadd(P,&W[7]);  // 7P
-    ecncpy(&W[4],&W[8]); ecndbl(&W[8]);    // 8P
+    ecnXXXinf(&Q);
+    ecnXXXinf(&W[0]);                         // O
+    ecnXXXcpy(P,&W[1]);                       // P
+    ecnXXXcpy(P,&W[2]); ecnXXXdbl(&W[2]);        // 2P
+    ecnXXXcpy(&W[2],&W[3]); ecnXXXadd(P,&W[3]);  // 3P
+    ecnXXXcpy(&W[2],&W[4]); ecnXXXdbl(&W[4]);    // 4P
+    ecnXXXcpy(&W[4],&W[5]); ecnXXXadd(P,&W[5]);  // 5P
+    ecnXXXcpy(&W[3],&W[6]); ecnXXXdbl(&W[6]);    // 6P
+    ecnXXXcpy(&W[6],&W[7]); ecnXXXadd(P,&W[7]);  // 7P
+    ecnXXXcpy(&W[4],&W[8]); ecnXXXdbl(&W[8]);    // 8P
 
 // convert exponent to signed digit
     for (i=j=0;i<Nbytes;i++,j+=2)
@@ -473,38 +473,38 @@ void ecnmul(const char *e,point *P)
     for (i = 2*Nbytes - 1; i >= 0; i--)
     {
         select(w[i],W,&Q);
-        ecndbl(P);
-        ecndbl(P);
-        ecndbl(P);
-        ecndbl(P);
-        ecnadd(&Q,P);
+        ecnXXXdbl(P);
+        ecnXXXdbl(P);
+        ecnXXXdbl(P);
+        ecnXXXdbl(P);
+        ecnXXXadd(&Q,P);
     }
 }
 
 // double point multiplication R=eP+fQ
 // not constant time
-void ecnmul2(const char *e,point *P,const char *f,point *Q,point *R)
+void ecnXXXmul2(const char *e,point *P,const char *f,point *Q,point *R)
 {
     int i,j;
     point W[5];
     signed char w[8*Nbytes+8];
-    ecninf(&W[0]);     // O
-    ecncpy(P,&W[1]);   // P
-    ecncpy(Q,&W[3]);   // Q
-    ecncpy(Q,&W[2]); ecnsub(P,&W[2]);  // Q-P
-    ecncpy(Q,&W[4]); ecnadd(P,&W[4]);  // Q+P
+    ecnXXXinf(&W[0]);     // O
+    ecnXXXcpy(P,&W[1]);   // P
+    ecnXXXcpy(Q,&W[3]);   // Q
+    ecnXXXcpy(Q,&W[2]); ecnXXXsub(P,&W[2]);  // Q-P
+    ecnXXXcpy(Q,&W[4]); ecnXXXadd(P,&W[4]);  // Q+P
 
     dnaf(e,f,w);
 
     i=8*Nbytes+7;
     while (w[i]==0) i--; // ignore leading zeros
-    ecninf(R);
+    ecnXXXinf(R);
     while (i>=1)
     {
-        ecndbl(R);
+        ecnXXXdbl(R);
         j=w[i];
-        if (j>0) ecnadd(&W[j],R);
-        if (j<0) ecnsub(&W[-j],R);
+        if (j>0) ecnXXXadd(&W[j],R);
+        if (j<0) ecnXXXsub(&W[-j],R);
         i--;
     }
 }

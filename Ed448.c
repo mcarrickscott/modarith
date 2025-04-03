@@ -103,12 +103,12 @@ static void output(spint *x) {
 // output a point (x,y)
 void outputxy(point *P)
 {
-    if (ecnisinf(P)) {
+    if (ecnXXXisinf(P)) {
         printf("P= O\n");
     } else {
         char x[BYTES],y[BYTES];
         char buff[(2*BYTES)+1];
-        ecnget(P,x,y);
+        ecnXXXget(P,x,y);
         toHex(BYTES,x,buff);
         printf("Px= "); puts(buff);
         toHex(BYTES,y,buff);
@@ -170,7 +170,7 @@ void ED448_KEY_PAIR(char *prv,char *pub)
 {
     int sign;
     point P;
-    ecngen(&P);
+    ecnXXXgen(&P);
     char s[BYTES];
 
     H(BYTES+1,BYTES,prv,s);
@@ -179,9 +179,9 @@ void ED448_KEY_PAIR(char *prv,char *pub)
     s[55]|=0x80;
 
     reverse(s);  // little endian to big endian
-    ecnmul(s,&P); 
+    ecnXXXmul(s,&P); 
 
-    sign=ecnget(&P,NULL,pub);  // get y coordinate and sign
+    sign=ecnXXXget(&P,NULL,pub);  // get y coordinate and sign
     reverse(pub);              // big endian to little endian
     pub[56]=(char)(sign<<7);
 }
@@ -197,7 +197,7 @@ void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
     gel r,s,d;
     sha3 SHA3;
     point R;
-    ecngen(&R);
+    ecnXXXgen(&R);
 
     if (pub!=NULL)
     {
@@ -226,9 +226,9 @@ void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
 
     reduce(h,r);
     modexp(r,h);  // convert to big endian array
-    ecnmul(h,&R);
+    ecnXXXmul(h,&R);
 
-    sign=ecnget(&R,NULL,sig);  // get y coordinate and sign
+    sign=ecnXXXget(&R,NULL,sig);  // get y coordinate and sign
     reverse(sig);              // big endian to little endian
     sig[BYTES]=(char)(sign<<7); // first part of signature
 
@@ -264,23 +264,23 @@ int ED448_VERIFY(char *pub,int mlen,char *m,char *sig)
     sha3 SHA3;
     char h[2*BYTES+2];
 
-    ecngen(&G);
+    ecnXXXgen(&G);
 
 // reconstruct point R
     for (i=0;i<BYTES;i++)
         buff[i]=sig[i];
     reverse(buff);
     sign=sig[BYTES]>>7;
-    ecnset(sign,NULL,buff,&R);
-    if (ecnisinf(&R)) return 0;
+    ecnXXXset(sign,NULL,buff,&R);
+    if (ecnXXXisinf(&R)) return 0;
 
 // reconstruct point Q 
     for (i=0;i<BYTES;i++)
         buff[i]=pub[i];
     reverse(buff);
     sign=(pub[BYTES]>>7)&1;
-    ecnset(sign,NULL,buff,&Q);
-    if (ecnisinf(&Q)) return 0;
+    ecnXXXset(sign,NULL,buff,&Q);
+    if (ecnXXXisinf(&Q)) return 0;
 
     for (i=0;i<BYTES;i++)
         buff[i]=sig[i+BYTES+1];
@@ -301,10 +301,10 @@ int ED448_VERIFY(char *pub,int mlen,char *m,char *sig)
 
     if (!modimp(buff,u)) return 0;  // out of range
 
-    ecncof(&G); ecncof(&R); ecncof(&Q);
-    ecnmul2(buff,&G,h,&Q,&Q);
+    ecnXXXcof(&G); ecnXXXcof(&R); ecnXXXcof(&Q);
+    ecnXXXmul2(buff,&G,h,&Q,&Q);
 
-    if (ecncmp(&R,&Q))
+    if (ecnXXXcmp(&R,&Q))
         return 1;
     return 0;
 }
