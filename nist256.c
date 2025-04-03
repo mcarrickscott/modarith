@@ -14,7 +14,7 @@
 /*** Insert automatically generated code for P-256 prime group order group.c here ***/
 /* Note that much of this code is not needed and can be deleted */
 
-
+@group@
 
 /*** End of automatically generated code ***/
 

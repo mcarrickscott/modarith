@@ -103,11 +103,9 @@ It is strongly recommended that the generated assembly language be closely studi
 1. Copy all code from this directory to a working directory.
 2. Run the python script curve.py, selecting curve name and wordlength (32 or 64 bit). The curve will be in either Edwards or Weierstrass form. Edit this script to add your own curve
 3. The script generates 4 files *field.c* *group.c* *point.h* and *curve.c*
-4. The script automatically injects this code into *edwards.c* or *weierstrass.c* and *curve.h*
-5. Compile and link *testcurve.c* with *edwards.c* or *weierstrass.c*
-6. Run testcurve to test the arithmetic and perform some timings.
+4. The script automatically injects this code into *edwards.c* or *weierstrass.c* and *curve.h*, and into EdDSA or ECDSA code if it exists, as for example into *ed448.c* and *nist256.c*
 
-The API interface is as indicated in *curve.h*. The API is completely implemented in *edwards.c* or *weierstrass.c*
+The API interface is as indicated in *curve.h*. The curve API is completely implemented in *edwards.c* or *weierstrass.c*
 
 MAKE SURE to copy fresh copies of *edwards.c* *weierstrass.c* and *curve.h* from source after each test 
 
@@ -119,23 +117,19 @@ Support for standard SHA2 and SHA3 hashing algorithms is provided in *hash.c* an
 	gcc -O2 testcurve.c edwards.c -lcpucycles -o testcurve
 	./testcurve
 
-Note that this intermediate API only provides the elliptic curve functionality. A higher level algorithm API (like that provided for Ed448 signature) would use this API while itself providing additional algorithm specific random number and hashing functionality. It may also use the *monty.py* script to generate code to perform arithmetic modulo the prime group order, if so required by the algorithm.
+Note that this intermediate API only provides the elliptic curve functionality. A higher level algorithm API (like that provided for ed448 EdDSA signature) would use this API while itself providing additional algorithm specific random number and hashing functionality. It may also use the *monty.py* script to generate code to perform arithmetic modulo the prime group order, if so required by the algorithm.
 
-## Quickstart 2:-
+## Quickstart 2 (EdDSA):-
 
 	python3 curve.py 64 ED448
-Drop *group.c* into *Ed448.c* (EdDSA using ED448) where indicated
+	gcc -O2 ed448.c edwards.c hash.c -o ed448
+	./ed448
 
-	gcc -O2 Ed448.c edwards.c hash.c -o Ed448
-	./Ed448
-
-## Quickstart 3:-
+## Quickstart 3 (ECDSA):-
 
 	python3 curve.py 64 NIST256
-Drop *group.c* into *EC256.c* (ECDSA using P-256) where indicated
-
-	gcc -O2 EC256.c weierstrass.c hash.c -o EC256
-	./EC256
+	gcc -O2 nist256.c weierstrass.c hash.c -o nist256
+	./nist256
 
 # Rust version
 
@@ -159,23 +153,23 @@ Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source 
 
 	python3 curve_rust.py 64 NIST256
 
-Drop *group.rs* into *EC256.rs* (ECDSA using P-256) where indicated. Copy *EC256.rs* and *weierstrass.rs* to the rust src subdirectory
+Copy *nist256.rs* and *weierstrass.rs* to the rust src subdirectory
 	
 	cd ecc
-	cargo run --release --bin EC256
+	cargo run --release --bin nist256
 
 Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
 
 	python3 curve_rust.py 64 ED448
 
-Drop *group.rs* into *Ed448.rs* (EdDSA using ED448) where indicated. Copy *Ed448.rs* and *edwards.rs* to the rust src subdirectory
+Copy *ed448.rs* and *edwards.rs* to the rust src subdirectory
 	
 	cd ecc
-	cargo run --release --bin Ed448
+	cargo run --release --bin ed448
 
 # A lazy reduction optimization
 
-For the *Ed448.c* example, modular additions and subtractions can be speeded up by first editing *monty.py* amd *monty_rust.py* and setting *generic=False*.
+For the *ed448.c* example, modular additions and subtractions can be speeded up by first editing *monty.py* and *monty_rust.py* and setting *generic=False*.
 
 This activates a curve-specific optimization described in https://eprint.iacr.org/2017/437
 
@@ -183,23 +177,23 @@ This activates a curve-specific optimization described in https://eprint.iacr.or
 
 Here we describe the steps involved to create your own ECC based signature scheme in C. The process for Rust is very similar.
 
-The file *signature.c* contains templates for the implementation of an API for a digital signature scheme. For working examples see *Ed448.c* and *EC256.c* 
+Copy the *signature.c* template to *<curve_name>.c* for the implementation of an API for a digital signature scheme. For working examples see *ed448.c* and *nist256.c* 
 
 Start with a clean download of all of the files in this directory to a working directory.
 
-Next ensure that the elliptic curve modulus is named (upper case) and supported in either *pseudo.py* or *monty.py*. Ensure the elliptic curve group is named (lower case) in *monty.py*.
+Next ensure that the elliptic curve is named and supported in either *pseudo.py* or *monty.py*. 
 
-Make sure the various elliptic curve constants are given in *curve.py* under the upper case curve name. Then for a 64-bit build
+Make sure the various elliptic curve constants are given in *curve.py* under the curve name. Then for a 64-bit build
 
-	python3 curve.py 64 <Upper Case Name>
+	python3 curve.py 64 <Curve Name>
 
-This will automatically modify or create the files *curve.h*, *group.c* and either *edwards.c* or *weierstrass.c*. 
+This will automatically create or modify the files *curve.h*, and either *edwards.c* or *weierstrass.c*. 
 
-Now edit the *signature.c* file. First drop in the code from *group.c* where indicated. Then access the document that outlines the details of the signature scheme, and complete the API implementation. For working examples refer to *Ed448.c* and *EC256.c*
+Now edit the *<curve_name>.c* file. Access the document that outlines the details of the signature scheme, and complete the API implementation. For working examples refer to *ed448.c* (EdDSA) and *nist256.c* (ECDSA)
 
-Provide a main program in *signature.c* which implements some test vectors and compile as
+Provide a main program in *<curve_name>.c* which implements some test vectors and compile as
 
-	gcc -O2 signature.c <weierstrass.c or edwards.c> hash.c -o signature
+	gcc -O2 <curve_name>.c <weierstrass.c or edwards.c> hash.c -o <curve_name>
 
 # Testing
 

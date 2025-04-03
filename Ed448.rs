@@ -30,7 +30,7 @@ use hash::*;
 /*** Insert code automatically generated in group.rs here ***/
 /* Note that much of this code is not needed and can be deleted */
 
-
+@group@
 
 /*** End of automatically generated code ***/
 

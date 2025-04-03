@@ -18,9 +18,10 @@
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
 #
-# By convention if the curve name is entered in upper-case, the prime modulus is the field prime
-# If entered in lower-case, the prime modulus is the group order (a large prime factor of the number of points on the curve)
-# For example : python3 montyms64.py nist256. This uses the prime 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+# The modulus can either be entered directly, or derived from the hard-wired name of an elliptic curve
+# Normally this will be the field prime modulus
+# However if the modulus is entered in decimal with two leading 0s, it is instead assumed to be a group 
+# order (a large prime factor of the number of points on a curve)
 #
 # Note that even though a modulus is represented using an unsaturated base, it may still retains some shape
 # For example on a 32-bit processor using a radix of 2^29 the NIST384 prime is
@@ -1802,15 +1803,8 @@ mp=0
 if prime=="NIST256" :
     p=2**256-2**224+2**192+2**96-1
 
-if prime=="nist256" :
-    p=0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
-
 if prime=="NIST384" :
     p=2**384-2**128-2**96+2**32-1
-
-if prime=="nist384" :
-    p=2**384-2**128-2**96+2**32-1
-    p=p + 1 - 1388124618062372383606759648309780106643088307173319169677
 
 if prime=="X25519" :
     p=2**255-19
@@ -1821,12 +1815,6 @@ if prime=="ED448" :
     	algorithm=True
     	mp=4			# Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
-if prime=="ed448" :
-    p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffff7cca23e9c44edb49aed63690216cc2728dc58f552378c292ab5844f3
-
-if prime=="ed25519" :
-    p=0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED
-
 if prime=="X448" :
     p=2**448-2**224-1
     if not generic :
@@ -1836,12 +1824,6 @@ if prime=="X448" :
 
 if prime=="NIST521" :
     p=2**521-1
-
-if prime=="nist521" :
-    p=6864797660130609714981900799081393217269435300143305409394463459185543183397655394245057746333217197532963996371363321113864768612440380340372808892707005449
-
-if prime=="ed521" :
-    p=1716199415032652428745475199770348304317358825035826352348615864796385795849413675475876651663657849636693659065234142604319282948702542317993421293670108523
 
 if prime=="GM270" :
     p=2**270-2**162-1
@@ -1891,9 +1873,6 @@ if prime=="NIST224" :
 if prime=="SECP256K1" :
     p=2**256-2**32-977
 
-if prime=="secp256k1" :
-    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
-
 if prime=="TWEEDLE" :
     p=0x40000000000000000000000000000000038aa127696286c9842cafd400000001
 
@@ -1924,27 +1903,18 @@ if prime=="MFP1973" :
 if prime=="CSIDH512" :
     p=5326738796327623094747867617954605554069371494832722337612446642054009560026576537626892113026381253624626941643949444792662881241621373288942880288065659
 
-if prime=="nums256e" :
-    p=0x4000000000000000000000000000000041955AA52F59439B1A47B190EEDD4AF5
-
-if prime=="nums256w" :
-    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE43C8275EA265C6020AB20294751A825
-
 ### End of user editable area
 
 field=True
-
 noname=False
 if p==0 :
-    if prime[0].isdigit() :
-        p=eval(prime)
-        noname=True    # unnamed prime
-    else :
+    if not prime[0].isdigit() :
         print("This named prime not supported")
         exit(2)
-else :
-    if prime.islower() :
+    if prime[0]=='0' and prime[1]=='0' :
         field=False
+    p=int(prime)
+    noname=True    # unnamed prime
 
 fnamec='field.c'
 fnameo='field.o'

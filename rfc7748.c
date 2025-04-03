@@ -147,6 +147,12 @@ static int bit(int n,const char *a) {
     return (int)((a[n/8u]&((unsigned char)1u<<(n%8u)))>>(n%8u));
 }
 
+static char mask() {
+    int r=Nbits%8;
+    if (r==0) r=8;
+    return (char)((1<<r)-1);
+}
+
 // RFC7748 - Montgomery curve
 // bv=bk*bu, bu,bv are x coordinates on elliptic curve
 void rfc7748(const char *bk, const char *bu,char *bv) {
@@ -157,6 +163,7 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
     char cu[Nbytes];
     spint u[Nlimbs]; spint x1[Nlimbs]; spint x2[Nlimbs]; spint x3[Nlimbs]; spint z2[Nlimbs]; spint z3[Nlimbs];
     spint A[Nlimbs]; spint B[Nlimbs]; spint AA[Nlimbs]; spint BB[Nlimbs]; spint C[Nlimbs]; spint D[Nlimbs]; spint E[Nlimbs];
+    char msk=mask();
 
     for (i=0;i<Nbytes;i++) {
         ck[i]=bk[i];
@@ -164,9 +171,8 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
     }
 
     reverse(cu);  // convert from little to big endian
-#ifdef X25519
-    cu[0]&=0x7f;  // implementations of X25519 (but not X448) MUST mask the most significant bit in the final byte
-#endif     
+    cu[0]&=msk;  // Mask most significant bitS in the final byte
+    
 // clamp input
     clamp(ck);
 

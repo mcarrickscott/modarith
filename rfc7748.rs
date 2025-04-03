@@ -113,6 +113,14 @@ fn bit(n: usize,a: &[u8]) -> usize {
     return ((a[n / 8] & (1 << (n % 8))) >> (n%8)) as usize;
 }
 
+fn mask() -> u8 {
+    let mut r=NBITS%8;
+    if r==0 {
+        r=8;
+    }
+    return ((1<<r)-1) as u8;
+}
+
 // RFC7748 - Montgomery curve
 // bv=bk*bu, bu,bv are x coordinates on elliptic curve
 fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
@@ -132,6 +140,7 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
     let mut c:[SPINT;NLIMBS]=[0;NLIMBS];
     let mut d:[SPINT;NLIMBS]=[0;NLIMBS];
     let mut e:[SPINT;NLIMBS]=[0;NLIMBS];
+    let msk=mask();
 
     for i in 0..NBYTES {
         ck[i]=bk[i];
@@ -139,11 +148,8 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
     }
 
     cu.reverse(); // convert from little to big endian
-//X25519 only!
-#[cfg(X25519)]
-{
-    cu[0]&=0x7f;   // implementations of X25519 (but not X448) MUST mask the most significant bit in the final byte
-}
+    cu[0]&=msk;   // mask most significant bits in the final byte
+
 // clamp input
     clamp(&mut ck);
 

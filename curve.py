@@ -6,6 +6,7 @@
 #
 import sys
 import subprocess
+import os.path
 
 microsoft=False  # set to True if using Microsoft C 64-bit compiler
 
@@ -279,10 +280,12 @@ with open('point.h', 'w') as f:
         print("typedef struct xyz point;")
         f.close()
 
+order="00"+str(q) # mark as group order by prefixing with 00
+
 if WL==64 and microsoft :
-    subprocess.run("python3 montyms64.py "+curve.lower(), shell=True)
+    subprocess.run("python3 montyms64.py "+order, shell=True)
 else :
-    subprocess.run("python3 monty.py "+str(WL)+" "+curve.lower(), shell=True)
+    subprocess.run("python3 monty.py "+str(WL)+" "+order, shell=True)
 
 print("field code is in field.c")
 print("curve definition is in curve.c")
@@ -296,3 +299,6 @@ if curve_type==EDWARDS:
     replacefromfile("edwards.c","@field@","field.c")
     replacefromfile("edwards.c","@curve@","curve.c")
     replacefromfile("curve.h","@point@","point.h")
+cfile=curve.lower()+".c"
+if os.path.exists(cfile) :
+    replacefromfile(cfile,"@group@","group.c")

@@ -6,6 +6,7 @@
 #
 import sys
 import subprocess
+import os.path
 
 # is it a lucky trinomial?
 def trinomial(p,base) :
@@ -309,7 +310,9 @@ with open('point.rs', 'w') as f:
         print("}")
         f.close()
 
-subprocess.run("python3 monty_rust.py "+str(WL)+" "+curve.lower(), shell=True)
+order="00"+str(q) # mark as group order by prefixing with 00
+
+subprocess.run("python3 monty_rust.py "+str(WL)+" "+order, shell=True)
 
 print("field code is in field.rs")
 print("curve definition is in curve.rs")
@@ -323,3 +326,6 @@ if curve_type==EDWARDS:
     replacefromfile("edwards.rs","@field@","field.rs")
     replacefromfile("edwards.rs","@curve@","curve.rs")
     replacefromfile("edwards.rs","@point@","point.rs")
+cfile=curve.lower()+".rs"
+if os.path.exists(cfile) :
+    replacefromfile(cfile,"@group@","group.rs")

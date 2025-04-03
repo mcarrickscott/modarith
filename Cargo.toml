@@ -12,12 +12,12 @@ name="testcurve"
 path="src/testcurve.rs"
 
 [[bin]]
-name="EC256"
-path="src/EC256.rs"
+name="nist256"
+path="src/nist256.rs"
 
 [[bin]]
-name="Ed448"
-path="src/Ed448.rs"
+name="ed448"
+path="src/ed448.rs"
 
 [features]
 
