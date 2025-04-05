@@ -182,4 +182,23 @@ extern void  SHA3_continuing_shake(sha3 *H, char *h, int len);
  */
 extern void  SHA3_squeeze(sha3 *H, char *h, int len);
 
+#define SHA256 32 /**< SHA-256 hashing */
+#define SHA384 48 /**< SHA-384 hashing */
+#define SHA512 64 /**< SHA-512 hashing */
+
+#define SHA2_HASH 2
+#define SHA3_HASH 3
+
+/**	@brief special purpose HMAC function
+ *
+	@param hash is SHA2 or SHA3
+    @param hlen is hash output length
+	@param tag is hmac tag of length hlen
+    @param klen is the length of the key
+	@param k is the key of length hlen
+    @param mlen is the length of the message
+    @param m is the message
+ */
+extern void HMAC(int hash,int hlen,char *tag,int klen,char *k,int mlen,char *m);
+
 #endif

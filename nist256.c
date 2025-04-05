@@ -1,9 +1,10 @@
 
 // ECDSA Implementation for curve P-256
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
+// Uses random nonce generation process as described in A.3.1
 // python curve.py 64 NIST256
-// This completes weierstrass.c for this curve. Then
-// gcc -O2 EC256.c weierstrass.c hash.c -o EC256
+// This completes weierstrass.c and nist256.c for this curve. Then
+// gcc -O2 nist256.c weierstrass.c hash.c -o nist256
 
 #include <stdio.h>
 #include <stdint.h>

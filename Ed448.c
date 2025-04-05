@@ -1,9 +1,9 @@
-// Ed448 Implementation
+// EdDSA implementation for curve ed448
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
 // and RFC8032
 // python curve.py 64 ED448
-// This completes edwards.rs for this curve. Then
-// gcc -O2 Ed448.c edwards.c hash.c -o Ed448
+// This completes edwards.rs and ed448.c for this curve. Then
+// gcc -O2 ed448.c edwards.c hash.c -o ed448
 
 #include <stdio.h>
 #include <stdint.h>

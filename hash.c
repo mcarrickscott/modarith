@@ -546,6 +546,7 @@ void SHA3_continuing_shake(sha3 *sh,char *digest,int len)
     SHA3_shake(&cp,digest,len);
 }
 
+/*
 // general purpose SHAKE256 hash function
 // Input ilen bytes, output olen bytes
 static void H(int ilen,int olen,char *s,char *digest)
@@ -555,4 +556,161 @@ static void H(int ilen,int olen,char *s,char *digest)
     for (int i=0;i<ilen;i++) 
         SHA3_process(&SHA3,s[i]);
     SHA3_shake(&SHA3,digest,olen); 
+}*/
+
+/*
+// Maybe needed for Deterministic ECDSA
+
+static void GPhash(int hash,int hlen,char *w,int plen,char *p,int xlen,char *x)
+{
+    hash256 sh256;
+    hash384 sh384;
+    hash512 sh512;
+    sha3 sh3;
+    int i;
+
+    switch (hash)
+    {
+    case SHA2_HASH :
+        switch (hlen)
+        {
+        case SHA256 :
+            HASH256_init(&sh256);
+            for (i=0;i<plen;i++) HASH256_process(&sh256,p[i]);
+            for (i=0;i<xlen;i++) HASH256_process(&sh256,x[i]);
+            HASH256_hash(&sh256,w);
+            break;
+        case SHA384 :
+            HASH384_init(&sh384);
+            for (i=0;i<plen;i++) HASH384_process(&sh384,p[i]);
+            for (i=0;i<xlen;i++) HASH384_process(&sh384,x[i]);
+            HASH384_hash(&sh384,w);
+            break;
+        case SHA512 :
+            HASH512_init(&sh512);
+            for (i=0;i<plen;i++) HASH512_process(&sh512,p[i]);
+            for (i=0;i<xlen;i++) HASH512_process(&sh512,x[i]);
+            HASH512_hash(&sh512,w);   
+            break;
+        }
+        break;
+    case SHA3_HASH :
+        SHA3_init(&sh3,hlen);
+        for (i=0;plen;i++) SHA3_process(&sh3,p[i]);
+        for (i=0;xlen;i++) SHA3_process(&sh3,x[i]);
+        SHA3_hash(&sh3,w);  
+        break;
+    default: return;
+    }
+    return;
 }
+
+static int blksize(int hash,int hlen)
+{
+    int blk=0;
+    switch (hash)
+    {
+    case SHA2_HASH :
+            blk=64;
+            if (hlen>32) blk=128;
+            break;
+    case SHA3_HASH :
+            blk=200-2*hlen;
+            break;
+    default: break;
+    }
+    return blk;
+}
+
+// RFC 2104 
+void HMAC(int hash,int hlen,char *tag,int klen,char *k,int mlen,char *m)
+{
+    int i,blk;
+    char k0[200];   // assumes max block sizes
+
+    blk=blksize(hash,hlen);
+    if (blk==0) return;
+
+    for (i=0;i<klen;i++)
+        k0[i]=k[i];
+    for (i=0;i<blk-klen;i++)
+        k0[klen+i]=0;
+    for (i=0;i<blk;i++)
+        k0[i]^=0x36;
+    GPhash(hash,hlen,tag,blk,k0,mlen,m);
+    for (i=0;i<blk;i++)
+        k0[i]^=0x6a;
+    GPhash(hash,hlen,tag,blk,k0,hlen,tag);
+}
+
+// test program for HMAC
+#include <stdio.h>
+
+static void byte2hex(char *ptr,unsigned char ch)
+{
+    int t=ch/16;
+    int b=ch%16;
+    if (t<10)
+    	ptr[0]='0'+t;
+    else
+    	ptr[0]='a'+(t-10);
+    if (b<10)
+    	ptr[1]='0'+b;
+    else
+    	ptr[1]='a'+(b-10);    	
+}
+
+static int char2int(char input)
+{
+    if ((input >= '0') && (input <= '9'))
+        return input - '0';
+    if ((input >= 'A') && (input <= 'F'))
+        return input - 'A' + 10;
+    if ((input >= 'a') && (input <= 'f'))
+        return input - 'a' + 10;
+    return 0;
+}
+
+// Convert from a hex string to byte array 
+static void fromHex(int ilen, const char *src, char *dst)
+{
+    int i,lz,len=0;
+    char pad[512];
+    while (src[len]!=0) len++;
+    lz=2*ilen-len;
+    if (lz<0) lz=0;
+    for (i=0;i<lz;i++) pad[i]='0';  // pad with leading zeros
+    for (i=lz;i<2*ilen;i++) pad[i]=src[i-lz];
+
+    for (i=0;i<ilen;i++)
+    {
+        dst[i] = (char2int(pad[2*i]) * 16) + char2int(pad[2*i + 1]);
+    }
+}
+
+// Convert a byte array to a hex string 
+static void toHex(int len, const char *src, char *dst)
+{
+    int i;
+    for (i = 0; i < len; i++)
+    {
+        unsigned char ch = src[i];
+        byte2hex(&dst[i * 2],ch);
+    }
+    dst[2*len]='\0';
+}
+
+int main() {
+    const char *k=(const char *)"9779d9120642797f1747025d5b22b7ac607cab08e1758f2f3a46c8be1e25c53b8c6a8f58ffefa176";
+    const char *m=(const char *)"b1689c2591eaf3c9e66070f8a77954ffb81749f1b00346f9dfe0b2ee905dcc288baf4a92de3f4001dd9f44c468c3d07d6c6ee82faceafc97c2fc0fc0601719d2dcd0aa2aec92d1b0ae933c65eb06a03c9c935c2bad0459810241347ab87e9f11adb30415424c6c7f5f22a003b8ab8de54f6ded0e3ab9245fa79568451dfa258e";
+    char K[40],M[128],T[64],t[65];
+    fromHex(40,k,K);
+    printf("Got here 0\n");
+    fromHex(128,m,M);
+    printf("Got here 1\n");
+    HMAC(SHA2_HASH,32,T,40,K,128,M);
+    printf("Got here 2\n");
+    toHex(32,T,t);
+    printf("hmac=  "); puts(t);
+}
+*/

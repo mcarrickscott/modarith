@@ -2,9 +2,9 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
-// For example: cargo run --release --bin EC256
+// For example: cargo run --release --bin nist256
 // python curve_rust.py 64 NIST256
-// This completes weierstrass.rs for this curve
+// This completes nist256.rs and weierstrass.rs for this curve
 // ECDSA Implementation for curve P-256
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
 

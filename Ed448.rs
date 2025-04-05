@@ -2,9 +2,9 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_imports)]
-// For example: cargo run --release --bin Ed448
+// For example: cargo run --release --bin ed448
 // python curve_rust.py 64 ED448
-// This completes edwards.rs for this curve
+// This completes ed448.rs and edwards.rs for this curve
 // EdDSA Implementation for curve ED448
 // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf
 
