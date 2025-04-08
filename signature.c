@@ -11,7 +11,7 @@
 /*** Insert code automatically generated from group.c here ***/
 /* Note that much of this code is not needed and can be deleted */
 
-
+@group@
 
 /*** End of automatically generated code ***/
 

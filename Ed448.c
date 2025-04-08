@@ -117,9 +117,9 @@ void outputxy(point *P)
 }
 */
 
-// reduce 114 byte array h to integer r modulo group order q, in constant time
-// Consider h as 2^440.(2^440x + y)  + z, where x,y and z < q (z is bottom 55 bytes, y is next 55 bytes, x is top 4 bytes)
-// Important that x,y and z < q, 55 bytes = 440 bits, q is 446 bits
+// reduce 912 bit array h to integer r modulo group order q, in constant time
+// Consider h as 2^440.(2^440x + y)  + z, where x,y and z < q (z is bottom 440 bits, y is next 440 bits, x is top 32 bits)
+// Important that x,y and z < q, q is 446 bits
 static void reduce(char *h,spint *r)
 {
     int i;
@@ -128,19 +128,19 @@ static void reduce(char *h,spint *r)
 
     mod2r(440,c);
    
-    for (i=0;i<55;i++)  // bottom 55 bytes
+    for (i=0;i<55;i++)  // bottom 440 bits
         buff[i]=h[i];
     buff[55]=0;
     reverse(buff);
     modimp(buff,z);  
     
-    for (i=0;i<55;i++)  // middle 55 bytes
+    for (i=0;i<55;i++)  // middle 440 bits
         buff[i]=h[i+55];
     buff[55]=0;
     reverse(buff);
     modimp(buff,y);  
     
-    for (i=0;i<4;i++)  // top 4 bytes
+    for (i=0;i<4;i++)  // top 32 bits
        buff[i]=h[110+i];   
     for (i=4;i<56;i++)
         buff[i]=0;

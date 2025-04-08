@@ -251,30 +251,33 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
 // a test vector for x25519 or x448 from RFC7748
 int main()
 {
+    char sv[(Nbytes*2)+1];
+    uint64_t start,fin;
+    uint16_t rnd=1;  // crude random number generator
+    clock_t begin;
+    int i,elapsed;
+    char bk[Nbytes],bv[Nbytes];
+    char bu[Nbytes]={};
+
+#if defined(X25519) || defined(X448)
 #ifdef X25519
     const char *sk=(const char *)"77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
 #endif
 #ifdef X448
     const char *sk=(const char *)"9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
 #endif
-    uint64_t start,fin;
-    clock_t begin;
-    int i,elapsed;
-    char sv[(Nbytes*2)+1];
-    char bk[Nbytes],bv[Nbytes];
-    char bu[Nbytes]={};
 
     bu[0]=GENERATOR;
 // convert to byte array
     fromHex(sk,bk);
-
     rfc7748(bk,bu,bv);
 
 // convert to Hex
     toHex(bv,sv);
-
+    printf("Test Vector\n");
     puts(sk); 
     puts(sv); 
+#endif
 
 #ifdef COUNT_CLOCKS
 #ifdef USE_RDTSC
@@ -283,6 +286,11 @@ int main()
     start=cpucycles();
 #endif    
 #endif
+
+    bu[0]=GENERATOR;
+    for (i=0;i<Nbytes;i++) {
+        rnd=5*rnd+1; bk[i]=rnd%256;
+    }
     begin=clock();
     for (i=0;i<5000;i++) {
         rfc7748(bk,bu,bv);
@@ -301,4 +309,26 @@ int main()
     printf("Microseconds= %d\n",elapsed);
     toHex(bu,sv);
     puts(sv);
+
+// do a D-H key exchange
+    char alice[Nbytes],bob[Nbytes],apk[Nbytes],bpk[Nbytes],ssa[Nbytes],ssb[Nbytes];
+    for (i=0;i<Nbytes;i++)
+    {
+        rnd=5*rnd+1; alice[i]=rnd%256;
+        rnd=5*rnd+1; bob[i]=rnd%256;
+        apk[i]=0; bpk[i]=0;
+    }
+    apk[0]=bpk[0]=GENERATOR;
+    rfc7748(alice,apk,apk);
+    rfc7748(bob,bpk,bpk);
+
+    rfc7748(alice,bpk,ssa);
+    rfc7748(bob,apk,ssb);
+    toHex(ssa,sv);
+    printf("Alice shared secret\n");
+    puts(sv);
+    toHex(ssb,sv);
+    printf("Bob's shared secret\n");
+    puts(sv);
+
 }

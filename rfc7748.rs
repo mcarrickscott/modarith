@@ -230,7 +230,6 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
 
 // a test vector for x25519 or x448 from RFC7748
 fn main() {
-// ******
 //X25519
 #[cfg(X25519)]
     const SK:&str="77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
@@ -248,10 +247,15 @@ fn main() {
 
     rfc7748(&bk,&bu,&mut bv);
 
+    println!("Test Vector");
     println!("{}",&SK);
     printhex(&bv);
-
+    
+    let mut rnd:u16 = 1; // crude random number generator
 	unsafe {
+        for i in 0..NBYTES {
+            rnd=5*rnd+1; bk[i]=rnd as u8;
+        }
 	    let pre = std::arch::x86_64::_rdtsc();
 	    for _i in 0..5000 {
             rfc7748(&bk,&bu,&mut bv);
@@ -261,4 +265,27 @@ fn main() {
 	    println!("Clock cycles= {}",((post-pre)/10_000));
         printhex(&bu);
 	}
+// D-H key exchange
+    let mut alice:[u8;NBYTES]=[0;NBYTES];
+    let mut bob:[u8;NBYTES]=[0;NBYTES];
+    let mut gen:[u8;NBYTES]=[0;NBYTES];
+    let mut apk:[u8;NBYTES]=[0;NBYTES];
+    let mut bpk:[u8;NBYTES]=[0;NBYTES];
+    let mut ssa:[u8;NBYTES]=[0;NBYTES];
+    let mut ssb:[u8;NBYTES]=[0;NBYTES];
+    for i in 0..NBYTES {
+        rnd=5*rnd+1; alice[i]=rnd as u8;
+        rnd=5*rnd+1; bob[i]=rnd as u8;
+    }
+    gen[0]=GENERATOR; 
+    rfc7748(&alice,&gen,&mut apk);
+    rfc7748(&bob,&gen,&mut bpk);
+
+    rfc7748(&alice,&bpk,&mut ssa);
+    rfc7748(&bob,&apk,&mut ssb);
+
+    println!("Alice shared secret");
+    printhex(&ssa);
+    println!("Bob's shared secret");
+    printhex(&ssb);
 }

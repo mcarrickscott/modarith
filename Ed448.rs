@@ -41,9 +41,9 @@ type GEL = [SPINT; LIMBS];
 
 
 
-// reduce 114 byte array h to integer r modulo group order q, in constant time
-// Consider h as 2^440.(2^440 + y) + z, where x,y and z < q (z is bottom 55 bytes, y is next 55 bytes, x is top 4 bytes)
-// Important that x,y and z < q, 55 bytes = 440 bits, q is 446 bits
+// reduce 912 bit array h to integer r modulo group order q, in constant time
+// Consider h as 2^440.(2^440x + y)  + z, where x,y and z < q (z is bottom 440 bits, y is next 440 bits, x is top 32 bits)
+// Important that x,y and z < q, q is 446 bits
 fn reduce(h:&[u8],r:&mut [SPINT]) {
     let mut buff:[u8;BYTES]=[0;BYTES];    
     let mut x:GEL=[0;LIMBS];
@@ -53,14 +53,14 @@ fn reduce(h:&[u8],r:&mut [SPINT]) {
 
     mod2r(8*(BYTES-1),&mut c);
 
-    for i in 0..55 {  // bottom 55 bytes
+    for i in 0..55 {  // bottom 440 bits
         buff[i]=h[i];
     }
     buff[55]=0;
     buff.reverse();
     modimp(&buff,&mut z);
 
-    for i in 0..55 { // middle 55 bytes
+    for i in 0..55 { // middle 440 bits
         buff[i]=h[i+55];
     }
     buff[55]=0;
@@ -280,10 +280,7 @@ pub fn VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     return false;
 }
 
-
-
 // Some utility functions for I/O and debugging
-
 fn char2int(inp: u8) -> u8 {
     if inp>='0' as u8 && inp <='9' as u8 {
         return inp-'0' as u8;
