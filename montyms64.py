@@ -1913,7 +1913,9 @@ if p==0 :
         exit(2)
     if prime[0]=='0' and prime[1]=='0' :
         field=False
-    p=int(prime)
+        p=int(prime)
+    else :
+        p=eval(prime)
     noname=True    # unnamed prime
 
 fnamec='field.c'

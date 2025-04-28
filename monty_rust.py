@@ -1705,7 +1705,9 @@ if p==0 :
         exit(2)
     if prime[0]=='0' and prime[1]=='0' :
         field=False
-    p=int(prime)
+        p=int(prime)
+    else :
+        p=eval(prime)
 
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
