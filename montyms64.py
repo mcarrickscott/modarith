@@ -1812,8 +1812,8 @@ if prime=="X25519" :
 if prime=="ED448" :
     p=2**448-2**224-1
     if not generic :
-    	algorithm=True
-    	mp=4			# Assuming Edwards curve - see https://eprint.iacr.org/2017/437
+        algorithm=True
+        mp=4            # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="X448" :
     p=2**448-2**224-1
@@ -1897,8 +1897,8 @@ if prime=="MFP7" :
     base=52
 
 if prime=="MFP1973" :
-	p=0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff
-	base=52
+    p=0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff
+    base=52
 
 if prime=="SQISIGN_1" :
     p=5*2**248-1

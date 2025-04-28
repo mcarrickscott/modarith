@@ -1391,8 +1391,8 @@ if prime=="ED521" :
 if prime=="ED25519" :
     p=2**255-19
     if not generic :
-    	algorithm=True
-    	mp=4			# Assuming Edwards curve - see https://eprint.iacr.org/2017/437
+        algorithm=True
+        mp=4            # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="X25519" :
     p=2**255-19
@@ -1437,8 +1437,8 @@ if n<120 or pow(3,p-1,p)!=1 :
     print("Not a sensible modulus, too small or not a prime")
     exit(2)
 #if n>360 and WL==16 :
-#	print("Modulus probably too big for 16-bit processor")
-#	exit(1)
+#    print("Modulus probably too big for 16-bit processor")
+#    exit(1)
 
 if base==0 :
     base=getbase(n)   # use default radix

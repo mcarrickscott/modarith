@@ -1403,8 +1403,8 @@ if prime=="ED521" :
 if prime=="ED25519" :
     p=2**255-19
     if not generic :
-    	algorithm=True
-    	mp=4			# Assuming Edwards curve - see https://eprint.iacr.org/2017/437
+        algorithm=True
+        mp=4            # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="X25519" :
     p=2**255-19

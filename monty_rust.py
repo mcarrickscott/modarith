@@ -1580,8 +1580,8 @@ if prime=="X448" :
 if prime=="ED448" :
     p=2**448-2**224-1
     if not generic :
-    	algorithm=True
-    	mp=4			# Assuming Edwards curve - see https://eprint.iacr.org/2017/437
+        algorithm=True
+        mp=4          # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="NIST521" :
     p=2**521-1
@@ -1679,19 +1679,19 @@ if prime=="SIDH751" :
     p=2**372*3**239-1
 
 if prime=="MFP4" :
-	p=3*67*(2**246)-1
-	if WL==64:
-		base=52
+    p=3*67*(2**246)-1
+    if WL==64:
+        base=52
 
 if prime=="MFP7" :
-	p=2**145*(3**9)*(59**3)*(311**3)*(317**3)*(503**3)-1
-	if WL==64:
-		base=52
+    p=2**145*(3**9)*(59**3)*(311**3)*(317**3)*(503**3)-1
+    if WL==64:
+        base=52
 
 if prime=="MFP1973" :
-	p=0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff
-	if WL==64:
-		base=52
+    p=0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff
+    if WL==64:
+        base=52
 
 if prime=="SQISIGN_1" :
     p=5*2**248-1
