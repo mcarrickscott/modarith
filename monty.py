@@ -797,6 +797,7 @@ def modmli(n) :
     mask=(1<<base)-1
     xcess=N*base-n
     str="// Modular multiplication by an integer, c=a*b mod 2p\n"
+    str+="// uses special method for trinomials, otherwise Barrett-Dhem reduction\n"
     if makestatic :
         str+="static "
     if inline and makestatic:
@@ -824,9 +825,53 @@ def modmli(n) :
         str+="\tc[0]+=s;\n"
         str+="\tc[{}]+=s;\n".format(trin)
     else :
-        str+="\tspint t[{}];\n".format(N)
-        str+="\tmodint{}(b,t);\n".format(DECOR)
-        str+="\tmodmul{}(a,t,c);\n".format(DECOR)
+# new experimental stuff
+        str+="/*\n"
+        for i in range(0,N) :
+            d=ppw[i]
+            if abs(d)>1 :
+                if i==0 or ispowerof2(d)<0 :
+                    str+="\tspint p{}={}u;\n".format(i,hex(d))
+
+        str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
+        str+="\tudpint t=0;\n"
+        str+="\tspint q,h;\n"
+        str+="\tspint r=0x{:x};\n".format((2**(n+base))//p)
+        for i in range(0,N-1) :
+            str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+            str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
+        str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
+        str+="\th=(spint)t;\n"
+        str+="\tc[{}]=h & mask;\n".format(N-1)
+        str+="\t\n//Barrett-Dhem reduction\n"
+        str+="\th>>={};\n".format((n-WL)%base)
+        str+="\tq=(spint)(((udpint)h*(udpint)r)>>{});\n".format(WL)  
+
+        for i in range(0,N) :
+            d=ppw[i]
+            if d==0 :
+                continue
+            if d==-1 :
+                str+="\tc[{}]+=q;\n".format(i)
+                continue
+            if d==1 :
+                str+="\tc[{}]-=q;\n".format(i)
+            e=ispowerof2(d)
+            if e>0 :
+                if i<N-1 :
+                    str+="\tt=(udpint)q<<{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{});\n".format(e,i,i+1,base)
+                else :
+                    str+="\tc[{}]-=(q<<{})&mask;\n".format(i,e)
+            else :
+                if i<N-1 :
+                    str+="\tt=(udpint)q*p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{});\n".format(i,i,i+1,base)
+                else :
+                    str+="\tc[{}]-=(q*p{})&mask;\n".format(i,i)
+        str+="\t(void)prop(c);\n"
+        str+="*/\n"
+        str+="\tspint w[{}];\n".format(N)
+        str+="\tmodint{}(b,w);\n".format(DECOR)
+        str+="\tmodmul{}(a,w,c);\n".format(DECOR)
     str+="}\n"
     return str
 
