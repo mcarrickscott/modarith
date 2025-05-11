@@ -573,14 +573,73 @@ def modmli(n,base) :
 
         if xcess>0 :
             smask=(1<<(base-xcess))-1
-            str+= "\ts=(s<<{})+(c[{}]>>{}u); c[{}]&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+            str+= "\ts=(s<<{})+(c[{}]>>{}); c[{}]&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
         str+="\tc[0]+=s;\n"
         str+="\tc[{}]+=s;\n".format(trin)
     else :
-        str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
-        str+="\tmodint(b,&mut t);\n"
-        str+="\tmodmul(&t,c);\n"
+
+# Barrett/Dhem method
+#        str+="/*\n"
+        for i in range(0,N) :
+            d=ppw[i]
+            if abs(d)>1 :
+                if d>1 :
+                    if i==0 or ispowerof2(d)<0 :
+                        str+="\tlet p{}={} as SPINT;\n".format(i,hex(d))
+                if d<1 :
+                    if i==0 :
+                        str+="\tlet p{}={} as SPINT;\n".format(i,hex(-d))
+
+        str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
+        str+="\tlet mut t=0 as UDPINT;\n"
+        str+="\tlet r=0x{:x} as SPINT;\n".format((2**(n+base))//p)
+        for i in range(0,N-1) :
+            str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(i)
+            str+="c[{}]=(t as SPINT) & mask; t=t>>{};\n".format(i,base)
+        str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(N-1)
+        str+="c[{}]=(t as SPINT) & mask;\n".format(N-1)
+        str+="\t\n//Barrett-Dhem reduction\n"
+        str+="\tlet h = (t>>{}) as SPINT;\n".format((n-WL)%base)
+        str+="\tlet q=(((h as UDPINT)*(r as UDPINT))>>{}) as SPINT;\n".format(WL)  
+
+# required to propagate carries?
+        propc=False
+        for i in range(1,N-1) :
+            if ppw[i]!=0 :
+                propc=True
+        if ppw[0]>0 :
+            propc=True
+
+        for i in range(0,N) :
+            d=ppw[i]
+            if d==0 :
+                continue
+            if d==-1 :
+                str+="\tc[{}]+=q;\n".format(i)
+                continue
+            if d==1 :
+                str+="\tc[{}]-=q;\n".format(i)
+            e=ispowerof2(d)
+            if e>0 :
+                if i<N-1 :
+                    str+="\tt=(q as UDPINT)<<{}; c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(e,i,i+1,base)
+                else :
+                    str+="\tc[{}]=(c[{}]-(q<<{}))&mask;\n".format(i,i,e)
+            else :
+                if d<0 :
+                    str+="\tt=(q as UDPINT)*(p{} as UDPINT); c[{}]+=(t as SPINT)&mask; c[{}]+=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
+                else :
+                    if i<N-1 :
+                        str+="\tt=(q as UDPINT)*(p{} as UDPINT); c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
+                    else :
+                        str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+        if propc :
+            str+="\tprop(c);\n"
+#        str+="*/\n"
+#        str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
+#        str+="\tmodint(b,&mut t);\n"
+#        str+="\tmodmul(&t,c);\n"
 
     str+="\treturn;\n}\n"
     return str
@@ -1863,8 +1922,8 @@ with open('time.rs', 'w') as f:
         print(prop(n,base))
         print(flat(n,base))
         print(modfsb(n,base))
-        if trin==0 :
-            print(modint())
+        #if trin==0 :
+        #    print(modint())
         #if trin>0 :
         print(modmli(n,base))
         #else :

@@ -947,9 +947,67 @@ def modmli(n) :
         str+="\tc[0]+=s;\n"
         str+="\tc[{}]+=s;\n".format(trin)
     else :
-        str+="\tspint t[{}];\n".format(N)
-        str+="\tmodint{}(b,t);\n".format(DECOR)
-        str+="\tmodmul{}(a,t,c);\n".format(DECOR)
+# Barrett/Dhem method
+#        str+="/*\n"
+        for i in range(0,N) :
+            d=ppw[i]
+            if abs(d)>1 :
+                if d>1 :
+                    if i==0 or ispowerof2(d)<0 :
+                        str+="\tspint p{}={}u;\n".format(i,hex(d))
+                if d<1 :
+                    if i==0 :
+                        str+="\tspint p{}={}u;\n".format(i,hex(-d))
+
+        str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
+        str+="\tspint tl=0,th=0;\n"
+        str+="\tspint q,h,r=0x{:x};\n".format((2**(n+base))//p)
+        for i in range(0,N-1) :
+            str+="\taccum(&tl,&th,a[{}],b); ".format(i) #"\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+            str+="c[{}]=tl & mask; shiftr(&tl,&th,{}u);\n".format(i,base) #"c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
+        str+="\taccum(&tl,&th,a[{}],b); ".format(N-1)   #"\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
+        str+="c[{}]=tl & mask;\n".format(N-1)  #"c[{}]=(spint)t & mask;\n".format(N-1)
+        str+="\t\n//Barrett-Dhem reduction\n"
+        str+="\tshiftr(&tl,&th,{}u); h=tl;\n".format((n-WL)%base)   #"\th = (spint)(t>>{}u);\n".format((n-WL)%base)
+        str+="\tmul(&tl,&th,h,r); q=th;\n"     #"\tq=(spint)(((udpint)h*(udpint)r)>>{}u);\n".format(WL)  
+
+# required to propagate carries?
+        propc=False
+        for i in range(1,N-1) :
+            if ppw[i]!=0 :
+                propc=True
+        if ppw[0]>0 :
+            propc=True
+
+        for i in range(0,N) :
+            d=ppw[i]
+            if d==0 :
+                continue
+            if d==-1 :
+                str+="\tc[{}]+=q;\n".format(i)
+                continue
+            if d==1 :
+                str+="\tc[{}]-=q;\n".format(i)
+            e=ispowerof2(d)
+            if e>0 :
+                if i<N-1 :
+                    str+="\ttl=q; shiftl(&tl,&th,{}u); c[{}]-=tl&mask; shiftr(&tl,&th,{}u); c[{}]-=tl;\n".format(e,i,base,i+1)   #"\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
+                else :
+                    str+="\tc[{}]=(c[{}]-(q<<{}u))&mask;\n".format(i,i,e)
+            else :
+                if d<0 :
+                    str+="\tmul(&tl,&th,q,p{}); c[{}]+=tl&mask; shiftr(&tl,&th,{}u); c[{}]+=tl;\n".format(i,i,base,i+1)  #"\tt=(udpint)q*p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
+                else :
+                    if i<N-1 :
+                        str+="\tmul(&tl,&th,q,p{}); c[{}]-=tl&mask; shiftr(&tl,&th,{}u); c[{}]-=tl;\n".format(i,i,base,i+1)   #"\tt=(udpint)q*p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(i,i,i+1,base)
+                    else :
+                        str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+        if propc :
+            str+="\t(void)prop(c);\n"
+#        str+="*/\n"
+#        str+="\tspint t[{}];\n".format(N)
+#        str+="\tmodint{}(b,t);\n".format(DECOR)
+#        str+="\tmodmul{}(a,t,c);\n".format(DECOR)
     str+="}\n"
     return str
 

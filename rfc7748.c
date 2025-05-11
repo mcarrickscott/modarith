@@ -32,9 +32,7 @@
 
 #ifdef COUNT_CLOCKS
 
-#ifdef USE_RDTSC
-#include <x86intrin.h>
-#else
+#ifndef USE_RDTSC
 #include <cpucycles.h>
 #endif
 
