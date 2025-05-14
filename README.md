@@ -46,7 +46,7 @@ Read comments in these files for simple build instructions.
 
 The Rust generated code uses wrapping arithmetic, so will panic due to integer overflow in Debug mode. Always run in Release mode.
 
-(RFC7748 describes an implementation of Diffie-Hellman key exchange on the Montgomery elliptic curves X25519 and X448. You can create your own Montgomery curve using the sagemath script provided in the file bowe.sage)
+(RFC7748 describes an implementation of Diffie-Hellman key exchange on the Montgomery elliptic curves X25519 and X448. You can create your own Montgomery and Edwards curve using this utility https://github.com/mcarrickscott/findmontgomery.git )
 
 # Modular arithmetic API
 
