@@ -966,7 +966,8 @@ def modmli(n) :
             str+="\taccum(&tl,&th,a[{}],b); ".format(i) #"\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
             str+="c[{}]=tl & mask; shiftr(&tl,&th,{}u);\n".format(i,base) #"c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
         str+="\taccum(&tl,&th,a[{}],b); ".format(N-1)   #"\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
-        str+="c[{}]=tl & mask;\n".format(N-1)  #"c[{}]=(spint)t & mask;\n".format(N-1)
+        str+="c[{}]=tl;\n".format(N-1)  #"c[{}]=(spint)t & mask;\n".format(N-1)
+        
         str+="\t\n//Barrett-Dhem reduction\n"
         str+="\tshiftr(&tl,&th,{}u); h=tl;\n".format((n-WL)%base)   #"\th = (spint)(t>>{}u);\n".format((n-WL)%base)
         str+="\tmul(&tl,&th,h,r); q=th;\n"     #"\tq=(spint)(((udpint)h*(udpint)r)>>{}u);\n".format(WL)  
@@ -993,7 +994,7 @@ def modmli(n) :
                 if i<N-1 :
                     str+="\ttl=q; shiftl(&tl,&th,{}u); c[{}]-=tl&mask; shiftr(&tl,&th,{}u); c[{}]-=tl;\n".format(e,i,base,i+1)   #"\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
                 else :
-                    str+="\tc[{}]=(c[{}]-(q<<{}u))&mask;\n".format(i,i,e)
+                    str+="\tc[{}]-=q<<{}u;\n".format(i,,e)
             else :
                 if d<0 :
                     str+="\tmul(&tl,&th,q,p{}); c[{}]+=tl&mask; shiftr(&tl,&th,{}u); c[{}]+=tl;\n".format(i,i,base,i+1)  #"\tt=(udpint)q*p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
@@ -1001,7 +1002,8 @@ def modmli(n) :
                     if i<N-1 :
                         str+="\tmul(&tl,&th,q,p{}); c[{}]-=tl&mask; shiftr(&tl,&th,{}u); c[{}]-=tl;\n".format(i,i,base,i+1)   #"\tt=(udpint)q*p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(i,i,i+1,base)
                     else :
-                        str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+                        str+="\tc[{}]-=q*p{};\n".format(i,i)
+                        #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
         if propc :
             str+="\t(void)prop(c);\n"
 #        str+="*/\n"

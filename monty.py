@@ -844,7 +844,7 @@ def modmli(n) :
             str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
             str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
         str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
-        str+="c[{}]=(spint)t & mask;\n".format(N-1)
+        str+="c[{}]=(spint)t;\n".format(N-1)
         str+="\t\n//Barrett-Dhem reduction\n"
         str+="\th = (spint)(t>>{}u);\n".format((n-WL)%base)
         str+="\tq=(spint)(((udpint)h*(udpint)r)>>{}u);\n".format(WL)  
@@ -871,7 +871,7 @@ def modmli(n) :
                 if i<N-1 :
                     str+="\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
                 else :
-                    str+="\tc[{}]=(c[{}]-(q<<{}u))&mask;\n".format(i,i,e)
+                    str+="\tc[{}]-=q<<{}u;\n".format(i,e)
             else :
                 if d<0 :
                     str+="\tt=(udpint)q*(udpint)p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
@@ -879,7 +879,8 @@ def modmli(n) :
                     if i<N-1 :
                         str+="\tt=(udpint)q*(udpint)p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(i,i,i+1,base)
                     else :
-                        str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+                        str+="\tc[{}]-=q*p{};\n".format(i,i)
+                        #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
         if propc :
             str+="\t(void)prop(c);\n"
 #        str+="*/\n"

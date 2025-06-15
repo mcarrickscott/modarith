@@ -598,7 +598,7 @@ def modmli(n,base) :
             str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(i)
             str+="c[{}]=(t as SPINT) & mask; t=t>>{};\n".format(i,base)
         str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(N-1)
-        str+="c[{}]=(t as SPINT) & mask;\n".format(N-1)
+        str+="c[{}]=t as SPINT;\n".format(N-1)
         str+="\t\n//Barrett-Dhem reduction\n"
         str+="\tlet h = (t>>{}) as SPINT;\n".format((n-WL)%base)
         str+="\tlet q=(((h as UDPINT)*(r as UDPINT))>>{}) as SPINT;\n".format(WL)  
@@ -625,7 +625,7 @@ def modmli(n,base) :
                 if i<N-1 :
                     str+="\tt=(q as UDPINT)<<{}; c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(e,i,i+1,base)
                 else :
-                    str+="\tc[{}]=(c[{}]-(q<<{}))&mask;\n".format(i,i,e)
+                    str+="\tc[{}]-=q<<{};\n".format(i,e)
             else :
                 if d<0 :
                     str+="\tt=(q as UDPINT)*(p{} as UDPINT); c[{}]+=(t as SPINT)&mask; c[{}]+=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
@@ -633,7 +633,8 @@ def modmli(n,base) :
                     if i<N-1 :
                         str+="\tt=(q as UDPINT)*(p{} as UDPINT); c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
                     else :
-                        str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+                        str+="\tc[{}]-=q*p{};\n".format(i,i)
+                        #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
         if propc :
             str+="\tprop(c);\n"
 #        str+="*/\n"
