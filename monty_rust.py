@@ -44,6 +44,7 @@ inline=True # consider encouraging inlining
 generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 makepublic=False # Make functions public
+fully_propagate=False # recommended set to True for Production code
 
 import sys
 import subprocess
@@ -637,6 +638,9 @@ def modmli(n,base) :
                         #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
         if propc :
             str+="\tprop(c);\n"
+        else :
+            if fully_propagate :
+                str+="\tprop(c);\n"
 #        str+="*/\n"
 #        str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
 #        str+="\tmodint(b,&mut t);\n"

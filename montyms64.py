@@ -45,6 +45,7 @@ generic=True # set to False if algorithm is known in advance, in which case moda
 allow_asr=True # Allow Arithmetic Shift Right. Maybe set to False to silence MISRA warnings
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
+fully_propagate=False # recommended set to True for Production code
 
 import sys
 import subprocess
@@ -1006,6 +1007,9 @@ def modmli(n) :
                         #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
         if propc :
             str+="\t(void)prop(c);\n"
+        else :
+            if fully_propagate :
+                str+="\t(void)prop(c);\n"
 #        str+="*/\n"
 #        str+="\tspint t[{}];\n".format(N)
 #        str+="\tmodint{}(b,t);\n".format(DECOR)

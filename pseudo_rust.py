@@ -26,6 +26,7 @@ inline=True # consider encouraging inlining
 generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 makepublic=False # Make functions public
+fully_propagate=False # recommended set to True for Production code
 
 import sys
 import subprocess
@@ -450,7 +451,8 @@ def second_pass(str,n,m,base) :
     for i in range(k+1,N-1) :
         str+= "\tc[{}]=v{};\n".format(i,i)
     str+="\tc[{}]=nv;\n".format(N-1)
-
+    if fully_propagate :
+        str+="\tprop(c);\n"
     return str
 
 # modular multiplication
