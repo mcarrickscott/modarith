@@ -99,6 +99,10 @@ All generated functions are written with the expectation that they will execute 
 
 It is strongly recommended that the generated assembly language be closely studied to ensure that there are no compiler introduced timing leaks. In particular code generated for the functions *modcmv* and *modcsw* should be checked, bearing in mind that they may be inlined by the compiler. If necessary compiler-specific measures should be taken to prevent inlining, and/or place these functions into a separately compiled module.   
 
+## Testing (new)
+
+Some testing of code correctness is carried out by the scripts themselves. However field arithmetic can be further tested against a range of corner/edge cases using the Python script *edge.py*. See the comments at the start of that file for details.
+
 
 # New - automatic generation of Edwards or Weierstrass curve API code in C
 
