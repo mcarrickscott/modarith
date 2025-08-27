@@ -122,11 +122,11 @@ def flat(n,base) :
     str="//propagate carries and add p if negative, propagate carries again\n"
     str+="#[allow(unused_variables)]\n"
     str+="#[inline]\n"
-    str+="fn flatten(n: &mut [SPINT]) -> bool {\n"
+    str+="fn flatten(n: &mut [SPINT]) -> SPINT {\n"
     str+="\tlet carry=prop(n);\n"
     str+=caddp(1)
     str+="\tprop(n);\n"
-    str+="\treturn (carry&1) == 1;\n}\n"
+    str+="\treturn carry&1;\n}\n"
     return str
 
 #final subtract
@@ -137,7 +137,7 @@ def modfsb(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modfsb(n: &mut[SPINT]) -> bool{\n"
+    str+="fn modfsb(n: &mut[SPINT]) -> SPINT{\n"
     #str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
     str+=subp(1)
     str+="\treturn flatten(n);\n}\n"
@@ -939,7 +939,7 @@ def modimp() :
     str+="\t\ta[0]+=b[i] as SPINT;\n\t}\n"
     str+="\tlet res=modfsb(a);\n"
     str+="\tnres(a);\n"
-    str+="\treturn res;\n}\n"
+    str+="\treturn res==1;\n}\n"
     return str 
 
 #get sign (parity)

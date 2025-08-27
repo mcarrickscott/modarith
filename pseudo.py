@@ -180,11 +180,16 @@ def prop(n) :
 def flat(n) :
     mask=(1<<base)-1
     str="//propagate carries and add p if negative, propagate carries again\n"
-    str+="static int inline flatten(spint *n) {\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic:
+        str+="spint inline flatten(spint *n) {\n"
+    else :
+        str+="spint flatten(spint *n) {\n"
     str+="\tspint carry=prop(n);\n"
     str+=caddp(1)
     str+="\t(void)prop(n);\n"
-    str+="\treturn (int)(carry&1);\n"
+    str+="\treturn (carry&1);\n"
     str+="}\n"
     return str
 
@@ -194,9 +199,9 @@ def modfsb(n) :
     if makestatic :
         str+="static "
     if inline and makestatic:
-        str+="int inline modfsb{}(spint *n) {{\n".format(DECOR)
+        str+="spint inline modfsb{}(spint *n) {{\n".format(DECOR)
     else :
-        str+="int modfsb{}(spint *n) {{\n".format(DECOR)
+        str+="spint modfsb{}(spint *n) {{\n".format(DECOR)
     str+=subp(1)
     str+="\treturn flatten(n);\n"
     str+="}\n"
@@ -1013,7 +1018,7 @@ def modimp() :
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
     str+="\t\ta[0]+=(spint)(unsigned char)b[i];\n\t}\n"
-    str+="\tres=modfsb{}(a);\n".format(DECOR)
+    str+="\tres=(int)modfsb{}(a);\n".format(DECOR)
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="\treturn res;\n"
     str+="}\n"
