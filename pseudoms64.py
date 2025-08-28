@@ -603,13 +603,13 @@ def second_pass(str,n,m) :
     xcess=N*base-n
 # second reduction pass
     str+="// second reduction pass\n\n"  
+    k=0
     if fred :
         str+="\tspint ut=tl;\n"  
         if xcess>0 :
             smask=(1<<(base-xcess))-1
             str+= "\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
-        k=0
         if m>1 :
             str+= "\tut*=0x{:x};\n".format(m)
         str+= "\ts=v0+(ut & mask);\n"
@@ -627,7 +627,6 @@ def second_pass(str,n,m) :
             smask=(1<<(base-xcess))-1
             str+= "\tshiftl(&tl,&th,{}); add(&tl,&th,(v{}>>{}u),0); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)   #"\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
-        k=0
         if m>1 :
             str+= "\tmuli(&tl,&th,0x{:x});\n".format(m)  #"\tut*=0x{:x};\n".format(m)
         str+= "\ts=v0+(tl & mask);\n"
@@ -641,7 +640,6 @@ def second_pass(str,n,m) :
 
         str+= "\tcarry=(s>>{})+shiftout(tl,th,{});\n".format(base,base)    #"\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
     k=k+1
-
 
     str+= "\tc[{}]=v{}+carry;\n".format(k,k)
 

@@ -484,31 +484,46 @@ def second_pass(str,n,m) :
     mask=(1<<base)-1
     xcess=N*base-n
 # second reduction pass
-    str+="// second reduction pass\n\n"  
+    str+="// second reduction pass\n\n" 
+    k=0
     if fred :
         str+="\tspint ut=(spint)t;\n"  
+        if xcess>0 :
+            smask=(1<<(base-xcess))-1
+            str+= "\tut=(ut<<{})+(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+        if m>1 :
+            str+= "\tut*=0x{:x};\n".format(m)
+        str+= "\ts=v0+(ut & mask);\n"
+        str+= "\tc[0]=(s&mask);\n"
+
+        if carry_on :
+            str+="\tut=(s>>{})+(ut>>{});\n".format(base,base)
+            str+="\ts=v1+(ut & mask);\n"
+            str+= "\tc[1]=(s&mask);\n"
+            k+=1
+
+        str+= "\tcarry=(s>>{})+(ut>>{});\n".format(base,base)
+
     else :
         str+="\tudpint ut=(udpint)t;\n"    
-    if xcess>0 :
-        smask=(1<<(base-xcess))-1
-        str+= "\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+        if xcess>0 :
+            smask=(1<<(base-xcess))-1
+            str+= "\tut=(ut<<{})+(udpint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
-    k=0
-    if m>1 :
-        str+= "\tut*=0x{:x};\n".format(m)
-    str+= "\ts=v0+((spint)ut & mask);\n"
-    str+= "\tc[0]=(spint)(s&mask);\n"
+        if m>1 :
+            str+= "\tut*=0x{:x};\n".format(m)
+        str+= "\ts=v0+((spint)ut & mask);\n"
+        str+= "\tc[0]=(s&mask);\n"
 
-    if carry_on :
-        str+="\tut=(udpint)(s>>{})+(ut>>{});\n".format(base,base)
-        str+="\ts=v1+((spint)ut & mask);\n"
-        str+= "\tc[1]=(spint)(s&mask);\n"
-        k+=1
+        if carry_on :
+            str+="\tut=(udpint)(s>>{})+(ut>>{});\n".format(base,base)
+            str+="\ts=v1+((spint)ut & mask);\n"
+            str+= "\tc[1]=(s&mask);\n"
+            k+=1
 
-    str+= "\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
+        str+= "\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
+
     k=k+1
-
-
     str+= "\tc[{}]=v{}+carry;\n".format(k,k)
 
     for i in range(k+1,N) :
