@@ -31,6 +31,11 @@ For a quick start copy the files from here into a working directory, and try
 
 Then 64-bit code for the suggested modulus is generated and tested. An executable that times important functions will be created if the platform allows it. The standalone C timing code is output to *time.c*, and code for production use is output to *field.c*
 
+If your shell interprets an asterix, try placing a backslash before each asterix, or
+
+	python3 pseudo.py 64 "2**255-19"
+	./time
+
 For Rust 
 
 	python3 pseudo_rust.py 64 2**255-19
