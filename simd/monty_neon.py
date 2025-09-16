@@ -989,7 +989,7 @@ def modmli(n) :
                     str+="\tt=vshlq_n_u64(vmovl_u32(q),{}u); c[{}]=vsub_u32(c[{}],vand_u32(vmovn_u64(t),mask)); c[{}]=vsub_u32(c[{}],vmovn_u64(vshrq_n_u64(t,{})));\n".format(e,i,i,i+1,i+1,base)
                     #str+="\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
                 else :
-                    str+="\tc[{}]=vsub_u32(c[{}],vshl_n_u32(q,{});\n".format(i,i,e)
+                    str+="\tc[{}]=vsub_u32(c[{}],vshl_n_u32(q,{}));\n".format(i,i,e)
                     #str+="\tc[{}]-=q<<{}u;\n".format(i,e)
             else :
                 if d<0 :

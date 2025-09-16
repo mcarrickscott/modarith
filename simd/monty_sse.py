@@ -1061,11 +1061,11 @@ def modmli(n) :
                     str+="\tt=_mm_srli_epi64(q,{}u); c[{}]=_mm_sub_epi32(c[{}],_mm_and_si128(t,mask)); c[{}]=_mm_sub_epi32(c[{}],_mm_srli_epi64(t,{}));\n".format(e,i,i,i+1,i+1,base)
                     #str+="\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
                 else :
-                    str+="\tc[{}]=_mm_sub_epi32(c[{}],_mm_slli_epi32(q,{});\n".format(i,i,e)
+                    str+="\tc[{}]=_mm_sub_epi32(c[{}],_mm_slli_epi32(q,{}));\n".format(i,i,e)
                     #str+="\tc[{}]-=q<<{}u;\n".format(i,e)
             else :
                 if d<0 :
-                    str+="\tt=_mm_mul_epu32(q,p{}); c[{}]=_mm_ad_epi32(c[{}],_mm_and_si128(t,mask)); c[{}]=_mm_add_epi32(c[{}],_mm_srli_epi64(t,{}u));\n".format(i,i,i,i+1,i+1,base)
+                    str+="\tt=_mm_mul_epu32(q,p{}); c[{}]=_mm_add_epi32(c[{}],_mm_and_si128(t,mask)); c[{}]=_mm_add_epi32(c[{}],_mm_srli_epi64(t,{}u));\n".format(i,i,i,i+1,i+1,base)
                     #str+="\tt=(udpint)q*(udpint)p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
                 else :
                     if i<N-1 :
