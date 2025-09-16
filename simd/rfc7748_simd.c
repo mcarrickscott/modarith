@@ -1,0 +1,356 @@
+// Program to implement RFC7748 - https://datatracker.ietf.org/doc/html/rfc7748
+// Montgomery curve key exchange code, as used by TLS
+// Use associated python scripts to generate code for X25519 or X448, but easily modified for other Montgomery curves
+//
+// A good Montgomery curve can be found by running the sagemath script bowe.sage
+//
+// Mike Scott 23rd November 2023
+// TII
+//
+// code for 16/32/64-bit processor for X25519 curve can be generated  by 
+//
+// python pseudo.py 16/32/64 X25519
+// or
+// python monty.py 16/32/64 X25519
+//
+// code for 16/32/64-bit processor for X448 curve can be generated  by
+//
+// python monty.py 16/32/64 X448
+
+// make sure decoration and generic are both set to False
+// Seems to prefer clang compiler and karatsuba set to False for X25519 and True for X448
+// clang -O3 -march=native -mtune=native rfc7748.c -lcpucycles -o rfc7748
+
+/*** Insert automatically generated code for modulus field.c here ***/
+
+
+
+/*** End of automatically generated code ***/
+
+#define COUNT_CLOCKS
+//#define USE_RDTSC
+
+#ifdef COUNT_CLOCKS
+
+#ifndef USE_RDTSC
+#include <cpucycles.h>
+#endif
+
+#endif
+
+#include <time.h>
+#include <string.h>
+
+static int char2int(char input)
+{
+    if ((input >= '0') && (input <= '9'))
+        return input - '0';
+    if ((input >= 'A') && (input <= 'F'))
+        return input - 'A' + 10;
+    if ((input >= 'a') && (input <= 'f'))
+        return input - 'a' + 10;
+    return 0;
+}
+
+static void byte2hex(char *ptr,unsigned char ch)
+{
+    int t=ch/16;
+    int b=ch%16;
+    if (t<10)
+    	ptr[0]='0'+t;
+    else
+    	ptr[0]='a'+(t-10);
+    if (b<10)
+    	ptr[1]='0'+b;
+    else
+    	ptr[1]='a'+(b-10);    	
+}
+
+// Convert a byte array to a hex string 
+static void toHex(const char *src, char *dst)
+{
+    int i;
+    for (i = 0; i < Nbytes; i++)
+    {
+        unsigned char ch = src[i];
+        byte2hex(&dst[i * 2],ch);
+    }
+    dst[2*Nbytes]='\0';
+}
+
+// Convert from a hex string to byte array 
+static void fromHex(const char *src, char *dst)
+{
+    int i,lz,len=0;
+    char pad[2*Nbytes];
+    while (src[len]!=0) len++;
+    lz=2*Nbytes-len;
+    if (lz<0) lz=0;
+    for (i=0;i<lz;i++) pad[i]='0';  // pad with leading zeros
+    for (i=lz;i<2*Nbytes;i++) pad[i]=src[i-lz];
+
+    for (i=0;i<Nbytes;i++)
+    {
+        dst[i] = (char2int(pad[2*i]) * 16) + char2int(pad[2*i + 1]);
+    }
+}
+
+// reverse bytes. Useful when dealing with little-endian formats
+static void reverse(char *w)
+{
+    int i;
+    for (i = 0; i < (Nbytes/2); i++) {
+        unsigned char ch = w[i];
+        w[i] = w[Nbytes - i - 1]; 
+        w[Nbytes - i - 1] = ch; 
+    } 
+}
+
+// output a modulo number in hex
+/*
+static void output(spint *x) {
+    char b[Nbytes+1];
+    char buff[(2*Nbytes)+1];
+    modexp(x,b);
+    toHex(b,buff);
+    puts(buff);
+}
+*/
+// Describe Montgomery Curve parameters
+
+#ifdef X25519
+#define A24 121665  // Montgomery curve constant (A-2)/4
+#define COF 3       // Montgomery curve cofactor = 2^cof (2 or 3)
+#define GENERATOR 9
+#endif
+
+#ifdef X448
+#define A24 39081   // Montgomery curve constant (A-2)/4
+#define COF 2       // Montgomery curve cofactor = 2^cof (2 or 3)
+#define GENERATOR 5
+#endif
+
+// clamp input - see RFC7748
+static void clamp(char *bk) {
+    int s=(8-(Nbits%8))%8;
+    bk[0]&=-(1<<COF);
+    char mask=(unsigned char)(0xffu>>s);
+    bk[Nbytes-1]&=mask;
+    bk[Nbytes-1]|=(unsigned char)(0x80u>>s);
+}
+
+// return nth bit of byte array
+static int bit(int n,const char *a) {
+    return (int)((a[n/8u]&((unsigned char)1u<<(n%8u)))>>(n%8u));
+}
+
+static char mask() {
+    int r=Nbits%8;
+    if (r==0) r=8;
+    return (char)((1<<r)-1);
+}
+
+// RFC7748 - Montgomery curve
+// bv=bk*bu, bu,bv are x coordinates on elliptic curve
+void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const char *bu2,char *bv2) {
+    int i;
+    uint32_t kt[2];
+    int swap1,swap2,sb1,sb2;
+    spint swap;
+    char ck1[Nbytes],ck2[Nbytes];
+    char cu1[Nbytes],cu2[Nbytes];
+    spint u[Nlimbs]; spint x1[Nlimbs]; spint x2[Nlimbs]; spint x3[Nlimbs]; spint z2[Nlimbs]; spint z3[Nlimbs];
+    spint A[Nlimbs]; spint B[Nlimbs]; spint AA[Nlimbs]; spint BB[Nlimbs]; spint C[Nlimbs]; spint D[Nlimbs]; spint E[Nlimbs];
+    char msk=mask();
+
+    for (i=0;i<Nbytes;i++) {
+        ck1[i]=bk1[i];
+        cu1[i]=bu1[i];
+        ck2[i]=bk2[i];
+        cu2[i]=bu2[i];	
+    }
+
+    reverse(cu1);  // convert from little to big endian
+    cu1[0]&=msk;  // Mask most significant bitS in the final byte
+    reverse(cu2);  // convert from little to big endian
+    cu2[0]&=msk;  // Mask most significant bitS in the final byte    
+    
+// clamp input
+    clamp(ck1);
+    clamp(ck2); 
+
+// import into internal representation
+    modimp(cu1,cu2,u);
+
+    modcpy(u,x1);  // x_1=u
+    modone(x2);    // x_2=1
+    modzer(z2);    // z_2=0
+    modcpy(u,x3);  // x_3=u
+    modone(z3);    // z_3=1
+
+    swap1=swap2=0;
+    for (i=Nbits-1;i>=0;i--)
+    {
+        sb1=bit(i,ck1);
+        sb2=bit(i,ck2);
+
+        swap1^=sb1; swap2^=sb2;
+
+        swap=tospint(swap1,swap2);
+        modcsw(swap,x2,x3);
+        modcsw(swap,z2,z3);
+        
+        swap1=sb1; swap2=sb2;
+            
+        modadd(x2,z2,A);        // A = x_2 + z_2
+        modsqr(A,AA);           // AA = A^2
+        modsub(x2,z2,B);        // B = x_2 - z_2
+        modsqr(B,BB);           // BB = B^2
+
+        modsub(AA,BB,E);        // E = AA - BB
+        modadd(x3,z3,C);        // C = x_3 + z_3
+        
+        modsub(x3,z3,D);        // D = x_3 - z_3
+        modmul(D,A,D);          // DA = D * A
+        modmul(C,B,C);          // CB = C * B
+ 
+        modadd(D,C,x3); modsqr(x3,x3);    // x_3 = (DA + CB)^2
+        
+        modsub(D,C,z3); modsqr(z3,z3); modmul(z3,x1,z3);  // z_3 = x_1 * (DA - CB)^2
+        modmul(AA,BB,x2);       // x_2 = AA * BB
+        modmli(E,A24,z2);        
+        modadd(z2,AA,z2); modmul(z2,E,z2);   // z_2 = E * (AA + a24 * E)
+    }
+    modcsw(swap,x2,x3);
+    modcsw(swap,z2,z3);
+
+    modpro(z2,A);       
+    modinv(z2,A,z2);    // sufficient for twist secure curves like X25519 and X448 
+
+    modmul(x2,z2,x2);   
+
+    modexp(x2,bv1,bv2);
+    reverse(bv1); // convert to little endian
+    reverse(bv2);
+}
+
+// a test vector for x25519 or x448 from RFC7748
+int main()
+{
+    char sv1[(Nbytes*2)+1];
+    char sv2[(Nbytes*2)+1];
+    uint64_t start,fin;
+    uint16_t rnd=1;  // crude random number generator
+    clock_t begin;
+    int i,elapsed;
+    char bk1[Nbytes],bv1[Nbytes];
+    char bu1[Nbytes]={};
+    char bk2[Nbytes],bv2[Nbytes];
+    char bu2[Nbytes]={};    
+
+#if defined(X25519) || defined(X448)
+#ifdef X25519
+    const char *sk1=(const char *)"77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a";
+    const char *sk2=(const char *)"5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb";    
+#endif
+#ifdef X448
+    const char *sk1=(const char *)"9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b";
+    const char *sk2=(const char *)"1c306a7ac2a0e2e0990b294470cba339e6453772b075811d8fad0d1d6927c120bb5ee8972b0d3e21374c9c921b09d1b0366f10b65173992d";    
+#endif
+
+    bu1[0]=bu2[0]=GENERATOR;
+// convert to byte array
+    fromHex(sk1,bk1);
+    fromHex(sk2,bk2);
+    rfc7748(bk1,bu1,bv1,bk2,bu2,bv2);
+
+// convert to Hex
+    toHex(bv1,sv1);
+    printf("RFC7748 Test Vector 1\n");
+    puts(sk1); 
+    puts(sv1); 
+    
+    toHex(bv2,sv2);
+    printf("RFC7748 Test Vector 2\n");
+    puts(sk2); 
+    puts(sv2);    
+#endif
+
+#ifdef COUNT_CLOCKS
+#ifdef USE_RDTSC
+    start=__rdtsc();
+#else
+    start=cpucycles();
+#endif    
+#endif
+
+
+    for (i=0;i<Nbytes;i++) {
+	bu1[i]=bu2[i]=0;
+        rnd=5*rnd+1; bk1[i]=rnd%256;
+    }
+    bu1[0]=bu2[0]=GENERATOR;    
+    for (i-0;i<Nbytes;i++) {
+	rnd=5*rnd+1; bk2[i]=rnd%256;
+    }
+    begin=clock();
+    for (i=0;i<5000;i++) {
+        rfc7748(bk1,bu1,bv1,bk2,bu2,bv2);
+        rfc7748(bk1,bv1,bu1,bk2,bv2,bu2);
+    }
+    elapsed=100*(clock() - begin) / CLOCKS_PER_SEC;
+#ifdef COUNT_CLOCKS
+#ifdef USE_RDTSC
+    fin=__rdtsc();
+#else
+    fin=cpucycles();
+#endif
+    printf("Clock cycles per point multiplication= %d\n",(int)((fin-start)/20000ULL));
+#endif
+
+    printf("Microseconds per point multiplication= %d\n",elapsed/2);
+    toHex(bu1,sv1);
+    puts(sv1);
+    toHex(bu2,sv2);
+    puts(sv2);    
+
+// do a double D-H key exchange
+
+    char alice1[Nbytes],bob1[Nbytes],apk1[Nbytes],bpk1[Nbytes],ssa1[Nbytes],ssb1[Nbytes];
+    char alice2[Nbytes],bob2[Nbytes],apk2[Nbytes],bpk2[Nbytes],ssa2[Nbytes],ssb2[Nbytes];
+    for (i=0;i<Nbytes;i++)
+    {
+        rnd=5*rnd+1; alice1[i]=rnd%256;
+        rnd=5*rnd+1; bob1[i]=rnd%256;
+        apk1[i]=0; bpk1[i]=0;
+    }
+    for (i=0;i<Nbytes;i++)
+    {
+        rnd=5*rnd+1; alice2[i]=rnd%256;
+        rnd=5*rnd+1; bob2[i]=rnd%256;
+        apk2[i]=0; bpk2[i]=0;
+    }    
+    apk1[0]=bpk1[0]=GENERATOR;
+    apk2[0]=bpk2[0]=GENERATOR;    
+    rfc7748(alice1,apk1,apk1,alice2,apk2,apk2);
+    rfc7748(bob1,bpk1,bpk1,bob2,bpk2,bpk2);
+
+    rfc7748(alice1,bpk1,ssa1,alice2,bpk2,ssa2);
+    rfc7748(bob1,apk1,ssb1,bob2,apk2,ssb2);
+    toHex(ssa1,sv1);
+    printf("Alice first shared secret\n");
+    puts(sv1);
+
+    toHex(ssb1,sv1);
+    printf("Bob's first shared secret\n");
+    puts(sv1);
+
+    toHex(ssa2,sv2);
+    printf("Alice second shared secret\n");
+    puts(sv2);    
+    
+    toHex(ssb2,sv2);
+    printf("Bob's second shared secret\n");
+    puts(sv2);
+
+}

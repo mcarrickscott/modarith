@@ -1,4 +1,4 @@
-# Python program to generate reasonably efficient C/C++ modular arithmetic code for pseudo-mersenne primes on a 16, 32 or 64-bit processor
+# Python program to generate reasonably efficient C/C++ modular arithmetic code for pseudo-mersenne primes using ARM NEON SIMD extensions
 # Modulus should be a pseudo-mersenne of the form 2^n-m
 # uses unsaturated radix
 #
@@ -118,12 +118,18 @@ def makebig(p,base,N) :
     return pw
 
 
-def intrinsic() :
+def intrinsics() :
     str="// t=a*c where t, a is 64 bits and c is a small constant\n"
     str+="static inline dpint vmulct_n_u64(dpint a,int b) {\n"
     str+="\tudpint pp1=vmull_n_u32(vmovn_u64(a),b);\n"
     str+="\tudpint pp2=vmull_n_u32(vmovn_u64(vshrq_n_u64(a,32)),b);\n"
     str+="\treturn vaddq_u64(pp1,vshlq_n_u64(pp2,32));\n"  
+    str+="}\n" 
+    str+="// set each lane to a constant\n"
+    str+="static inline spint tospint(int c0,int c1) {\n"
+    str+="\tuint32_t s[2];\n"
+    str+="\ts[0]=c0; s[1]=c1;\n"
+    str+="\treturn vld1_u32(s);\n"
     str+="}\n" 
     return str
 
@@ -171,7 +177,7 @@ def prop(n) :
     str+="\tcarry=vshr_n_s32 (carry, {}u);\n".format(base)
 
     #str+="\tsspint carry=(sspint)n[0];\n"
-    #str+="\tcarry>>={}u;\n".fflattenormat(base)
+    #str+="\tcarry>>={}u;\n".format(base)
 
     str+="\tn[0]=vand_u32 (n[0], mask);\n"
     #str+="\tn[0]&=mask;\n"
@@ -1463,7 +1469,7 @@ def header() :
         print("#define",prime,"\n")
 
 def functions() :
-    print(intrinsic())
+    print(intrinsics())
     print(prop(n))
     print(flat(n))
     print(modfsb(n))
@@ -1722,7 +1728,7 @@ with open('time.c', 'w') as f:
             print("#include <time.h>\n")
 #        if use_rdtsc :
 #            print("#include <x86intrin.h>\n")
-        print(intrinsic())
+        print(intrinsics())
         print(prop(n))
         print(flat(n))
         print(modfsb(n))
