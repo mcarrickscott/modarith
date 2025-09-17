@@ -290,7 +290,7 @@ int main()
         rnd=5*rnd+1; bk1[i]=rnd%256;
     }
     bu1[0]=bu2[0]=GENERATOR;    
-    for (i-0;i<Nbytes;i++) {
+    for (i=0;i<Nbytes;i++) {
 	rnd=5*rnd+1; bk2[i]=rnd%256;
     }
     begin=clock();
