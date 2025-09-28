@@ -104,7 +104,7 @@ def intrinsics() :
     str+="}\n" 
     
     str+="// set each lane to a constant\n"
-    str+="static inline spint _mm_setc_epi64(int c0,int c1) {\n"
+    str+="static inline spint _mm_setc_epi64(int64_t c0,int64_t c1) {\n"
     str+="\treturn _mm_set_epi64x(c1,c0);\n"
     str+="}\n" 
 
@@ -170,7 +170,6 @@ def intrinsics() :
     str+="static inline __m128i tospint(int c0,int c1) {\n"
     str+="\treturn _mm_set_epi64x(c1,c0);\n"
     str+="}\n" 
-
 
     return str
 
