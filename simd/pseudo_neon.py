@@ -274,7 +274,6 @@ def modsub(n,m) :
         str+="void modsub{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
     if not algorithm :
         str+="\tspint carry;\n"
-    if not algorithm :
         str+="\tspint bot=vdup_n_u32({}u);\n".format(m*2)
         str+="\tspint top=vdup_n_u32(0x{:x}u);\n".format(2*TW)       
     else :

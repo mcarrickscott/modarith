@@ -111,7 +111,7 @@ static void reverse(char *w)
 static void output(spint *x) {
     char b[Nbytes+1];
     char buff[(2*Nbytes)+1];
-    modexp(x,b);
+    modexp(x,b,NULL);  // first lane only
     toHex(b,buff);
     puts(buff);
 }

@@ -39,12 +39,7 @@
 
 # Some default settings
 
-embedded=False  # If True then functions to start and stop a performance counter (cycles or micro-seconds) must be made available
-                # If True no timing executable is created
-cyclesorsecs=True     # if embedded, count cycles otherwise seconds
-arduino=False   # set True if embedded and using arduino for timings
-if arduino :    # If arduino, count microseconds
-    cyclesorsecs=False 
+cyclesorsecs=True     # count cycles otherwise seconds
 compiler="gcc"  # gcc, clang or icx
 cyclescounter=True # use Bernstein's cpu cycle counter, otherwise just provide timings
 use_rdtsc=False # override cpucycle and use rdtsc directly, x86 only, for better comparison with other implementations
@@ -1846,12 +1841,11 @@ def time_modmul(n,ra,rb) :
     str="void time_modmul{}() {{\n".format(DECOR)
     str+="\tspint x[{}],y[{}],z[{}];\n".format(N,N,N)
     str+="\tint i,j;\n"
-    if not embedded :
-        str+="\tuint64_t start,finish;\n"
-        str+="\tclock_t begin;\n"
-        str+="\tint elapsed;\n"
-    else :
-        str+="\tlong start,finish;\n"
+
+    str+="\tuint64_t start,finish;\n"
+    str+="\tclock_t begin;\n"
+    str+="\tint elapsed;\n"
+
     str+="\t"
     for i in range(0,N) :
         str+="x[{}]=_mm256_setc_epi32({},{},{},{}); ".format(i,hex(rap[i]),hex(rbp[i]),hex(rap[i]),hex(rbp[i]))
@@ -1865,56 +1859,30 @@ def time_modmul(n,ra,rb) :
     str+="\tnres{}(x,x);\n".format(DECOR)
     str+="\tnres{}(y,y);\n".format(DECOR)
 
-    if embedded :
-        if arduino :
-            str+="\tstart=micros();\n"
-        else :
-            str+="\t//provide code to start counter, start=?;\n"
-        str+="\tfor (j=0;j<200;j++) {\n"
-        str+="\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t\tmodmul{}(y,z,x);\n".format(DECOR)
-        str+="\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t}\n"
-        if arduino :
-            str+="\tfinish=micros();\n"
-        else :
-            str+="\t//provide code to stop counter, finish=?;\n"
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if arduino :
-            str+='\tSerial.print("modmul usecs= "); Serial.println((finish-start)/1000);\n'
-        else :
-            if cyclesorsecs :
-                str+='\tprintf("modmul check %x Clock cycles= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/1000));\n'
-            else :
-                str+='\tprintf("modmul check %x Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)));\n'
-        str+="}\n"
+    if cyclescounter :
+        str+="\tstart=cpucycles();\n"
+    if use_rdtsc :
+        str+="\tstart=__rdtsc();\n"
+    str+="\tbegin=clock();\n"
+    str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
+    str+="\t\tfor (j=0;j<200;j++) {\n"
+    str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(y,z,x);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
+    str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
+    str+="\t\t}\n"
+    if cyclescounter :
+        str+="\tfinish=cpucycles();\n"
+    if use_rdtsc :
+        str+="\tfinish=__rdtsc();\n"
+    str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
+    str+="\tredc{}(z,z);\n".format(DECOR)
+    if cyclescounter or use_rdtsc :
+        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        if cyclescounter :
-            str+="\tstart=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tstart=__rdtsc();\n"
-        str+="\tbegin=clock();\n"
-        str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
-        str+="\t\tfor (j=0;j<200;j++) {\n"
-        str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(y,z,x);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(x,y,z);\n".format(DECOR)
-        str+="\t\t\tmodmul{}(z,x,y);\n".format(DECOR)
-        str+="\t\t}\n"
-        if cyclescounter :
-            str+="\tfinish=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tfinish=__rdtsc();\n"
-        str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclescounter or use_rdtsc :
-            str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
-        else :
-            str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
-        str+="}\n"
+        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+    str+="}\n"
     return str
 
 def time_modsqr(n,r) :
@@ -1926,12 +1894,10 @@ def time_modsqr(n,r) :
     str="void time_modsqr{}() {{\n".format(DECOR)
     str+="\tspint x[{}],z[{}];\n".format(N,N)
     str+="\tint i,j;\n"
-    if not embedded :
-        str+="\tuint64_t start,finish;\n"
-        str+="\tclock_t begin;\n"
-        str+="\tint elapsed;\n"
-    else :
-        str+="\tlong start,finish;\n"
+
+    str+="\tuint64_t start,finish;\n"
+    str+="\tclock_t begin;\n"
+    str+="\tint elapsed;\n"
 
     str+="\t"
     for i in range(0,N) :
@@ -1940,50 +1906,28 @@ def time_modsqr(n,r) :
     str+="\n"
 
     str+="\tnres{}(x,x);\n".format(DECOR)
-    if embedded :
-        if arduino :
-            str+="\tstart=micros();\n"
-        else :
-            str+="\t//provide code to start counter, start=?;\n"
-        str+="\tfor (j=0;j<500;j++) {\n"
-        str+="\t\tmodsqr{}(x,z);\n".format(DECOR)
-        str+="\t\tmodsqr{}(z,x);\n".format(DECOR)
-        str+="\t}\n"
-        if arduino :
-            str+="\tfinish=micros();\n"
-        else :
-            str+="\t//provide code to stop counter, finish=?;\n"
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if arduino :
-            str+='\tSerial.print("modsqr usecs= "); Serial.println((finish-start)/1000);\n'
-        else :
-            if cyclesorsecs :
-                str+='\tprintf("modsqr check %x Clock cycles= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/1000));\n'
-            else :
-                str+='\tprintf("modsqr check %x Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)));\n'
-        str+="}\n"
+
+    if cyclescounter :
+        str+="\tstart=cpucycles();\n"
+    if use_rdtsc :
+        str+="\tstart=__rdtsc();\n"
+    str+="\tbegin=clock();\n"
+    str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
+    str+="\t\tfor (j=0;j<500;j++) {\n"
+    str+="\t\t\tmodsqr{}(x,z);\n".format(DECOR)
+    str+="\t\t\tmodsqr{}(z,x);\n".format(DECOR)
+    str+="\t\t}\n"
+    if cyclescounter :
+        str+="\tfinish=cpucycles();\n"
+    if use_rdtsc :
+        str+="\tfinish=__rdtsc();\n"
+    str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
+    str+="\tredc{}(z,z);\n".format(DECOR)
+    if cyclescounter or use_rdtsc :
+        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        if cyclescounter :
-            str+="\tstart=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tstart=__rdtsc();\n"
-        str+="\tbegin=clock();\n"
-        str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
-        str+="\t\tfor (j=0;j<500;j++) {\n"
-        str+="\t\t\tmodsqr{}(x,z);\n".format(DECOR)
-        str+="\t\t\tmodsqr{}(z,x);\n".format(DECOR)
-        str+="\t\t}\n"
-        if cyclescounter :
-            str+="\tfinish=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tfinish=__rdtsc();\n"
-        str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclescounter or use_rdtsc :
-            str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
-        else :
-            str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
-        str+="}\n"
+        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+    str+="}\n"
     return str
 
 def time_modinv(n,r) :
@@ -1995,12 +1939,10 @@ def time_modinv(n,r) :
     str="void time_modinv{}() {{\n".format(DECOR)
     str+="\tspint x[{}],z[{}];\n".format(N,N)
     str+="\tint i,j;\n"
-    if not embedded :
-        str+="\tuint64_t start,finish;\n"
-        str+="\tclock_t begin;\n"
-        str+="\tint elapsed;\n"
-    else :
-        str+="\tlong start,finish;\n"
+
+    str+="\tuint64_t start,finish;\n"
+    str+="\tclock_t begin;\n"
+    str+="\tint elapsed;\n"
 
     str+="\t"
     for i in range(0,N) :
@@ -2009,46 +1951,27 @@ def time_modinv(n,r) :
     str+="\n"
 
     str+="\tnres{}(x,x);\n".format(DECOR)
-    if embedded :
-        if arduino :
-            str+="\tstart=micros();\n"
-        else :
-            str+="\t//provide code to start counter, start=?;\n"
-        str+="\tmodinv{}(x,NULL,z);\n".format(DECOR)
-        if arduino :
-            str+="\tfinish=micros();\n"
-        else :
-            str+="\t//provide code to stop counter, finish=?;\n"
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if arduino :
-            str+='\tSerial.print("modinv usecs= "); Serial.println(finish-start);\n'
-        else :
-            if cyclesorsecs :
-                str+='\tprintf("modinv check %x Clock cycles= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)(finish-start));\n'
-            else :
-                str+='\tprintf("modinv check %x Microsecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)(finish-start));\n'
-        str+="}\n"
+
+    if cyclescounter :
+        str+="\tstart=cpucycles();\n"
+    if use_rdtsc :
+        str+="\tstart=__rdtsc();\n"
+    str+="\tbegin=clock();\n"
+    str+="\tfor (i=0;i<{};i++) {{\n".format(50000//scale)
+    str+="\t\t\tmodinv{}(x,NULL,z);\n".format(DECOR)
+    str+="\t\t\tmodinv{}(z,NULL,x);\n".format(DECOR)
+    str+="\t}\n"
+    if cyclescounter :
+        str+="\tfinish=cpucycles();\n"
+    if use_rdtsc :
+        str+="\tfinish=__rdtsc();\n"
+    str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
+    str+="\tredc{}(z,z);\n".format(DECOR)
+    if cyclescounter or use_rdtsc:
+        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
     else :
-        if cyclescounter :
-            str+="\tstart=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tstart=__rdtsc();\n"
-        str+="\tbegin=clock();\n"
-        str+="\tfor (i=0;i<{};i++) {{\n".format(50000//scale)
-        str+="\t\t\tmodinv{}(x,NULL,z);\n".format(DECOR)
-        str+="\t\t\tmodinv{}(z,NULL,x);\n".format(DECOR)
-        str+="\t}\n"
-        if cyclescounter :
-            str+="\tfinish=cpucycles();\n"
-        if use_rdtsc :
-            str+="\tfinish=__rdtsc();\n"
-        str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
-        str+="\tredc{}(z,z);\n".format(DECOR)
-        if cyclescounter or use_rdtsc:
-            str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
-        else :
-            str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
-        str+="}\n"
+        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",_mm256_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+    str+="}\n"
     return str
 
 
@@ -2427,16 +2350,15 @@ ra=random.randint(0,modulus-1)
 rb=random.randint(0,modulus-1)
 rs=random.randint(0,modulus-1)
 ri=random.randint(0,modulus-1)
-#if embedded :
 subprocess.call("rm time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
         header()
-        if not embedded :
-            if cyclescounter :
-                print("#include <cpucycles.h>\n")
-            print("#include <time.h>\n")
+
+        if cyclescounter :
+            print("#include <cpucycles.h>\n")
+        print("#include <time.h>\n")
         if use_rdtsc :
             print("#include <x86intrin.h>\n")
         print(intrinsics())
@@ -2456,21 +2378,19 @@ with open('time.c', 'w') as f:
         print(time_modmul(n,ra,rb))
         print(time_modsqr(n,rs))
         print(time_modinv(n,ri))
-        if not embedded :
-            print(main())
+        print(main())
 f.close()
 
 #maybe -march=rv64gc for RISC-V
 #maybe -fPIC
-if not embedded :
-    if cyclescounter :
-        subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -lcpucycles -o time", shell=True)
-    else :
-        subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -o time", shell=True)
-    print("For timings run ./time")
-    #subprocess.call("rm time.c", shell=True)
+
+if cyclescounter :
+    subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -lcpucycles -o time", shell=True)
 else :
-    print("Timing code is in file time.c")
+    subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -o time", shell=True)
+print("For timings run ./time")
+    #subprocess.call("rm time.c", shell=True)
+
 
 
 # to determine code size
