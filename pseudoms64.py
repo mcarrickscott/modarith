@@ -24,6 +24,7 @@ use_rdtsc=False # use rdtsc directly, x86 only, for better comparison with other
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
+rmdel="rm"  # rm or del depending on shell
 generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
 allow_asr=True # Allow Arithmetic Shift Right. Maybe set to False to silence MISRA warnings
 check=False # run cppcheck on the output
@@ -794,7 +795,7 @@ def modpro() :
     cline="addchain search {} > inv.acc".format(PE)
     subprocess.call(cline, shell=True)
     subprocess.call("addchain gen inv.acc > ac.txt", shell=True)
-    subprocess.call("rm inv.acc",shell=True)
+    subprocess.call(rmdel+" inv.acc",shell=True)
 
     f=open('ac.txt')
     lines=f.readlines()
@@ -822,7 +823,7 @@ def modpro() :
             str+="\tmodnsqr{}({},{});\n".format(DECOR,info[1],int(info[3]))
     str+="}\n"
     f.close()
-    subprocess.call("rm ac.txt",shell=True)    
+    subprocess.call(rmdel+" ac.txt",shell=True)    
     return str
 
 #modular inversion
@@ -1570,7 +1571,7 @@ rb=random.randint(0,modulus-1)
 rs=random.randint(0,modulus-1)
 ri=random.randint(0,modulus-1)
 
-subprocess.call("rm time.c", shell=True)
+subprocess.call(rmdel+" time.c", shell=True)
 
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
