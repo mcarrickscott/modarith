@@ -1146,7 +1146,7 @@ def modsqr(n) :
     for i in range(1,N) :
         if gone_neg :
             if PM :
-                str+=" t=_mm256_add_epi64(t,_mm256_mul_epu32(mask,fm));".format(fm)
+                str+=" t=_mm256_add_epi64(t,_mm256_mul_epu32(mask,fm));"
                 #str+=" t+=(udpint)(spint)((spint){}*mask);".format(M)
             else :
                 if not s_is_declared :
