@@ -625,6 +625,7 @@ def modpro() :
             #str+="\t}\n"
     str+="\tmodcpy(&z,r);\n"
     str+="\treturn;\n}\n"
+    f.close()
     subprocess.call("rm ac.txt",shell=True)    
     return str
 

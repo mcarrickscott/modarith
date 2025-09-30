@@ -1281,6 +1281,7 @@ def modpro() :
             #str+="\t\tmodsqr{}({},{});\n".format(DECOR,info[1],info[1])
             #str+="\t}\n"
     str+="}\n"
+    f.close()
     subprocess.call("rm ac.txt",shell=True)    
     return str
 

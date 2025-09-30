@@ -1091,6 +1091,7 @@ def modpro() :
             str+="\tmodnsqr(&mut {},{});\n".format(info[1],int(info[3]))
     str+="\tmodcpy(&z,r);\n"
     str+="\treturn;\n}\n"
+    f.close()
     subprocess.call("rm ac.txt",shell=True)    
     return str
 
