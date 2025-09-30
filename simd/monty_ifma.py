@@ -711,6 +711,7 @@ def modmul(n) :
     #str+="\tspint q=((spint)1<<{}u); // q is unsaturated radix \n".format(base)
     str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<{}u)-1);\n".format(base)
     #str+="\tspint mask=(spint)(q-(spint)1);\n"
+    str+="\tspint zero=_mm_set2_epi64(0);\n"
     str+="\tspint one=_mm_set2_epi64(1);\n"
     if fullmonty :
         str+="\tspint ndash=_mm_set2_epi64(0x{:x}u);\n".format(ndash)
@@ -1016,7 +1017,7 @@ def modmli(n) :
             e=ispowerof2(d)
             if e>0 :
                 if i<N-1 :
-                    str+="\ttl=q; th=zero; shiftl(&tl,&th,{}u); c[{}]=_mm_sub_epi64(c[{}],mm_and_si128(tl,mask)); shiftr(&tl,&th); c[{}]=_mm_sub_epi64(c[{}],tl);\n".format(e,i,i,i+1,i+1) 
+                    str+="\ttl=q; th=zero; shiftl(&tl,&th,{}u); c[{}]=_mm_sub_epi64(c[{}],_mm_and_si128(tl,mask)); shiftr(&tl,&th); c[{}]=_mm_sub_epi64(c[{}],tl);\n".format(e,i,i,i+1,i+1) 
                     #str+="\ttl=q; shiftl(&tl,&th,{}u); c[{}]-=tl&mask; shiftr(&tl,&th,{}u); c[{}]-=tl;\n".format(e,i,base,i+1)   #"\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
                 else :
                     str+="\tc[{}]=_mm_sub_epi64(c[{}],_mm_slli_epi64(q,{}u));\n".format(i,i,e)
@@ -1068,6 +1069,7 @@ def modsqr(n) :
     #str+="\tspint q=((spint)1<<{}u); // q is unsaturated radix \n".format(base)
     str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<{}u)-1);\n".format(base)
     #str+="\tspint mask=(spint)(q-(spint)1);\n"
+    str+="\tspint zero=_mm_set2_epi64(0);\n"
     str+="\tspint one=_mm_set2_epi64(1);\n"
     if fullmonty :
         str+="\tspint ndash=_mm_set2_epi64(0x{:x}u);\n".format(ndash)
