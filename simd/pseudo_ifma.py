@@ -11,7 +11,7 @@
 #
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
-# Execute this program as: python3 pseudoms64.py X25519
+# Execute this program as: python3 pseudo_ifma.py X25519
 # Production code is output to file field.c
 # 
 # Mike Scott 19th February 2025
@@ -167,7 +167,7 @@ def intrinsics() :
     str+="}\n\n"
 
     str+="// set each lane to a constant\n"
-    str+="static inline __m128i tospint(int c0,int c1) {\n"
+    str+="static inline spint tospint(int c0,int c1) {\n"
     str+="\treturn _mm_set_epi64x(c1,c0);\n"
     str+="}\n" 
 
