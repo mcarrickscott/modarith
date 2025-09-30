@@ -2260,8 +2260,11 @@ subprocess.call("rm time.c", shell=True)
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
         header()
-
+        if cyclescounter :
+            print("#include <cpucycles.h>\n")
         print("#include <time.h>\n")
+        if use_rdtsc :
+            print("#include <x86intrin.h>\n")
         print(intrinsics())
         print(prop(n))
         print(flat(n))
@@ -2282,7 +2285,11 @@ with open('time.c', 'w') as f:
         print(main())
 f.close()
 
-print("Timing code is in file time.c")
+if cyclescounter :
+    subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -lcpucycles -o time", shell=True)
+else :
+    subprocess.call(compiler + " -march=native -mtune=native -O3 time.c -o time", shell=True)
+print("For timings run ./time")
 
 # to determine code size
 makestatic=False
