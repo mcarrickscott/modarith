@@ -779,7 +779,7 @@ def modmul(n) :
             #str+=" spint v{}=((tl*ndash) & mask); ".format(i)    #" spint v{}=(((spint)t*ndash) & mask); ".format(i)
             if PM :
                 str+=" mul(&wl,&wh,sm,v{}); ".format(i)
-                str+=" sub(&tl,&th,&wl,&wh); "
+                str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,i)    #" t-=(dpint)(spint)((spint){}*v{}); ".format(M,i)
             else :
                 if ppw[0]==1 :
@@ -831,7 +831,7 @@ def modmul(n) :
             #str+=" spint v{}=((tl*ndash) & mask); ".format(N)    #" spint v{}=(((spint)t*ndash) & mask); ".format(N)
             if PM :
                 str+=" mul(&wl,&wh,sm,v{}); ".format(N)
-                str+=" sub(&tl,&th,&wl,&wh); "
+                str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,N)   #" t-=(dpint)(spint)((spint){}*v{}); ".format(M,N)
             else :
                 if ppw[0]==1 :
@@ -1133,7 +1133,7 @@ def modsqr(n) :
             #str+=" spint v{}=((tl*ndash) & mask); ".format(i)    #" spint v{}=(((spint)t*ndash) & mask); ".format(i)
             if PM :
                 str+=" mul(&wl,&wh,sm,v{}); ".format(i)
-                str+=" sub(&tl,&th,&wl,&wh); "
+                str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,i)  #" t-=(udpint)(spint)((spint){}*v{}); ".format(M,i)
             else :
                 if ppw[0]==1 :
@@ -1176,7 +1176,7 @@ def modsqr(n) :
             #str+=" spint v{}=((tl*ndash) & mask); ".format(N)   #" spint v{}=(((spint)t*ndash) & mask); ".format(N)
             if PM :
                 str+=" mul(&wl,&wh,sm,v{}); ".format(N)
-                str+=" sub(&tl,&th,&wl,&wh); "
+                str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,N)   #" t-=(udpint)(spint)((spint){}*v{}); ".format(M,N)
             else :
                 if ppw[0]==1 :
