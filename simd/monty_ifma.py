@@ -730,7 +730,7 @@ def modmul(n) :
         if PM :
             gone_neg=True
             str+=" mul(&wl,&wh,sm,_mm_sub_epi64(q,v0)); "
-            str+=" add(&tl,&th,&wl,&wh); "
+            str+=" add(&tl,&th,wl,wh); "
             #str+=" add(&tl,&th,(spint){}*(q-v0),0); ".format(M)    #" t+=(dpint)(spint)((spint){}*(q-v0)); ".format(M)
             maxnum+=M*maxdigit
         else :
@@ -752,7 +752,7 @@ def modmul(n) :
         if gone_neg :
             if PM :
                 str+=" mul(&wl,&wh,sm,mask); "
-                str+=" add(&tl,&th,&wl,&wh);"
+                str+=" add(&tl,&th,wl,wh);"
                 #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)    #" t+=(dpint)(spint)((spint){}*mask);".format(M)
                 maxnum+=M*maxdigit
             else :
@@ -805,7 +805,7 @@ def modmul(n) :
     if gone_neg :
         if PM :
             str+=" mul(&wl,&wh,sm,mask); "
-            str+=" add(&tl,&th,&wl,&wh);"
+            str+=" add(&tl,&th,wl,wh);"
             #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(dpint)(spint)((spint){}*mask);".format(M)
         else :
             if not s_is_declared :
@@ -850,7 +850,7 @@ def modmul(n) :
             if gone_neg :
                 if PM :
                     str+=" mul(&wl,&wh,sm,mask); "
-                    str+=" add(&tl,&th,&wl,&wh);"
+                    str+=" add(&tl,&th,wl,wh);"
                     #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(dpint)(spint)((spint){}*mask);".format(M)
                 else :
                     if not s_is_declared :
@@ -911,7 +911,7 @@ def modmul(n) :
                 if gone_neg :
                     if PM :
                         str+=" mul(&wl,&wh,sm,mask); "
-                        str+=" add(&tl,&th,&wl,&wh);"
+                        str+=" add(&tl,&th,wl,wh);"
                         #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)   #" t+=(dpint)(spint)((spint){}*mask);".format(M)
                     else :
                         if not s_is_declared :
@@ -1087,7 +1087,7 @@ def modsqr(n) :
         if PM :
             gone_neg=True
             str+=" mul(&wl,&wh,sm,_mm_sub_epi64(q,v0)); "
-            str+=" add(&tl,&th,&wl,&wh); "
+            str+=" add(&tl,&th,wl,wh); "
             #str+=" add(&tl,&th,(spint){}*(q-v0),0); ".format(M)  #" t+=(udpint)(spint)((spint){}*(q-v0)); ".format(M)
         else :
             if ppw[0]==1 :
@@ -1108,7 +1108,7 @@ def modsqr(n) :
         if gone_neg :
             if PM :
                 str+=" mul(&wl,&wh,sm,mask); "
-                str+=" add(&tl,&th,&wl,&wh);"
+                str+=" add(&tl,&th,wl,wh);"
                 #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)   #" t+=(udpint)(spint)((spint){}*mask);".format(M)
             else :
                 if not s_is_declared :
@@ -1152,7 +1152,7 @@ def modsqr(n) :
     if gone_neg :
         if PM :
             str+=" mul(&wl,&wh,sm,mask); "
-            str+=" add(&tl,&th,&wl,&wh);"
+            str+=" add(&tl,&th,wl,wh);"
             #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(udpint)(spint)((spint){}*mask);".format(M)
         else :
             if not s_is_declared :
@@ -1194,7 +1194,7 @@ def modsqr(n) :
             if gone_neg :
                 if PM :
                     str+=" mul(&wl,&wh,sm,mask); "
-                    str+=" add(&tl,&th,&wl,&wh);"
+                    str+=" add(&tl,&th,wl,wh);"
                     #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(udpint)(spint)((spint){}*mask);".format(M)
                 else :
                     if not s_is_declared :
@@ -1253,7 +1253,7 @@ def modsqr(n) :
                 if gone_neg :
                     if PM :
                         str+=" mul(&wl,&wh,sm,mask); "
-                        str+=" add(&tl,&th,&wl,&wh);"
+                        str+=" add(&tl,&th,wl,wh);"
                         #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(udpint)(spint)((spint){}*mask);".format(M)
                     else :
                         if not s_is_declared :
