@@ -1,11 +1,13 @@
 # Experimental SIMD implementation
 
-Here we provide versions of the scripts which implement finite field arithmetic using C language intrinsics which exploit the SSE/AVX2 and 
-NEON SIMD extensions supported by many Intel AMD and ARM processors. The SSE, AVX2 and NEON instructions typically perform operations in 
-parallel on a number of 64-bit lanes implemented in 128 or 256-bit registers. This experimental implementation was built and tested on 
-a standard x64 PC/laptop and a Raspberry Pi 400 computer which uses the Cortex-A72 processor.
+Here we provide versions of the scripts which implement finite field arithmetic using C language intrinsics which exploit the 
+SSE/AVX2/AVX-IFMA and 
+NEON SIMD extensions supported by many Intel AMD and ARM processors. The SSE, AVX2/AVX-IFMA and NEON instructions typically perform 
+operations in parallel on a number of 64-bit lanes implemented in 128 or 256-bit registers. This experimental implementation was built 
+and tested on a standard x64 PC/laptop and a Raspberry Pi 400 computer which uses the Cortex-A72 processor.
 
-SSE and NEON support two lanes. AVX2 supports four.
+SSE AVX-IFMA and NEON support two lanes. AVX2 supports four. A simple extension to AVX512 would allow up to 8 lanes, but support for AVX512
+is currently quite patchy.
 
 Recall that the script generated code is fully constant time. Therefore more than one simultaneous but independent calculation can be 
 performed, one in each lane.
