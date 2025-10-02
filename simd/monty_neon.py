@@ -1926,7 +1926,7 @@ def time_modsqr(n,r) :
         str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
         str+="\tredc{}(z,z);\n".format(DECOR)
         str+="\tvst1_u32(s,z[0]);\n"        
-        if cyclescounter or use_rdtsc :
+        if cyclescounter :
             str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)s[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
         else :
             str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",(int)s[0]&0xFFFFFF,elapsed);\n'
@@ -1995,7 +1995,7 @@ def time_modinv(n,r) :
         str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
         str+="\tredc{}(z,z);\n".format(DECOR)
         str+="\tvst1_u32(s,z[0]);\n"        
-        if cyclescounter or use_rdtsc:
+        if cyclescounter :
             str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",(int)s[0]&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
         else :
             str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",(int)s[0]&0xFFFFFF,elapsed);\n'
