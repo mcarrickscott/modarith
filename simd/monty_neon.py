@@ -1633,12 +1633,15 @@ def modshl(n) :
     str+="void modshl{}(unsigned int n,spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint mask=vdup_n_u32(0x{:x});\n".format(mask)
-    str+="\ta[{}]=vorr_u32(vshl_n_u32(a[{}],n),vshr_n_u32(a[{}],{}u-n));\n".format(N-1,N-1,N-2,base)
+    str+="\tspint sft=vdup_n_u32(n);\n"
+    str+="\tspint nsft=vdup_n_u32({}u-n};\n".format(base)
+
+    str+="\ta[{}]=vorr_u32(vshl_u32(a[{}],sft),vshr_u32(a[{}],nsft));\n".format(N-1,N-1,N-2)
     #str+="\ta[{}]=((a[{}]<<n)) | (a[{}]>>({}u-n));\n".format(N-1,N-1,N-2,base)
     str+="\tfor (i={};i>0;i--) {{\n".format(N-2)
-    str+="\t\ta[i]=vorr_u32(vand_u32(vshl_n_u32(a[i],n),mask)    ,vshr_n_u32(a[i-1],{}u-n)    );\n\t}}\n".format(base)
+    str+="\t\ta[i]=vorr_u32(vand_u32(vshl_u32(a[i],sft),mask)    ,vshr_u32(a[i-1],nsft)    );\n\t}}\n"
     #str+="\t\ta[i]=((a[i]<<n)&(spint)0x{:x}) | (a[i-1]>>({}u-n));\n\t}}\n".format(mask,base)
-    str+="\ta[0]=vand_u32(vshl_n_u32(a[0],n),mask);\n"
+    str+="\ta[0]=vand_u32(vshl_u32(a[0],sft),mask);\n"
     #str+="\ta[0]=(a[0]<<n)&(spint)0x{:x};\n".format(mask)
     str+="}\n"
     return str 
@@ -1653,13 +1656,16 @@ def modshr(n) :
     str+="spint modshr{}(unsigned int n,spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint mask=vdup_n_u32(0x{:x});\n".format(mask)
-    str+="\tspint mskn=vdup_n_u32((1<<n)-1);\n"    
+    str+="\tspint mskn=vdup_n_u32((1<<n)-1);\n"
+    str+="\tspint sft=vdup_n_u32(n);\n"
+    str+="\tspint nsft=vdup_n_u32({}u-n};\n".format(base)
+    
     str+="\tspint r=vand_u32(a[0],mskn);\n"
     #str+="\tspint r=a[0]&(((spint)1<<n)-(spint)1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N-1)
-    str+="\t\ta[i]=vorr_u32(vshr_n_u32(a[i],n),vand_u32(vshl_n_u32(a[i+1],{}u-n),mask));\n\t}}\n".format(base)
+    str+="\t\ta[i]=vorr_u32(vshr_u32(a[i],sft),vand_u32(vshl_u32(a[i+1],nsft),mask));\n\t}}\n"
     #str+="\t\ta[i]=(a[i]>>n) | ((a[i+1]<<({}u-n))&(spint)0x{:x});\n\t}}\n".format(base,mask)
-    str+="\ta[{}]=vshr_n_u32(a[{}],n);\n".format(N-1,N-1)
+    str+="\ta[{}]=vshr_u32(a[{}],sft);\n".format(N-1,N-1)
     #str+="\ta[{}]=a[{}]>>n;\n".format(N-1,N-1)
     str+="\treturn r;\n}\n"
     return str
@@ -1673,9 +1679,10 @@ def mod2r() :
     str+="\tunsigned int n=r/{}u;\n".format(base)
     str+="\tunsigned int m=r%{}u;\n".format(base)
     str+="\tspint one=vdup_n_u32(1);\n"
+    str+="\tspint sft=vdup_n_u32(m);\n"
     str+="\tmodzer{}(a);\n".format(DECOR)
     str+="\tif (r>={}*8) return;\n".format(Nbytes)
-    str+="\ta[n]=one; a[n]=vshl_n_u32(a[n],m);\n"
+    str+="\ta[n]=one; a[n]=vshl_u32(a[n],sft);\n"
     #str+="\ta[n]=1; a[n]<<=m;\n"
     str+="\tnres{}(a,a);\n}}\n".format(DECOR)
     return str
@@ -2396,9 +2403,9 @@ f.close()
 #maybe -fPIC
 if not embedded :
     if cyclescounter :
-        subprocess.call(compiler + " -march=native -mtune=native -O3 -fmax-errors=5 time.c -lcpucycles -o time", shell=True)
+        subprocess.call(compiler + " -march=native -mtune=native -O3  time.c -lcpucycles -o time", shell=True)
     else :
-        subprocess.call(compiler + " -march=native -mtune=native -O3 -fmax-errors=5 time.c -o time", shell=True)
+        subprocess.call(compiler + " -march=native -mtune=native -O3  time.c -o time", shell=True)
     print("For timings run ./time")
     #subprocess.call("rm time.c", shell=True)
 else :
@@ -2413,7 +2420,7 @@ with open(fnamec, 'w') as f:
         functions()
 f.close()
 
-subprocess.call(compiler+" -O3 -c  -fmax-errors=5 "+fnamec,shell=True)
+subprocess.call(compiler+" -O3 -c  "+fnamec,shell=True)
 subprocess.call("size "+fnameo+" > size.txt",shell=True)
 
 f=open('size.txt')
@@ -2422,7 +2429,7 @@ info=lines[1].split()
 
 print("Code size using -O3 = ",info[0])
 
-subprocess.call(compiler+" -Os -c  -fmax-errors=5 "+fnamec,shell=True)
+subprocess.call(compiler+" -Os -c  "+fnamec,shell=True)
 subprocess.call("size "+fnameo+" > size.txt",shell=True)
 
 f=open('size.txt')
