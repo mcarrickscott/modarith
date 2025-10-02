@@ -1634,12 +1634,12 @@ def modshl(n) :
     str+="\tint i;\n"
     str+="\tspint mask=vdup_n_u32(0x{:x});\n".format(mask)
     str+="\tsspint sft=vdup_n_s32(n);\n"
-    str+="\tsspint nsft=vdup_n_s32({}u-n);\n".format(base)
+    str+="\tsspint nsft=vdup_n_s32(n-{}u);\n".format(base)
 
-    str+="\ta[{}]=vorr_u32(vshl_u32(a[{}],sft),vshr_u32(a[{}],nsft));\n".format(N-1,N-1,N-2)
+    str+="\ta[{}]=vorr_u32(vshl_u32(a[{}],sft),vshl_u32(a[{}],nsft));\n".format(N-1,N-1,N-2)
     #str+="\ta[{}]=((a[{}]<<n)) | (a[{}]>>({}u-n));\n".format(N-1,N-1,N-2,base)
     str+="\tfor (i={};i>0;i--) {{\n".format(N-2)
-    str+="\t\ta[i]=vorr_u32(vand_u32(vshl_u32(a[i],sft),mask)    ,vshr_u32(a[i-1],nsft)    );\n\t}}\n"
+    str+="\t\ta[i]=vorr_u32(vand_u32(vshl_u32(a[i],sft),mask)    ,vshl_u32(a[i-1],nsft)    );\n\t}}\n"
     #str+="\t\ta[i]=((a[i]<<n)&(spint)0x{:x}) | (a[i-1]>>({}u-n));\n\t}}\n".format(mask,base)
     str+="\ta[0]=vand_u32(vshl_u32(a[0],sft),mask);\n"
     #str+="\ta[0]=(a[0]<<n)&(spint)0x{:x};\n".format(mask)
@@ -1657,15 +1657,15 @@ def modshr(n) :
     str+="\tint i;\n"
     str+="\tspint mask=vdup_n_u32(0x{:x});\n".format(mask)
     str+="\tspint mskn=vdup_n_u32((1<<n)-1);\n"
-    str+="\tsspint sft=vdup_n_s32(n);\n"
+    str+="\tsspint sft=vdup_n_s32(-n);\n"
     str+="\tsspint nsft=vdup_n_s32({}u-n);\n".format(base)
     
     str+="\tspint r=vand_u32(a[0],mskn);\n"
     #str+="\tspint r=a[0]&(((spint)1<<n)-(spint)1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N-1)
-    str+="\t\ta[i]=vorr_u32(vshr_u32(a[i],sft),vand_u32(vshl_u32(a[i+1],nsft),mask));\n\t}}\n"
+    str+="\t\ta[i]=vorr_u32(vshl_u32(a[i],sft),vand_u32(vshl_u32(a[i+1],nsft),mask));\n\t}}\n"
     #str+="\t\ta[i]=(a[i]>>n) | ((a[i+1]<<({}u-n))&(spint)0x{:x});\n\t}}\n".format(base,mask)
-    str+="\ta[{}]=vshr_u32(a[{}],sft);\n".format(N-1,N-1)
+    str+="\ta[{}]=vshl_u32(a[{}],sft);\n".format(N-1,N-1)
     #str+="\ta[{}]=a[{}]>>n;\n".format(N-1,N-1)
     str+="\treturn r;\n}\n"
     return str
