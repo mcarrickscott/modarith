@@ -1633,8 +1633,8 @@ def modshl(n) :
     str+="void modshl{}(unsigned int n,spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint mask=vdup_n_u32(0x{:x});\n".format(mask)
-    str+="\tspint sft=vdup_n_u32(n);\n"
-    str+="\tspint nsft=vdup_n_u32({}u-n};\n".format(base)
+    str+="\tsspint sft=vdup_n_s32(n);\n"
+    str+="\tsspint nsft=vdup_n_s32({}u-n);\n".format(base)
 
     str+="\ta[{}]=vorr_u32(vshl_u32(a[{}],sft),vshr_u32(a[{}],nsft));\n".format(N-1,N-1,N-2)
     #str+="\ta[{}]=((a[{}]<<n)) | (a[{}]>>({}u-n));\n".format(N-1,N-1,N-2,base)
@@ -1657,8 +1657,8 @@ def modshr(n) :
     str+="\tint i;\n"
     str+="\tspint mask=vdup_n_u32(0x{:x});\n".format(mask)
     str+="\tspint mskn=vdup_n_u32((1<<n)-1);\n"
-    str+="\tspint sft=vdup_n_u32(n);\n"
-    str+="\tspint nsft=vdup_n_u32({}u-n};\n".format(base)
+    str+="\tsspint sft=vdup_n_s32(n);\n"
+    str+="\tsspint nsft=vdup_n_s32({}u-n);\n".format(base)
     
     str+="\tspint r=vand_u32(a[0],mskn);\n"
     #str+="\tspint r=a[0]&(((spint)1<<n)-(spint)1);\n"
@@ -1679,7 +1679,7 @@ def mod2r() :
     str+="\tunsigned int n=r/{}u;\n".format(base)
     str+="\tunsigned int m=r%{}u;\n".format(base)
     str+="\tspint one=vdup_n_u32(1);\n"
-    str+="\tspint sft=vdup_n_u32(m);\n"
+    str+="\tsspint sft=vdup_n_s32(m);\n"
     str+="\tmodzer{}(a);\n".format(DECOR)
     str+="\tif (r>={}*8) return;\n".format(Nbytes)
     str+="\ta[n]=one; a[n]=vshl_u32(a[n],sft);\n"
