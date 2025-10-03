@@ -155,6 +155,7 @@ def intrinsics() :
     
     str+="//extract from 512-bit register\n"
     str+="static inline int _mm512_extract_epi16(spint a,int m) {\n"
+    str+="\tm=0if (m>16)
     str+="\treturn _mm256_extract_epi16(_mm512_extracti64x4_epi64(a,m%16),m/16);\n"
     str+="}\n"
     return str
@@ -1181,15 +1182,15 @@ def modexp() :
     str+="\tspint c[{}];\n".format(N)
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i={};i>=0;i--) {{\n".format(Nbytes-1)
-    str+="\t\tb[i]=_mm512_extract_epi16(c[0],0)&0xff;\n"
+    str+="\t\tb[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],0),0)&0xff;\n"
     str+="\t\te[i]=f[i]=g[i]=0;\n"
-    str+="\t\tif (e!=NULL) e[i]=_mm512_extract_epi16(c[0],4)&0xff;\n"
-    str+="\t\tif (f!=NULL) f[i]=_mm512_extract_epi16(c[0],8)&0xff;\n"
-    str+="\t\tif (g!=NULL) g[i]=_mm512_extract_epi16(c[0],12)&0xff;\n"
-    str+="\t\tif (h!=NULL) h[i]=_mm512_extract_epi16(c[0],16)&0xff;\n"
-    str+="\t\tif (j!=NULL) j[i]=_mm512_extract_epi16(c[0],20)&0xff;\n"
-    str+="\t\tif (k!=NULL) k[i]=_mm512_extract_epi16(c[0],24)&0xff;\n"
-    str+="\t\tif (m!=NULL) m[i]=_mm512_extract_epi16(c[0],28)&0xff;\n"
+    str+="\t\tif (e!=NULL) e[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],4),0)&0xff;\n"
+    str+="\t\tif (f!=NULL) f[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],8),0)&0xff;\n"
+    str+="\t\tif (g!=NULL) g[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],12),0)&0xff;\n"
+    str+="\t\tif (h!=NULL) h[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],0),1)&0xff;\n"
+    str+="\t\tif (j!=NULL) j[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],4),1)&0xff;\n"
+    str+="\t\tif (k!=NULL) k[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],8),1)&0xff;\n"
+    str+="\t\tif (m!=NULL) m[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],12),1)&0xff;\n"
     #str+="\t\tb[i]=c[0]&(spint)0xff;\n"
     str+="\t\t(void)modshr{}(8,c);\n\t}}\n".format(DECOR)
     str+="}\n"
@@ -1309,9 +1310,9 @@ def time_modmul(n,ra,rb) :
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
     if cyclescounter or use_rdtsc :
-        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
+        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
@@ -1354,9 +1355,9 @@ def time_modsqr(n,r) :
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
     if cyclescounter or use_rdtsc :
-        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
+        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
@@ -1398,9 +1399,9 @@ def time_modinv(n,r) :
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
     if cyclescounter or use_rdtsc:
-        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
+        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
     else :
-        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
