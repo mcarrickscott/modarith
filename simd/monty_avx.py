@@ -2051,9 +2051,9 @@ def main() :
 
 if len(sys.argv)!=2 :
     print("Syntax error")
-    print("Valid syntax - python monty_sse.py <prime> OR <prime name>")
-    print("For example - python monty_sse.py NIST256")
-    print("For example - python monty_sse.py 0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409")
+    print("Valid syntax - python monty_avx.py <prime> OR <prime name>")
+    print("For example - python monty_avx.py NIST256")
+    print("For example - python monty_avx.py 0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409")
     exit(2)
 
 WL=32
