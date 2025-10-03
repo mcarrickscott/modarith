@@ -151,7 +151,12 @@ def intrinsics() :
     str+="// set each lane to a constant\n"
     str+="static inline spint tospint(int c0,int c1,int c2,int c3,int c4,int c5,int c6,int c7) {\n"
     str+="\treturn _mm512_set_epi32(0,c7,0,c6,0,c5,0,c4,0,c3,0,c2,0,c1,0,c0);\n"
-    str+="}\n" 
+    str+="}\n"
+    
+    str+="//extract from 512-bit register\n"
+    str+="static inline int _mm512_extract_epi16(spint a,int m) {\n"
+    str+="\treturn _mm256_extract_epi16(_mm512_extracti64x4_epi64(a,m%16),m/16);\n"
+    str+="}\n"
     return str
 
 
