@@ -153,11 +153,6 @@ def intrinsics() :
     str+="\treturn _mm512_set_epi32(0,c7,0,c6,0,c5,0,c4,0,c3,0,c2,0,c1,0,c0);\n"
     str+="}\n"
     
-    str+="//extract from 512-bit register\n"
-    str+="static inline int _mm512_extract_epi16(spint a,int m) {\n"
-    str+="\tm=0if (m>16)
-    str+="\treturn _mm256_extract_epi16(_mm512_extracti64x4_epi64(a,m%16),m/16);\n"
-    str+="}\n"
     return str
 
 
@@ -1184,13 +1179,13 @@ def modexp() :
     str+="\tfor (i={};i>=0;i--) {{\n".format(Nbytes-1)
     str+="\t\tb[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],0),0)&0xff;\n"
     str+="\t\te[i]=f[i]=g[i]=0;\n"
-    str+="\t\tif (e!=NULL) e[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],4),0)&0xff;\n"
-    str+="\t\tif (f!=NULL) f[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],8),0)&0xff;\n"
-    str+="\t\tif (g!=NULL) g[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],12),0)&0xff;\n"
-    str+="\t\tif (h!=NULL) h[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],0),1)&0xff;\n"
-    str+="\t\tif (j!=NULL) j[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],4),1)&0xff;\n"
-    str+="\t\tif (k!=NULL) k[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],8),1)&0xff;\n"
-    str+="\t\tif (m!=NULL) m[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],12),1)&0xff;\n"
+    str+="\t\tif (e!=NULL) e[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],0),4)&0xff;\n"
+    str+="\t\tif (f!=NULL) f[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],0),8)&0xff;\n"
+    str+="\t\tif (g!=NULL) g[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],0),12)&0xff;\n"
+    str+="\t\tif (h!=NULL) h[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],1),0)&0xff;\n"
+    str+="\t\tif (j!=NULL) j[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],1),4)&0xff;\n"
+    str+="\t\tif (k!=NULL) k[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],1),8)&0xff;\n"
+    str+="\t\tif (m!=NULL) m[i]=_mm256_extract_epi16(_mm512_extracti64x4_epi64(c[0],1),12)&0xff;\n"
     #str+="\t\tb[i]=c[0]&(spint)0xff;\n"
     str+="\t\t(void)modshr{}(8,c);\n\t}}\n".format(DECOR)
     str+="}\n"
