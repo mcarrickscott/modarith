@@ -1036,16 +1036,20 @@ def modcsw() :
     str+="\tint i;\n"
     str+="\tspint c0,c1,s,t,w,v,aux;\n"
 
-    str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0;\n"
+    str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0,R4=0,R5=0,R6=0,R7=0;\n"
     str+="\tspint one=_mm512_set2_epi32(1);\n"
     str+="\tR0+=0x5aa5a55au;\n"
     str+="\tR1+=0x7447e88eu;\n"    
     str+="\tR2+=0x5aa5a55au;\n"
     str+="\tR3+=0x7447e88eu;\n" 
+    str+="\tR4+=0x5aa5a55au;\n"
+    str+="\tR5+=0x7447e88eu;\n"    
+    str+="\tR6+=0x5aa5a55au;\n"
+    str+="\tR7+=0x7447e88eu;\n" 
     #str+="\tstatic spint R=0;\n"
     #str+="\tR+=0x5aa5a55au;\n"
 
-    str+="\tw=_mm512_setc_epi32(R0,R1,R2,R3);\n"
+    str+="\tw=_mm512_setc_epi32(R0,R1,R2,R3,R4,R5,R6,R7);\n"
     #str+="\tw=R;\n"
 
     str+="\tc0=_mm512_andnot_si512(b,_mm512_add_epi32(w,one));\n"
@@ -1076,16 +1080,20 @@ def modcmv() :
     str+="void __attribute__ ((noinline)) modcmv{}(spint b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint c0,c1,s,t,w,aux;\n"
-    str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0;\n"
+    str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0,R4=0,R5=0,R6=0,R7=0;\n"
     str+="\tspint one=_mm512_set2_epi32(1);\n"
     str+="\tR0+=0x5aa5a55au;\n"
     str+="\tR1+=0x7447e88eu;\n"  
     str+="\tR2+=0x5aa5a55au;\n"
     str+="\tR3+=0x7447e88eu;\n" 
+    str+="\tR4+=0x5aa5a55au;\n"
+    str+="\tR5+=0x7447e88eu;\n"  
+    str+="\tR6+=0x5aa5a55au;\n"
+    str+="\tR7+=0x7447e88eu;\n"
     #str+="\tstatic spint R=0;\n"
     #str+="\tR+=0x5aa5a55au;\n"
 
-    str+="\tw=_mm512_setc_epi32(R0,R1,R2,R3);\n"
+    str+="\tw=_mm512_setc_epi32(R0,R1,R2,R3,R4,R5,R6,R7);\n"
     #str+="\tw=R;\n"
 
     str+="\tc0=_mm512_andnot_si512(b,_mm512_add_epi32(w,one));\n"
@@ -1162,7 +1170,7 @@ def modexp() :
     str="//export to byte array\n"
     if makestatic :
         str+="static "
-    str+="void modexp{}(const spint *a,char *b,char * e,char *f, char* g) {{\n".format(DECOR)
+    str+="void modexp{}(const spint *a,char *b,char *e,char *f, char* g,char *h,char *j,char *k, char* m) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint mask=_mm512_set2_epi32(0xff);\n"
     str+="\tspint c[{}];\n".format(N)
@@ -1173,6 +1181,10 @@ def modexp() :
     str+="\t\tif (e!=NULL) e[i]=_mm512_extract_epi16(c[0],4)&0xff;\n"
     str+="\t\tif (f!=NULL) f[i]=_mm512_extract_epi16(c[0],8)&0xff;\n"
     str+="\t\tif (g!=NULL) g[i]=_mm512_extract_epi16(c[0],12)&0xff;\n"
+    str+="\t\tif (h!=NULL) h[i]=_mm512_extract_epi16(c[0],16)&0xff;\n"
+    str+="\t\tif (j!=NULL) j[i]=_mm512_extract_epi16(c[0],20)&0xff;\n"
+    str+="\t\tif (k!=NULL) k[i]=_mm512_extract_epi16(c[0],24)&0xff;\n"
+    str+="\t\tif (m!=NULL) m[i]=_mm512_extract_epi16(c[0],28)&0xff;\n"
     #str+="\t\tb[i]=c[0]&(spint)0xff;\n"
     str+="\t\t(void)modshr{}(8,c);\n\t}}\n".format(DECOR)
     str+="}\n"
@@ -1184,7 +1196,7 @@ def modimp() :
     str+="//returns 1 if in range, else 0\n"
     if makestatic :
         str+="static "
-    str+="spint modimp{}(const char *b, const char *e,const char *f, const char *g, spint *a) {{\n".format(DECOR) # b is hi (optional), e is low
+    str+="spint modimp{}(const char *b, const char *e,const char *f, const char *g, const char *h, const char *j,const char *k, const char *m, spint *a) {{\n".format(DECOR) # b is hi (optional), e is low
     str+="\tint i;\n"                                                                # want b to be low and e to be hi (optional)
     str+="\tspint res;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
@@ -1192,11 +1204,15 @@ def modimp() :
     #str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
-    str+="\t\tunsigned char bc=b[i],ec=0,fc=0,gc=0;\n"
+    str+="\t\tunsigned char bc=b[i],ec=0,fc=0,gc=0,hc=0,jc=0,kc=0,mc=0;\n"
     str+="\t\tif (e!=NULL) ec=e[i];\n"
     str+="\t\tif (f!=NULL) fc=f[i];\n"
     str+="\t\tif (g!=NULL) gc=g[i];\n"
-    str+="\t\ta[0]=_mm512_add_epi32(a[0],_mm512_setc_epi32(bc,ec,fc,gc));\n"
+    str+="\t\tif (h!=NULL) hc=h[i];\n"
+    str+="\t\tif (j!=NULL) jc=j[i];\n"
+    str+="\t\tif (k!=NULL) kc=k[i];\n"
+    str+="\t\tif (m!=NULL) mc=m[i];\n"
+    str+="\t\ta[0]=_mm512_add_epi32(a[0],_mm512_setc_epi32(bc,ec,fc,gc,hc,jc,kc,mc));\n"
     str+="\t}\n"
     
     #str+="\t\ta[0]+=(spint)(unsigned char)b[i];\n\t}\n"
