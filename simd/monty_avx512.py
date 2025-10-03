@@ -258,8 +258,8 @@ def intrinsics() :
     str+="\treturn _mm512_add_epi64(t,_mm512_mul_epu32(a,s));\n"
     str+="}\n" 
     str+="// set each lane to a constant\n"
-    str+="static inline spint tospint(int c0,int c1,int c2,int c3) {\n"
-    str+="\treturn _mm512_set_epi32(0,c3,0,c2,0,c1,0,c0);\n"
+    str+="static inline spint tospint(int c0,int c1,int c2,int c3,int c4,int c5,int c6,int c7) {\n"
+    str+="\treturn _mm512_set_epi32(0,c7,0,c6,0,c5,0,c4,0,c3,0,c2,0,c1,0,c0);\n"
     str+="}\n" 
     return str
 
@@ -1865,11 +1865,11 @@ def time_modmul(n,ra,rb) :
 
     str+="\t"
     for i in range(0,N) :
-        str+="x[{}]=_mm512_setc_epi32({},{},{},{}); ".format(i,hex(rap[i]),hex(rbp[i]),hex(rap[i]),hex(rbp[i]))
+        str+="x[{}]=_mm512_setc_epi32({},{},{},{},{},{},{},{}); ".format(i,hex(rap[i]),hex(rbp[i]),hex(rap[i]),hex(rbp[i]),hex(rap[i]),hex(rbp[i]),hex(rap[i]),hex(rbp[i]))
         #str+="x[{}]={}; ".format(i,hex(rap[i]))
     str+="\n\t"
     for i in range(0,N) :
-        str+="y[{}]=_mm512_setc_epi32({},{},{},{}); ".format(i,hex(rbp[i]),hex(rap[i]),hex(rbp[i]),hex(rap[i]))
+        str+="y[{}]=_mm512_setc_epi32({},{},{},{},{},{},{},{}); ".format(i,hex(rbp[i]),hex(rap[i]),hex(rbp[i]),hex(rap[i]),hex(rbp[i]),hex(rap[i]),hex(rbp[i]),hex(rap[i]))
         #str+="y[{}]={}; ".format(i,hex(rbp[i]))
     str+="\n"
 
@@ -1896,9 +1896,9 @@ def time_modmul(n,ra,rb) :
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
     if cyclescounter or use_rdtsc :
-        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
+        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
@@ -1918,7 +1918,7 @@ def time_modsqr(n,r) :
 
     str+="\t"
     for i in range(0,N) :
-        str+="x[{}]=_mm512_setc_epi32({},{},{},{}); ".format(i,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]))
+        str+="x[{}]=_mm512_setc_epi32({},{},{},{},{},{},{},{}); ".format(i,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]))
         #str+="x[{}]={}; ".format(i,hex(rp[i]))
     str+="\n"
 
@@ -1941,9 +1941,9 @@ def time_modsqr(n,r) :
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
     if cyclescounter or use_rdtsc :
-        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
+        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
@@ -1963,7 +1963,7 @@ def time_modinv(n,r) :
 
     str+="\t"
     for i in range(0,N) :
-        str+="x[{}]=_mm512_setc_epi32({},{},{},{}); ".format(i,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]))
+        str+="x[{}]=_mm512_setc_epi32({},{},{},{},{},{},{},{}); ".format(i,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]))
         #str+="x[{}]={}; ".format(i,hex(rp[i]))
     str+="\n"
 
@@ -1985,9 +1985,9 @@ def time_modinv(n,r) :
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
     if cyclescounter or use_rdtsc:
-        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
+        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
     else :
-        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",_mm512_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",_mm256_extract_epi16(_mm512_extracti64x4_epi64(z[0],0),0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
