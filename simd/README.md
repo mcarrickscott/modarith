@@ -1,12 +1,12 @@
 # Experimental SIMD implementation
 
 Here we provide versions of the scripts which implement finite field arithmetic using C language intrinsics which exploit the 
-SSE/AVX2/AVX-IFMA and 
-NEON SIMD extensions supported by many Intel AMD and ARM processors. The SSE, AVX2/AVX-IFMA and NEON instructions typically perform 
-operations in parallel on a number of 64-bit lanes implemented in 128 or 256-bit registers. This experimental implementation was built 
-and tested on a standard x64 PC/laptop and a Raspberry Pi 400 computer which uses the Cortex-A72 processor.
+SSE/AVX2/AVX512/AVX-IFMA and 
+NEON SIMD extensions supported by many Intel AMD and ARM processors. The SSE, AVX2/AVX512/AVX-IFMA and NEON instructions typically perform 
+operations in parallel on a number of 64-bit lanes implemented in 128, 256-bit or 512-bit registers. This experimental implementation was 
+built and tested on a standard x64 PC/laptop and a Raspberry Pi 400 computer which uses the Cortex-A72 processor.
 
-SSE AVX-IFMA and NEON support two lanes. AVX2 supports four. A simple extension to AVX512 would allow up to 8 lanes, but support for AVX512
+SSE AVX-IFMA and NEON support two lanes. AVX2 supports four, and AVX512 supports 8. Support for AVX-IFMA and AVX512
 is currently quite patchy.
 
 Recall that the script generated code is fully constant time. Therefore more than one simultaneous but independent calculation can be 
@@ -38,6 +38,6 @@ Replace the *field.c* code in *rfc7748_simd.c* and compile and run the program a
 
 # Application
 
-Two or four protocol executions can be carried out simultaneously, which can be somewhat faster that executing them serially, one after 
-another. For example a TLS server can calculate both its own public key and a shared secret at the same time.
+Two, four or eight protocol executions can be carried out simultaneously, which can be somewhat faster that executing them serially, one 
+after another. For example a TLS server can calculate both its own public key and a shared secret at the same time.
 

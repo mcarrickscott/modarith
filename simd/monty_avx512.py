@@ -1963,7 +1963,7 @@ def time_modinv(n,r) :
 
     str+="\t"
     for i in range(0,N) :
-        str+="x[{}]=_mm512_setc_epi32({},{},{},{},{},{},{},{}); ".format(i,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]))
+        str+="x[{}]=_mm512_setc_epi32({},{},{},{},{},{},{},{}); ".format(i,hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]),hex(rp[i]))
         #str+="x[{}]={}; ".format(i,hex(rp[i]))
     str+="\n"
 
