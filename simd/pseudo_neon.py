@@ -1055,7 +1055,7 @@ def modcsw() :
         #str+="\t\tg[i] = aux - v;\n\t}\n"
         str+="}\n"
     else :
-        str+="\tspint zero=vdup_n_u32(1);\n"
+        str+="\tspint zero=vdup_n_u32(0);\n"
         str+="\tspint delta,mask=vsub_u32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\tdelta=vand_u32(veor_u32(g[i],f[i]),mask);\n"
