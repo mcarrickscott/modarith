@@ -54,6 +54,7 @@ generic=True # set to False if algorithm is known in advance, in which case moda
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 fully_propagate=False # recommended set to True for Production code
+PSCR=False # Power Side Channel Resistant conditional moves and swaps
 
 import sys
 import subprocess
@@ -1555,7 +1556,7 @@ def redc(n) :
 #    str+="}\n"
 #    return str 
 
-#conditional swap -  see Loiseau et al. 2021
+#conditional swap -  see Santos and Scott eprint 2025
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
@@ -1563,35 +1564,44 @@ def modcsw() :
         str+="static "
     str+="void __attribute__ ((noinline)) modcsw{}(spint b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,v,aux;\n"
-    
-    str+="\tstatic uint32_t R[2]={0,0};\n"
-    str+="\tspint one=vdup_n_u32(1);\n"
-    str+="\tR[0]+=0x5aa5a55au;\n"
-    str+="\tR[1]+=0x7447e88eu;\n"    
-    
-    #str+="\tstatic spint R=0;\n"
-    #str+="\tR+=0x5aa5a55au;\n"
-    str+="\tw=vld1_u32(R);\n"
-    #str+="\tw=R;\n"
-    
-    str+="\tc0=vand_u32(vmvn_u32(b),vadd_u32(w,one));\n"
-    str+="\tc1=vadd_u32(b,w);\n"    
-    #str+="\t\tc0=(~b)&(w+1);\n"
-    #str+="\t\tc1=b+w;\n"
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tv=vmul_u32(w,vadd_u32(t,s));\n"
-    #str+="\t\tv=w*(t+s);\n"
-    str+="\t\tf[i]=aux=vadd_u32(vmul_u32(c0,t),vmul_u32(c1,s));\n"    
-    str+="\t\tf[i]=vsub_u32(aux,v);\n"
-    #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    #str+="\t\tf[i] = aux - v;\n"
-    str+="\t\tg[i]=aux=vadd_u32(vmul_u32(c0,s),vmul_u32(c1,t));\n"    
-    str+="\t\tg[i]=vsub_u32(aux,v);\n\t}\n"
-    #str+="\t\tg[i] = aux = c0*s+c1*t;\n"
-    #str+="\t\tg[i] = aux - v;\n\t}\n"
-    str+="}\n"
+    if PSCR :
+        str+="\tspint c0,c1,s,t,w,v,aux;\n"
+        
+        str+="\tstatic uint32_t R[2]={0,0};\n"
+        str+="\tspint one=vdup_n_u32(1);\n"
+        str+="\tR[0]+=0x5aa5a55au;\n"
+        str+="\tR[1]+=0x7447e88eu;\n"    
+        
+        #str+="\tstatic spint R=0;\n"
+        #str+="\tR+=0x5aa5a55au;\n"
+        str+="\tw=vld1_u32(R);\n"
+        #str+="\tw=R;\n"
+        
+        str+="\tc0=vand_u32(vmvn_u32(b),vadd_u32(w,one));\n"
+        str+="\tc1=vadd_u32(b,w);\n"    
+        #str+="\t\tc0=(~b)&(w+1);\n"
+        #str+="\t\tc1=b+w;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tv=vmul_u32(w,vadd_u32(t,s));\n"
+        #str+="\t\tv=w*(t+s);\n"
+        str+="\t\tf[i]=aux=vadd_u32(vmul_u32(c0,t),vmul_u32(c1,s));\n"    
+        str+="\t\tf[i]=vsub_u32(aux,v);\n"
+        #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+        #str+="\t\tf[i] = aux - v;\n"
+        str+="\t\tg[i]=aux=vadd_u32(vmul_u32(c0,s),vmul_u32(c1,t));\n"    
+        str+="\t\tg[i]=vsub_u32(aux,v);\n\t}\n"
+        #str+="\t\tg[i] = aux = c0*s+c1*t;\n"
+        #str+="\t\tg[i] = aux - v;\n\t}\n"
+        str+="}\n"
+    else :
+        str+="\tspint zero=vdup_n_u32(1);\n"
+        str+="\tspint delta,mask=vsub_u32(zero,b);\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=vand_u32(veor_u32(g[i],f[i]),mask);\n"
+        str+="\t\tg[i]=veor_u32(g[i],delta);\n"
+        str+="\t\tf[i]=veor_u32(f[i],delta);\n\t}\n"
+        str+="}\n"
     return str
 
 #conditional move
@@ -1602,26 +1612,33 @@ def modcmv() :
         str+="static "
     str+="void __attribute__ ((noinline)) modcmv{}(spint b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,aux;\n"
-    str+="\tstatic uint32_t R[2]={0,0};\n"
-    str+="\tspint one=vdup_n_u32(1);\n"
-    str+="\tR[0]+=0x5aa5a55au;\n"
-    str+="\tR[1]+=0x7447e88eu;\n"
-    str+="\tw=vld1_u32(R);\n"
-    #str+="\tw=R;\n"
-    str+="\tc0=vand_u32(vmvn_u32(b),vadd_u32(w,one));\n"
-    str+="\tc1=vadd_u32(b,w);\n"
-    #str+="\t\tc0=(~b)&(w+1);\n"
-    #str+="\t\tc1=b+w;\n"
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tf[i]=aux=vadd_u32(vmul_u32(c0,t),vmul_u32(c1,s));\n"
-    str+="\t\tf[i]=vsub_u32(aux,vmul_u32(w,vadd_u32(t,s)));\n\t}\n"
-    #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    #str+="\t\tf[i] = aux - w*(t+s);\n\t}\n"
-    str+="}\n"
+    if PSCR :
+        str+="\tspint c0,c1,s,t,w,aux;\n"
+        str+="\tstatic uint32_t R[2]={0,0};\n"
+        str+="\tspint one=vdup_n_u32(1);\n"
+        str+="\tR[0]+=0x5aa5a55au;\n"
+        str+="\tR[1]+=0x7447e88eu;\n"
+        str+="\tw=vld1_u32(R);\n"
+        #str+="\tw=R;\n"
+        str+="\tc0=vand_u32(vmvn_u32(b),vadd_u32(w,one));\n"
+        str+="\tc1=vadd_u32(b,w);\n"
+        #str+="\t\tc0=(~b)&(w+1);\n"
+        #str+="\t\tc1=b+w;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tf[i]=aux=vadd_u32(vmul_u32(c0,t),vmul_u32(c1,s));\n"
+        str+="\t\tf[i]=vsub_u32(aux,vmul_u32(w,vadd_u32(t,s)));\n\t}\n"
+        #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+        #str+="\t\tf[i] = aux - w*(t+s);\n\t}\n"
+        str+="}\n"
+    else :
+        str+="\tspint zero=vdup_n_u32(0);\n"
+        str+="\tspint delta,mask=vsub_u32(zero,b);\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=vand_u32(veor_u32(g[i],f[i]),mask);\n"
+        str+="\t\tf[i]=veor_u32(f[i],delta);\n\t}\n"
+        str+="}\n"
     return str
-
 
 #shift left
 def modshl(n) :

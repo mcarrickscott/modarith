@@ -34,6 +34,7 @@ inline=True # consider encouraging inlining
 generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
+PSCR=False # Power Side Channel Resistant conditional moves and swaps
 
 import sys
 import subprocess
@@ -124,7 +125,7 @@ def intrinsics() :
 
     str+="// t=a*b\n"
     str+="static inline void mul(spint *tl,spint *th,spint a,spint b) {\n"
-    str+="\tspint r=_mm_set2_epi64(0);\n"
+    str+="\tspint r=_mm_setzero_si128();\n"
     str+="\t*tl=_mm_madd52lo_epu64(r,a,b);\n"
     str+="\t*th=_mm_madd52hi_epu64(r,a,b);\n"
     str+="}\n\n"
@@ -133,7 +134,7 @@ def intrinsics() :
     str+="static inline void shiftr(spint *tl,spint *th){\n"
     str+="\t*tl=_mm_srai_epi64(*tl,52);\n"  # arithmetic as could be negative
     str+="\t*tl=_mm_add_epi64(*tl,*th);\n"
-    str+="\t*th=_mm_set2_epi64(0);\n"
+    str+="\t*th=_mm_setzero_si128();\n"
     str+="}\n\n"
 
     str+="// r=t>>52\n"
@@ -318,7 +319,7 @@ def modneg(n,m) :
         str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
     if not algorithm :
         str+="\tspint carry;\n"
-    str+="\tspint zero=_mm_set2_epi64(0);\n"
+    str+="\tspint zero=_mm_setzero_si128();\n"
     if not algorithm :
         str+="\tspint bot=_mm_set2_epi64({}u);\n".format(m*2)
         str+="\tspint top=_mm_set2_epi64(0x{:x}u);\n".format(2*TW)       
@@ -508,8 +509,8 @@ def modmul(n,m) :
     else :
         str+="void modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
 
-    str+="\tspint tl=_mm_set2_epi64(0);\n"
-    str+="\tspint th=_mm_set2_epi64(0);\n"
+    str+="\tspint tl=_mm_setzero_si128();\n"
+    str+="\tspint th=_mm_setzero_si128();\n"
     str+="\tspint spm=_mm_set2_epi64({});\n".format(mm)
 
     str+="\tspint ttl,tth;\n"
@@ -542,8 +543,8 @@ def modsqr(n,m) :
     else :
         str+="void modsqr{}(const spint *a,spint *c) {{\n".format(DECOR)
     
-    str+="\tspint tl=_mm_set2_epi64(0);\n"
-    str+="\tspint th=_mm_set2_epi64(0);\n"
+    str+="\tspint tl=_mm_setzero_si128();\n"
+    str+="\tspint th=_mm_setzero_si128();\n"
     str+="\tspint spm=_mm_set2_epi64({});\n".format(mm)
     str+="\tspint ttl,tth;\n"
     str+="\tspint t2l,t2h;\n"
@@ -572,8 +573,8 @@ def modmli(n,m) :
         str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
     else :
         str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
-    str+="\tspint tl=_mm_set2_epi64(0);\n"
-    str+="\tspint th=_mm_set2_epi64(0);\n"
+    str+="\tspint tl=_mm_setzero_si128();\n"
+    str+="\tspint th=_mm_setzero_si128();\n"
 
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
@@ -752,7 +753,7 @@ def modis1(n) :
     str+="\tspint c[{}];\n".format(N)
     str+="\tspint c0;\n"
     str+="\tspint one=_mm_set2_epi64(1);\n"
-    str+="\tspint d=_mm_set2_epi64(0);\n"
+    str+="\tspint d=_mm_setzero_si128();\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
     str+="\t\td=_mm_or_si128(d,c[i]);\n\t}\n"
@@ -770,7 +771,7 @@ def modis0(n) :
     str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
     str+="\tspint one=_mm_set2_epi64(1);\n"
-    str+="\tspint d=_mm_set2_epi64(0);\n"
+    str+="\tspint d=_mm_setzero_si128();\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
     str+="\t\td=_mm_or_si128(d,c[i]);\n\t}\n" 
@@ -785,7 +786,7 @@ def modzer() :
     str+="void modzer{}(spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_set2_epi64(0);\n"
+    str+="\t\ta[i]=_mm_setzero_si128();\n"
     str+="\t}\n"
     str+="}\n"
     return str
@@ -799,7 +800,7 @@ def modone() :
     str+="\tint i;\n"
     str+="\t\ta[0]=_mm_set2_epi64(1);\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_set2_epi64(0);\n"
+    str+="\t\ta[i]=_mm_setzero_si128();\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="}\n"
@@ -814,7 +815,7 @@ def modint() :
     str+="\tint i;\n"
     str+="\ta[0]=_mm_set2_epi64(x);\n"  
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_set2_epi64(0);\n"
+    str+="\t\ta[i]=_mm_setzero_si128();\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="}\n"
@@ -847,7 +848,7 @@ def redc(n) :
     str+="}\n"
     return str 
 
-#conditional swap -  see Loiseau et al. 2021
+#conditional swap -  see Santos and Scott eprint 2025
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
@@ -855,31 +856,40 @@ def modcsw() :
         str+="static "
     str+="void modcsw{}(spint b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,v,aux;\n"
-    str+="\tstatic uint64_t R0=0,R1=0;\n"
-    str+="\tspint zero=_mm_set2_epi64(0);\n"
-    str+="\tspint one=_mm_set2_epi64(1);\n"
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
-    str+="\tR0+=0x3cc3c33c5aa5a55au;\n"
-    str+="\tR1+=0x7447e88e1ee1e11eu;\n" 
+    if PSCR :
+        str+="\tspint c0,c1,s,t,w,v,aux;\n"
+        str+="\tstatic uint64_t R0=0,R1=0;\n"
+        str+="\tspint zero=_mm_setzero_si128();\n"
+        str+="\tspint one=_mm_set2_epi64(1);\n"
+        str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
+        str+="\tR0+=0x3cc3c33c5aa5a55au;\n"
+        str+="\tR1+=0x7447e88e1ee1e11eu;\n" 
 
-    str+="\tw=_mm_setc_epi64(R0,R1);\n"
-    str+="\tc0=_mm_andnot_si128(b,_mm_add_epi64(w,one));\n"
-    str+="\tc1=_mm_add_epi64(b,w);\n" 
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tv=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,w,t),w,s);\n"
-    #str+="\t\tv=w*(t+s);\n"
-    str+="\t\tf[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,t),c1,s);\n"
-    #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    str+="\t\tf[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
-    #str+="\t\tf[i] = aux - v;\n"
-    str+="\t\tg[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,s),c1,t);\n"
-    #str+="\t\tg[i] = aux = c0*s+c1*t;\n"
-    str+="\t\tg[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
-    #str+="\t\tg[i] = aux - v;\n\t}\n"
-    str+="\t}\n"
-    str+="}\n"
+        str+="\tw=_mm_setc_epi64(R0,R1);\n"
+        str+="\tc0=_mm_andnot_si128(b,_mm_add_epi64(w,one));\n"
+        str+="\tc1=_mm_add_epi64(b,w);\n" 
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tv=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,w,t),w,s);\n"
+        #str+="\t\tv=w*(t+s);\n"
+        str+="\t\tf[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,t),c1,s);\n"
+        #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+        str+="\t\tf[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
+        #str+="\t\tf[i] = aux - v;\n"
+        str+="\t\tg[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,s),c1,t);\n"
+        #str+="\t\tg[i] = aux = c0*s+c1*t;\n"
+        str+="\t\tg[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
+        #str+="\t\tg[i] = aux - v;\n\t}\n"
+        str+="\t}\n"
+        str+="}\n"
+    else :
+        str+="\tspint zero=_mm_setzero_si128();\n"
+        str+="\tspint delta,mask=_mm_sub_epi64(zero,b);\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=_mm_and_si128(_mm_xor_si128(g[i],f[i]),mask);\n"
+        str+="\t\tg[i]=_mm_xor_si128(g[i],mask);\n"
+        str+="\t\tf[i]=_mm_xor_si128(f[i],mask);\n\t}\n"
+        str+="}\n"
     return str
 
 #conditional move
@@ -890,27 +900,34 @@ def modcmv() :
         str+="static "
     str+="void modcmv{}(spint b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,v,w,aux;\n"
-    str+="\tstatic uint64_t R0=0,R1=0;\n"
-    str+="\tspint zero=_mm_set2_epi64(0);\n"
-    str+="\tspint one=_mm_set2_epi64(1);\n"
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
-    str+="\tR0+=0x3cc3c33c5aa5a55au;\n"
-    str+="\tR1+=0x7447e88e1ee1e11eu;\n" 
+    if PSCR :
+        str+="\tspint c0,c1,s,t,v,w,aux;\n"
+        str+="\tstatic uint64_t R0=0,R1=0;\n"
+        str+="\tspint zero=_mm_setzero_si128();\n"
+        str+="\tspint one=_mm_set2_epi64(1);\n"
+        str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
+        str+="\tR0+=0x3cc3c33c5aa5a55au;\n"
+        str+="\tR1+=0x7447e88e1ee1e11eu;\n" 
 
-    str+="\tw=_mm_setc_epi64(R0,R1);\n"
-    str+="\tc0=_mm_andnot_si128(b,_mm_add_epi64(w,one));\n"
-    str+="\tc1=_mm_add_epi64(b,w);\n" 
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tv=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,w,t),w,s);\n"
+        str+="\tw=_mm_setc_epi64(R0,R1);\n"
+        str+="\tc0=_mm_andnot_si128(b,_mm_add_epi64(w,one));\n"
+        str+="\tc1=_mm_add_epi64(b,w);\n" 
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tv=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,w,t),w,s);\n"
 
-    str+="\t\tf[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,t),c1,s);\n"
-    str+="\t\tf[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
-    str+="\t}\n"
-    str+="}\n"
+        str+="\t\tf[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,t),c1,s);\n"
+        str+="\t\tf[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
+        str+="\t}\n"
+        str+="}\n"
+    else :
+        str+="\tspint zero=_mm_setzero_si128();\n"
+        str+="\tspint delta,mask=_mm_sub_epi64(zero,b);\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=_mm_and_si128(_mm_xor_si128(g[i],f[i]),mask);\n"
+        str+="\t\tf[i]=_mm_xor_si128(f[i],mask);\n\t}\n"
+        str+="}\n"
     return str
-
 
 #shift left
 def modshl(n) :
@@ -993,7 +1010,7 @@ def modimp() :
     str+="\tint i;\n"
     str+="\tspint res;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_set2_epi64(0);\n\t}\n"
+    str+="\t\ta[i]=_mm_setzero_si128();\n\t}\n"
     #str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)

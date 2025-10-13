@@ -45,6 +45,7 @@ generic=True # set to False if algorithm is known in advance, in which case moda
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 makepublic=False # Make functions public
 fully_propagate=False # recommended set to True for Production code
+PSCR=True # Power Side Channel Resistant conditional moves and swaps
 
 import sys
 import subprocess
@@ -1274,35 +1275,43 @@ def redc(n,base) :
     str+="\treturn;\n}\n"
     return str 
 
-#conditional swap - see Loiseau et al. 2021
+#conditional swap -  see Santos and Scott eprint 2025
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     str+="#[inline(never)]\n"
     if makepublic :
         str+="pub "
     str+="fn modcsw(b: usize,g: &mut [SPINT],f: &mut [SPINT]) {\n"
-    str+="\tlet bb = b as SPINT;\n"
-    str+="\tstatic mut R:SPINT=0;\n"
-    str+="\tlet w:SPINT;\n"
-    str+="\tunsafe {\n"
-    if WL==16 :
-        str+="\t\tR+=0xa55a;\n"
-    if WL==32 :
-        str+="\t\tR+=0x5aa5a55a;\n"
-    if WL==64 :
-        str+="\t\tR+=0x3cc3c33c5aa5a55a;\n"
-    str+="\t\tw=R;\n"
-    str+="}\n"
-    str+="\t\tlet c0=(!bb)&(w+1);\n"
-    str+="\t\tlet c1=bb+w;\n"
-    str+="\tfor i in 0..{} {{\n".format(N)
-    str+="\t\tlet s=g[i];\n"
-    str+="\t\tlet t=f[i];\n"
-    str+="\t\tlet v=w*(t+s);\n"
-    str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*s);}\n"
-    str+="\t\tf[i]-=v;\n"
-    str+="\t\tunsafe{core::ptr::write_volatile(&mut g[i],c0*s+c1*t);}\n"
-    str+="\t\tg[i]-=v;\n\t}\n"
+    if PSCR :
+        str+="\tlet bb = b as SPINT;\n"
+        str+="\tstatic mut R:SPINT=0;\n"
+        str+="\tlet w:SPINT;\n"
+        str+="\tunsafe {\n"
+        if WL==16 :
+            str+="\t\tR+=0xa55a;\n"
+        if WL==32 :
+            str+="\t\tR+=0x5aa5a55a;\n"
+        if WL==64 :
+            str+="\t\tR+=0x3cc3c33c5aa5a55a;\n"
+        str+="\t\tw=R;\n"
+        str+="}\n"
+        str+="\t\tlet c0=(!bb)&(w+1);\n"
+        str+="\t\tlet c1=bb+w;\n"
+        str+="\tfor i in 0..{} {{\n".format(N)
+        str+="\t\tlet s=g[i];\n"
+        str+="\t\tlet t=f[i];\n"
+        str+="\t\tlet v=w*(t+s);\n"
+        str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*s);}\n"
+        str+="\t\tf[i]-=v;\n"
+        str+="\t\tunsafe{core::ptr::write_volatile(&mut g[i],c0*s+c1*t);}\n"
+        str+="\t\tg[i]-=v;\n\t}\n"
+    else :
+        str+="\tlet mask = -b as SPINT;\n"
+        str+="\tfor i in 0..{} {{\n".format(N)
+        str+="\t\tlet delta=(g[i]^f[i])&mask;\n"
+        str+="\t\tg[i]^=delta;\n"
+        str+="\t\tf[i]^=delta;\n"    
+        str+="\t}\n"
     str+="\treturn;\n}\n"
     return str
 
@@ -1313,25 +1322,32 @@ def modcmv() :
     if makepublic :
         str+="pub "
     str+="fn modcmv(b: usize,g: &[SPINT],f: &mut [SPINT]) {\n"
-    str+="\tstatic mut R:SPINT=0;\n"
-    str+="\tlet w:SPINT;\n"
-    str+="\tunsafe {\n"
-    if WL==16 :
-        str+="\t\tR+=0xa55a;\n"
-    if WL==32 :
-        str+="\t\tR+=0x5aa5a55a;\n"
-    if WL==64 :
-        str+="\t\tR+=0x3cc3c33c5aa5a55a;\n"
-    str+="\t\tw=R;\n"
-    str+="}\n"
-    str+="\tlet bb = b as SPINT;\n"
-    str+="\t\tlet c0=(!bb)&(w+1);\n"
-    str+="\t\tlet c1=bb+w;\n"
-    str+="\tfor i in 0..{} {{\n".format(N)
-    str+="\t\tlet s=g[i];\n"
-    str+="\t\tlet t=f[i];\n"
-    str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*s);}\n"
-    str+="\t\tf[i]-=w*(t+s);\n\t}\n"
+    if PSCR :
+        str+="\tstatic mut R:SPINT=0;\n"
+        str+="\tlet w:SPINT;\n"
+        str+="\tunsafe {\n"
+        if WL==16 :
+            str+="\t\tR+=0xa55a;\n"
+        if WL==32 :
+            str+="\t\tR+=0x5aa5a55a;\n"
+        if WL==64 :
+            str+="\t\tR+=0x3cc3c33c5aa5a55a;\n"
+        str+="\t\tw=R;\n"
+        str+="}\n"
+        str+="\tlet bb = b as SPINT;\n"
+        str+="\t\tlet c0=(!bb)&(w+1);\n"
+        str+="\t\tlet c1=bb+w;\n"
+        str+="\tfor i in 0..{} {{\n".format(N)
+        str+="\t\tlet s=g[i];\n"
+        str+="\t\tlet t=f[i];\n"
+        str+="\t\tunsafe{core::ptr::write_volatile(&mut f[i],c0*t+c1*s);}\n"
+        str+="\t\tf[i]-=w*(t+s);\n\t}\n"
+    else :
+        str+="\tlet mask = -b as SPINT;\n"
+        str+="\tfor i in 0..{} {{\n".format(N)
+        str+="\t\tlet delta=(g[i]^f[i])&mask;\n"
+        str+="\t\tf[i]^=delta;\n"    
+        str+="\t}\n"
     str+="\treturn;\n}\n"
     return str
 

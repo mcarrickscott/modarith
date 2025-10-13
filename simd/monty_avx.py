@@ -55,6 +55,7 @@ generic=True # set to False if algorithm is known in advance, in which case moda
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 fully_propagate=False # recommended set to True for Production code
+PSCR=False # Power Side Channel Resistant conditional moves and swaps
 
 import sys
 import subprocess
@@ -472,7 +473,7 @@ def modneg(n) :
     else :
         str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
     str+="\tspint mpy;\n"
-    str+="\tspint zero=_mm256_set2_epi32(0);\n"
+    str+="\tspint zero=_mm256_setzero_si256();\n"
     if not algorithm :
         if E: 
             str+="\tint q=(1<<{}u);\n".format(base)
@@ -709,7 +710,7 @@ def modmul(n) :
     else :
         str+="void modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
 
-    str+="\tdpint t=_mm256_set2_epi32(0);\n"
+    str+="\tdpint t=_mm256_setzero_si256();\n"
     #str+="\tdpint t=0;\n"
 
     if karatsuba :
@@ -969,7 +970,7 @@ def modmli(n) :
     else :
         str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
     str+="\tspint mask=_mm256_set2_epi32((1<<{}u)-1);\n".format(base)
-    str+="\tudpint t=_mm256_set2_epi32(0);\n"
+    str+="\tudpint t=_mm256_setzero_si256();\n"
 
     if trin>0 :
         #str+="\tudpint t=0;\n"
@@ -1096,7 +1097,7 @@ def modsqr(n) :
         str+="void modsqr{}(const spint *a,spint *c) {{\n".format(DECOR)
 
     str+="\tudpint tot;\n"
-    str+="\tudpint t=_mm256_set2_epi32(0);\n"
+    str+="\tudpint t=_mm256_setzero_si256();\n"
     #str+="\tudpint t=0;\n"
     str+="\tspint one=_mm256_set2_epi32(1);\n"
     if PM :
@@ -1475,7 +1476,7 @@ def modis1(n) :
     str+="\tspint c[{}];\n".format(N)
     str+="\tspint c0;\n"
     str+="\tspint one=_mm256_set2_epi32(1);\n"
-    str+="\tspint d=_mm256_set2_epi32(0);\n"
+    str+="\tspint d=_mm256_setzero_si256();\n"
     #str+="\tspint d=0;\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
@@ -1495,7 +1496,7 @@ def modis0(n) :
     str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
     str+="\tspint one=_mm256_set2_epi32(1);\n"
-    str+="\tspint d=_mm256_set2_epi32(0);\n"
+    str+="\tspint d=_mm256_setzero_si256();\n"
     #str+="\tspint d=0;\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
@@ -1513,7 +1514,7 @@ def modzer() :
     str+="void modzer{}(spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm256_set2_epi32(0);\n"
+    str+="\t\ta[i]=_mm256_setzero_si256();\n"
     #str+="\t\ta[i]=0;\n"
     str+="\t}\n"
     str+="}\n"
@@ -1528,7 +1529,7 @@ def modone() :
     str+="\t\ta[0]=_mm256_set2_epi32(1);\n"
     #str+="\ta[0]=1;\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm256_set2_epi32(0);\n"
+    str+="\t\ta[i]=_mm256_setzero_si256();\n"
     #str+="\t\ta[i]=0;\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
@@ -1544,7 +1545,7 @@ def modint() :
     str+="\ta[0]=_mm256_set2_epi32(x);\n"
     #str+="\ta[0]=(spint)x;\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm256_set2_epi32(0);\n"
+    str+="\t\ta[i]=_mm256_setzero_si256();\n"
     #str+="\t\ta[i]=0;\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
@@ -1580,7 +1581,7 @@ def redc(n) :
     str+="\tc[0]=_mm256_set2_epi32(1);\n"
     #str+="\tc[0]=1;\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\tc[i]=_mm256_set2_epi32(0);\n"
+    str+="\t\tc[i]=_mm256_setzero_si256();\n"
     #str+="\t\tc[i]=0;\n"
     str+="\t}\n"
     str+="\tmodmul{}(n,c,m);\n".format(DECOR)
@@ -1618,7 +1619,7 @@ def redc(n) :
 #    str+="}\n"
 #    return str 
 
-#conditional swap -  see Loiseau et al. 2021
+#conditional swap -  see Santos and Scott eprint 2025
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
@@ -1626,38 +1627,47 @@ def modcsw() :
         str+="static "
     str+="void __attribute__ ((noinline)) modcsw{}(spint b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,v,aux;\n"
+    if PSCR :
+        str+="\tspint c0,c1,s,t,w,v,aux;\n"
 
-    str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0;\n"
-    str+="\tspint one=_mm256_set2_epi32(1);\n"
-    str+="\tR0+=0x5aa5a55au;\n"
-    str+="\tR1+=0x7447e88eu;\n"   
-    str+="\tR2+=0x5aa5a55au;\n"
-    str+="\tR3+=0x7447e88eu;\n"     
+        str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0;\n"
+        str+="\tspint one=_mm256_set2_epi32(1);\n"
+        str+="\tR0+=0x5aa5a55au;\n"
+        str+="\tR1+=0x7447e88eu;\n"   
+        str+="\tR2+=0x5aa5a55au;\n"
+        str+="\tR3+=0x7447e88eu;\n"     
 
-    #str+="\tstatic spint R=0;\n"
-    #str+="\tR+=0x5aa5a55au;\n"
+        #str+="\tstatic spint R=0;\n"
+        #str+="\tR+=0x5aa5a55au;\n"
 
-    str+="\tw=_mm256_setc_epi32(R0,R1,R2,R3);\n"
-    #str+="\tw=R;\n"
+        str+="\tw=_mm256_setc_epi32(R0,R1,R2,R3);\n"
+        #str+="\tw=R;\n"
 
-    str+="\tc0=_mm256_andnot_si256(b,_mm256_add_epi32(w,one));\n"
-    str+="\tc1=_mm256_add_epi32(b,w);\n" 
-    #str+="\tc0=(~b)&(w+1);\n"
-    #str+="\tc1=b+w;\n"
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tv=_mm256_mul_epu32(w,_mm256_add_epi32(t,s));\n"
-    #str+="\t\tv=w*(t+s);\n"
-    str+="\t\tf[i]=aux=_mm256_add_epi32(_mm256_mul_epu32(c0,t),_mm256_mul_epu32(c1,s));\n"    
-    str+="\t\tf[i]=_mm256_sub_epi32(aux,v);\n"
-    #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    #str+="\t\tf[i] = aux - v;\n"
-    str+="\t\tg[i]=aux=_mm256_add_epi32(_mm256_mul_epu32(c0,s),_mm256_mul_epu32(c1,t));\n"    
-    str+="\t\tg[i]=_mm256_sub_epi32(aux,v);\n\t}\n"
-    #str+="\t\tg[i] = aux = c0*s+c1*t;\n"
-    #str+="\t\tg[i] = aux - v;\n\t}\n"
-    str+="}\n"
+        str+="\tc0=_mm256_andnot_si256(b,_mm256_add_epi32(w,one));\n"
+        str+="\tc1=_mm256_add_epi32(b,w);\n" 
+        #str+="\tc0=(~b)&(w+1);\n"
+        #str+="\tc1=b+w;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tv=_mm256_mul_epu32(w,_mm256_add_epi32(t,s));\n"
+        #str+="\t\tv=w*(t+s);\n"
+        str+="\t\tf[i]=aux=_mm256_add_epi32(_mm256_mul_epu32(c0,t),_mm256_mul_epu32(c1,s));\n"    
+        str+="\t\tf[i]=_mm256_sub_epi32(aux,v);\n"
+        #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+        #str+="\t\tf[i] = aux - v;\n"
+        str+="\t\tg[i]=aux=_mm256_add_epi32(_mm256_mul_epu32(c0,s),_mm256_mul_epu32(c1,t));\n"    
+        str+="\t\tg[i]=_mm256_sub_epi32(aux,v);\n\t}\n"
+        #str+="\t\tg[i] = aux = c0*s+c1*t;\n"
+        #str+="\t\tg[i] = aux - v;\n\t}\n"
+        str+="}\n"
+    else :
+        str+="\tspint zero=_mm256_setzero_si256();\n"
+        str+="\tspint delta,mask=_mm256_sub_epi32(zero,b);\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=_mm256_and_si256(_mm_xor_si256(g[i],f[i]),mask);\n"
+        str+="\t\tg[i]=_mm256_xor_si256(g[i],mask);\n"
+        str+="\t\tf[i]=_mm256_xor_si256(f[i],mask);\n\t}\n"
+        str+="}\n"
     return str
 
 #conditional move
@@ -1668,30 +1678,38 @@ def modcmv() :
         str+="static "
     str+="void __attribute__ ((noinline)) modcmv{}(spint b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,aux;\n"
-    str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0;\n"
-    str+="\tspint one=_mm256_set2_epi32(1);\n"
-    str+="\tR0+=0x5aa5a55au;\n"
-    str+="\tR1+=0x7447e88eu;\n"  
-    str+="\tR2+=0x5aa5a55au;\n"
-    str+="\tR3+=0x7447e88eu;\n"  
-    #str+="\tstatic spint R=0;\n"
-    #str+="\tR+=0x5aa5a55au;\n"
+    if PSCR :
+        str+="\tspint c0,c1,s,t,w,aux;\n"
+        str+="\tstatic uint32_t R0=0,R1=0,R2=0,R3=0;\n"
+        str+="\tspint one=_mm256_set2_epi32(1);\n"
+        str+="\tR0+=0x5aa5a55au;\n"
+        str+="\tR1+=0x7447e88eu;\n"  
+        str+="\tR2+=0x5aa5a55au;\n"
+        str+="\tR3+=0x7447e88eu;\n"  
+        #str+="\tstatic spint R=0;\n"
+        #str+="\tR+=0x5aa5a55au;\n"
 
-    str+="\tw=_mm256_setc_epi32(R0,R1,R2,R3);\n"
-    #str+="\tw=R;\n"
+        str+="\tw=_mm256_setc_epi32(R0,R1,R2,R3);\n"
+        #str+="\tw=R;\n"
 
-    str+="\tc0=_mm256_andnot_si256(b,_mm256_add_epi32(w,one));\n"
-    str+="\tc1=_mm256_add_epi32(b,w);\n" 
-    #str+="\tc0=(~b)&(w+1);\n"
-    #str+="\tc1=b+w;\n"
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tf[i]=aux=_mm256_add_epi32(_mm256_mul_epu32(c0,t),_mm256_mul_epu32(c1,s));\n"    
-    str+="\t\tf[i]=_mm256_sub_epi32(aux,_mm256_add_epi32(t,s));\n\t}\n"
-    #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    #str+="\t\tf[i] = aux - w*(t+s);\n\t}\n"
-    str+="}\n"
+        str+="\tc0=_mm256_andnot_si256(b,_mm256_add_epi32(w,one));\n"
+        str+="\tc1=_mm256_add_epi32(b,w);\n" 
+        #str+="\tc0=(~b)&(w+1);\n"
+        #str+="\tc1=b+w;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tf[i]=aux=_mm256_add_epi32(_mm256_mul_epu32(c0,t),_mm256_mul_epu32(c1,s));\n"    
+        str+="\t\tf[i]=_mm256_sub_epi32(aux,_mm256_add_epi32(t,s));\n\t}\n"
+        #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+        #str+="\t\tf[i] = aux - w*(t+s);\n\t}\n"
+        str+="}\n"
+    else :
+        str+="\tspint zero=_mm256_setzero_si256();\n"
+        str+="\tspint delta,mask=_mm256_sub_epi32(zero,b);\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=_mm256_and_si256(_mm_xor_si256(g[i],f[i]),mask);\n"
+        str+="\t\tf[i]=_mm256_xor_si256(f[i],mask);\n\t}\n"
+        str+="}\n"
     return str
 
 #shift left
@@ -1780,7 +1798,7 @@ def modimp() :
     str+="\tint i;\n"                                                                # want b to be low and e to be hi (optional)
     str+="\tspint res;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm256_set2_epi32(0);\n\t}\n"
+    str+="\t\ta[i]=_mm256_setzero_si256();\n\t}\n"
     #str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)

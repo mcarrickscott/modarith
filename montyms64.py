@@ -47,6 +47,7 @@ allow_asr=True # Allow Arithmetic Shift Right. Maybe set to False to silence MIS
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 fully_propagate=False # recommended set to True for Production code
+PSCR=True # Power Side Channel Resistant conditional moves and swaps
 
 import sys
 import subprocess
@@ -1509,28 +1510,37 @@ def redc(n) :
 #    str+="}\n"
 #    return str 
 
-#conditional swap -  see Loiseau et al. 2021
+#conditional swap -  see Santos and Scott eprint 2025
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
     if makestatic :
         str+="static "
-    str+="void modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
+    str+="void __attribute__ ((noinline)) modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,v,aux;\n"
-    str+="\tstatic spint R=0;\n"
-    str+="\tR+=0x3cc3c33c5aa5a55au;\n"
-    str+="\tw=R;\n"
-    str+="\t\tc0=(~b)&(w+1);\n"
-    str+="\t\tc1=b+w;\n"
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tv=w*(t+s);\n"
-    str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    str+="\t\tf[i] = aux - v;\n"
-    str+="\t\tg[i] = aux = c0*s+c1*t;\n"
-    str+="\t\tg[i] = aux - v;\n\t}\n"
-    str+="}\n"
+    if PSCR :
+        str+="\tspint c0,c1,s,t,w,v,aux;\n"
+        str+="\tstatic spint R=0;\n"
+        str+="\tR+=0x3cc3c33c5aa5a55au;\n"
+        str+="\tw=R;\n"
+        str+="\tc0=(~b)&(w+1);\n"
+        str+="\tc1=b+w;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tv=w*(t+s);\n"
+        str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+        str+="\t\tf[i] = aux - v;\n"
+        str+="\t\tg[i] = aux = c0*s+c1*t;\n"
+        str+="\t\tg[i] = aux - v;\n\t}\n"
+        str+="}\n"
+    else: 
+        str+="\tspint delta,mask=-b;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=(g[i]^f[i])&mask;\n"
+        str+="\t\tg[i]^=delta;\n"
+        str+="\t\tf[i]^=delta;\n"    
+        str+="\t}\n"
+        str+="}\n"
     return str
 
 #conditional move
@@ -1539,19 +1549,27 @@ def modcmv() :
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
     if makestatic :
         str+="static "
-    str+="void modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)
+    str+="void __attribute__ ((noinline)) modcmv{}(int b,const spint *g,volatile spint *f) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint c0,c1,s,t,w,aux;\n"
-    str+="\tstatic spint R=0;\n"
-    str+="\tR+=0x3cc3c33c5aa5a55au;\n"
-    str+="\tw=R;\n"
-    str+="\t\tc0=(~b)&(w+1);\n"
-    str+="\t\tc1=b+w;\n"
-    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ts=g[i]; t=f[i];\n"
-    str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-    str+="\t\tf[i] = aux - w*(t+s);\n\t}\n"
-    str+="}\n"
+    if PSCR :
+        str+="\tspint c0,c1,s,t,w,aux;\n"
+        str+="\tstatic spint R=0;\n"
+        str+="\tR+=0x3cc3c33c5aa5a55au;\n"
+        str+="\tw=R;\n"
+        str+="\tc0=(~b)&(w+1);\n"
+        str+="\tc1=b+w;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\ts=g[i]; t=f[i];\n"
+        str+="\t\tf[i] = aux = c0*t+c1*s;\n"
+        str+="\t\tf[i] = aux - w*(t+s);\n\t}\n"
+        str+="}\n"
+    else :
+        str+="\tspint delta,mask=-b;\n"
+        str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+        str+="\t\tdelta=(g[i]^f[i])&mask;\n"        
+        str+="\t\tf[i]^=delta;\n"    
+        str+="\t}\n"
+        str+="}\n"
     return str
 
 #shift left
