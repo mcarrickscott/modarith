@@ -237,7 +237,7 @@ def intrinsics() :
     str+="}\n"
 
     str+="// store to memory\n"
-    str+="static inline void store(uint32_t *mem,spint *x) {\n"
+    str+="static inline void store(uint32_t *mem,spint x) {\n"
     str+="\tvst1_u32(mem,x);\n"
     str+="}\n"
 
