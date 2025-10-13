@@ -230,6 +230,17 @@ def intrinsics() :
     str+="\ts[0]=c0; s[1]=c1;\n"
     str+="\treturn vld1_u32(s);\n"
     str+="}\n" 
+
+    str+="// load from memory\n"
+    str+="static inline spint load(uint32_t *mem) {\n"
+    str+="\treturn vld1_u32(mem);\n"
+    str+="}\n"
+
+    str+="// store to memory\n"
+    str+="static inline void store(uint32_t *mem,spint *x) {\n"
+    str+="\tvst1_u32(mem,x);\n"
+    str+="}\n"
+
     return str
 
 #conditional add of x*p
