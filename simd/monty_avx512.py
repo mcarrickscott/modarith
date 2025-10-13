@@ -262,6 +262,17 @@ def intrinsics() :
     str+="static inline spint tospint(int c0,int c1,int c2,int c3,int c4,int c5,int c6,int c7) {\n"
     str+="\treturn _mm512_set_epi32(0,c7,0,c6,0,c5,0,c4,0,c3,0,c2,0,c1,0,c0);\n"
     str+="}\n" 
+
+    str+="// load from memory\n"
+    str+="static inline spint load(store_t *mem) {\n"
+    str+="\treturn _mm512_loadu_si512((spint *)mem);\n"
+    str+="}\n"
+
+    str+="// store to memory\n"
+    str+="static inline void store(store_t *mem,spint x) {\n"
+    str+="\t_mm512_storeu_si512((spint *)mem,x);\n"
+    str+="}\n"
+
     return str
 
 #conditional add of x*p
@@ -1668,8 +1679,8 @@ def modcsw() :
         str+="\tspint delta,mask=_mm512_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\tdelta=_mm256_and_si512(_mm_xor_si512(g[i],f[i]),mask);\n"
-        str+="\t\tg[i]=_mm256_xor_si512(g[i],mask);\n"
-        str+="\t\tf[i]=_mm256_xor_si512(f[i],mask);\n\t}\n"
+        str+="\t\tg[i]=_mm256_xor_si512(g[i],delta);\n"
+        str+="\t\tf[i]=_mm256_xor_si512(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -1715,7 +1726,7 @@ def modcmv() :
         str+="\tspint delta,mask=_mm512_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\tdelta=_mm512_and_si512(_mm_xor_si512(g[i],f[i]),mask);\n"
-        str+="\t\tf[i]=_mm512_xor_si512(f[i],mask);\n\t}\n"
+        str+="\t\tf[i]=_mm512_xor_si512(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -2023,6 +2034,7 @@ def header() :
     print("#define spint __m512i")
     print("#define udpint __m512i")
     print("#define dpint __m512i\n")
+    print("#define store_t uint64_t\n")
 
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))

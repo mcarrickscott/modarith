@@ -262,6 +262,17 @@ def intrinsics() :
     str+="static inline spint tospint(int c0,int c1,int c2,int c3) {\n"
     str+="\treturn _mm256_set_epi32(0,c3,0,c2,0,c1,0,c0);\n"
     str+="}\n" 
+
+    str+="// load from memory\n"
+    str+="static inline spint load(store_t *mem) {\n"
+    str+="\treturn _mm256_loadu_si256((spint *)mem);\n"
+    str+="}\n"
+
+    str+="// store to memory\n"
+    str+="static inline void store(store_t *mem,spint x) {\n"
+    str+="\t_mm256_storeu_si256((spint *)mem,x);\n"
+    str+="}\n"
+
     return str
 
 #conditional add of x*p
@@ -1665,8 +1676,8 @@ def modcsw() :
         str+="\tspint delta,mask=_mm256_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\tdelta=_mm256_and_si256(_mm_xor_si256(g[i],f[i]),mask);\n"
-        str+="\t\tg[i]=_mm256_xor_si256(g[i],mask);\n"
-        str+="\t\tf[i]=_mm256_xor_si256(f[i],mask);\n\t}\n"
+        str+="\t\tg[i]=_mm256_xor_si256(g[i],delta);\n"
+        str+="\t\tf[i]=_mm256_xor_si256(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -1708,7 +1719,7 @@ def modcmv() :
         str+="\tspint delta,mask=_mm256_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\tdelta=_mm256_and_si256(_mm_xor_si256(g[i],f[i]),mask);\n"
-        str+="\t\tf[i]=_mm256_xor_si256(f[i],mask);\n\t}\n"
+        str+="\t\tf[i]=_mm256_xor_si256(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -2007,6 +2018,7 @@ def header() :
     print("#define spint __m256i")
     print("#define udpint __m256i")
     print("#define dpint __m256i\n")
+    print("#define store_t uint64_t\n")
 
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))

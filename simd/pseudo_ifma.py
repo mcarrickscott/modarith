@@ -172,6 +172,16 @@ def intrinsics() :
     str+="\treturn _mm_set_epi64x(c1,c0);\n"
     str+="}\n" 
 
+    str+="// load from memory\n"
+    str+="static inline spint load(store_t *mem) {\n"
+    str+="\treturn _mm_loadu_si128((spint *)mem);\n"
+    str+="}\n"
+
+    str+="// store to memory\n"
+    str+="static inline void store(store_t *mem,spint x) {\n"
+    str+="\t_mm_storeu_si128((spint *)mem,x);\n"
+    str+="}\n"
+
     return str
 
 #conditional add of p
@@ -887,8 +897,8 @@ def modcsw() :
         str+="\tspint delta,mask=_mm_sub_epi64(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\tdelta=_mm_and_si128(_mm_xor_si128(g[i],f[i]),mask);\n"
-        str+="\t\tg[i]=_mm_xor_si128(g[i],mask);\n"
-        str+="\t\tf[i]=_mm_xor_si128(f[i],mask);\n\t}\n"
+        str+="\t\tg[i]=_mm_xor_si128(g[i],delta);\n"
+        str+="\t\tf[i]=_mm_xor_si128(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -925,7 +935,7 @@ def modcmv() :
         str+="\tspint delta,mask=_mm_sub_epi64(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\tdelta=_mm_and_si128(_mm_xor_si128(g[i],f[i]),mask);\n"
-        str+="\t\tf[i]=_mm_xor_si128(f[i],mask);\n\t}\n"
+        str+="\t\tf[i]=_mm_xor_si128(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -1209,6 +1219,7 @@ def header() :
     print("#include <immintrin.h>\n")
     print("#define sspint __m128i")
     print("#define spint __m128i")
+    print("#define store_t uint64_t\n")
  
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))
