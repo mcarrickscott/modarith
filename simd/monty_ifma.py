@@ -1524,7 +1524,7 @@ def nres(n) :
         str+="static "
     str+="void nres{}(const spint *m,spint *n) {{\n".format(DECOR)
     str+="\tspint c[{}];\n".format(N)
-    for i in range(0,N-1) :
+    for i in range(0,N) :
         str+="\t\tc[{}]=_mm_set2_epi64({});\n".format(i,hex(cw[i]))
    
     str+="\tmodmul{}(m,c,n);\n".format(DECOR)
