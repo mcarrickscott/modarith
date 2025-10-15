@@ -979,9 +979,9 @@ def modmli(n) :
     if makestatic :
         str+="static "
     if inline and makestatic:
-        str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void inline modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     else :
-        str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     str+="\tspint mask=_mm_set2_epi32((1<<{}u)-1);\n".format(base)
     str+="\tudpint t=_mm_setzero_si128();\n"
 
@@ -993,7 +993,7 @@ def modmli(n) :
         #str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
         for i in range(0,N) :
-            str+="\tt=_mm_mlca_epu32(t,a[{}],b); ".format(i)
+            str+="\tt=_mm_mla_epu32(t,a[{}],bw); ".format(i)
             str+="c[{}]=_mm_and_si128(t,mask); t=_mm_srli_epi64(t,{}u);\n".format(i,base)
             #str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
             #str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
@@ -1030,12 +1030,12 @@ def modmli(n) :
         str+="\tspint q,h;\n"
         str+="\tspint r=_mm_set2_epi32(0x{:x});\n".format((2**(n+base))//p)
         for i in range(0,N-1) :
-            str+="\tt=_mm_mlca_epu32(t,a[{}],b); ".format(i)
+            str+="\tt=_mm_mla_epu32(t,a[{}],bw); ".format(i)
             str+="\tc[{}]=_mm_and_si128(t,mask); t=_mm_srli_epi64(t,{}u);\n".format(i,base)
             #str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
             #str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
 
-        str+="\tt=_mm_mlca_epu32(t,a[{}],b); ".format(N-1)
+        str+="\tt=_mm_mla_epu32(t,a[{}],bw); ".format(N-1)
         str+="c[{}]=(spint)t;\n".format(N-1)
         #str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
         #str+="c[{}]=(spint)t;\n".format(N-1)

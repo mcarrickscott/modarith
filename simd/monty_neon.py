@@ -912,9 +912,9 @@ def modmli(n) :
     if makestatic :
         str+="static "
     if inline and makestatic:
-        str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void inline modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     else :
-        str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     str+="\tspint mask=vdup_n_u32((1<<{}u)-1);\n".format(base)
     str+="\tudpint t=vdupq_n_u64(0);\n"
     if trin>0 :
@@ -924,7 +924,7 @@ def modmli(n) :
         #str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
         for i in range(0,N) :
-            str+="\tt=vmlal_n_u32(t,a[{}],b); ".format(i)
+            str+="\tt=vmlal_u32(t,a[{}],bw); ".format(i)
             str+="c[{}]=vand_u32(vmovn_u64(t),mask); t=vshrq_n_u64(t,{}u);\n".format(i,base)
 
             #str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
@@ -960,12 +960,12 @@ def modmli(n) :
         str+="\tspint q,h;\n"
         str+="\tspint r=vdup_n_u32(0x{:x});\n".format((2**(n+base))//p)
         for i in range(0,N-1) :
-            str+="\tt=vmlal_n_u32(t,a[{}],b); ".format(i)
+            str+="\tt=vmlal_u32(t,a[{}],bw); ".format(i)
             str+="\tc[{}]=vand_u32(vmovn_u64(t),mask); t=vshrq_n_u64(t,{}u);\n".format(i,base)
 
             #str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
             #str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
-        str+="\tt=vmlal_n_u32(t,a[{}],b); ".format(N-1)
+        str+="\tt=vmlal_u32(t,a[{}],bw); ".format(N-1)
         str+="c[{}]=vmovn_u64(t);\n".format(N-1)
 
         #str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)

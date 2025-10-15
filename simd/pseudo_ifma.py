@@ -580,15 +580,15 @@ def modmli(n,m) :
     if makestatic :
         str+="static "
     if inline and makestatic:
-        str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void inline modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     else :
-        str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     str+="\tspint tl=_mm_setzero_si128();\n"
     str+="\tspint th=_mm_setzero_si128();\n"
 
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
-    str+="\tspint bw=_mm_set2_epi64(b);\n"
+    #str+="\tspint bw=_mm_set2_epi64(b);\n"
     str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
 
     for i in range(0,N) :

@@ -153,7 +153,7 @@ void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const c
     int i;
     uint32_t kt[2];
     int swap1,swap2,sb1,sb2;
-    spint swap;
+    spint swap,a24;
     char ck1[Nbytes],ck2[Nbytes];
     char cu1[Nbytes],cu2[Nbytes];
     spint u[Nlimbs]; spint x1[Nlimbs]; spint x2[Nlimbs]; spint x3[Nlimbs]; spint z2[Nlimbs]; spint z3[Nlimbs];
@@ -185,6 +185,8 @@ void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const c
     modcpy(u,x3);  // x_3=u
     modone(z3);    // z_3=1
 
+    a24=tospint(A24,A24);
+
     swap1=swap2=0;
     for (i=Nbits-1;i>=0;i--)
     {
@@ -215,7 +217,7 @@ void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const c
         
         modsub(D,C,z3); modsqr(z3,z3); modmul(z3,x1,z3);  // z_3 = x_1 * (DA - CB)^2
         modmul(AA,BB,x2);       // x_2 = AA * BB
-        modmli(E,A24,z2);        
+        modmli(E,a24,z2);        
         modadd(z2,AA,z2); modmul(z2,E,z2);   // z_2 = E * (AA + a24 * E)
     }
     modcsw(swap,x2,x3);

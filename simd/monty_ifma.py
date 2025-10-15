@@ -953,10 +953,10 @@ def modmli(n) :
     if makestatic :
         str+="static "
     if inline and makestatic:
-        str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void inline modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     else :
-        str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
-    str+="\tspint bw=_mm_set2_epi64(b);\n"
+        str+="void modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
+    #str+="\tspint bw=_mm_set2_epi64(b);\n"
     if xcess>0 :
         smask=(1<<(base-xcess))-1
         str+="\tspint smask=_mm_set2_epi64({});\n".format(smask)

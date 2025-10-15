@@ -744,15 +744,15 @@ def modmli(n,m) :
     if makestatic :
         str+="static "
     if inline and makestatic:
-        str+="void inline modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void inline modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     else :
-        str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
+        str+="void modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     str+="\tudpint t=_mm_setzero_si128();\n"
     #str+="\tudpint t=0;\n"
 
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
-    str+="\tspint bw=_mm_set2_epi32(b);\n"
+    #str+="\tspint bw=_mm_set2_epi32(b);\n"
     str+="\tspint mask=_mm_set2_epi32((1<<{}u)-1);\n".format(base)
     #str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
