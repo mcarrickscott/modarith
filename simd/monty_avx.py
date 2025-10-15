@@ -1790,7 +1790,7 @@ def modexp() :
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i={};i>=0;i--) {{\n".format(Nbytes-1)
     str+="\t\tb[i]=_mm256_extract_epi16(c[0],0)&0xff;\n"
-    str+="\t\te[i]=f[i]=g[i]=0;\n"
+    #str+="\t\te[i]=f[i]=g[i]=0;\n"
     str+="\t\tif (e!=NULL) e[i]=_mm256_extract_epi16(c[0],4)&0xff;\n"
     str+="\t\tif (f!=NULL) f[i]=_mm256_extract_epi16(c[0],8)&0xff;\n"
     str+="\t\tif (g!=NULL) g[i]=_mm256_extract_epi16(c[0],12)&0xff;\n"
