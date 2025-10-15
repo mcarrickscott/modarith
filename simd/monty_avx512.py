@@ -1678,9 +1678,9 @@ def modcsw() :
         str+="\tspint zero=_mm512_setzero_si512();\n"
         str+="\tspint delta,mask=_mm512_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-        str+="\t\tdelta=_mm256_and_si512(_mm_xor_si512(g[i],f[i]),mask);\n"
-        str+="\t\tg[i]=_mm256_xor_si512(g[i],delta);\n"
-        str+="\t\tf[i]=_mm256_xor_si512(f[i],delta);\n\t}\n"
+        str+="\t\tdelta=_mm512_and_si512(_mm512_xor_si512(g[i],f[i]),mask);\n"
+        str+="\t\tg[i]=_mm512_xor_si512(g[i],delta);\n"
+        str+="\t\tf[i]=_mm512_xor_si512(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -1725,7 +1725,7 @@ def modcmv() :
         str+="\tspint zero=_mm512_setzero_si512();\n"
         str+="\tspint delta,mask=_mm512_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-        str+="\t\tdelta=_mm512_and_si512(_mm_xor_si512(g[i],f[i]),mask);\n"
+        str+="\t\tdelta=_mm512_and_si512(_mm512_xor_si512(g[i],f[i]),mask);\n"
         str+="\t\tf[i]=_mm512_xor_si512(f[i],delta);\n\t}\n"
         str+="}\n"
     return str

@@ -1675,7 +1675,7 @@ def modcsw() :
         str+="\tspint zero=_mm256_setzero_si256();\n"
         str+="\tspint delta,mask=_mm256_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-        str+="\t\tdelta=_mm256_and_si256(_mm_xor_si256(g[i],f[i]),mask);\n"
+        str+="\t\tdelta=_mm256_and_si256(_mm256_xor_si256(g[i],f[i]),mask);\n"
         str+="\t\tg[i]=_mm256_xor_si256(g[i],delta);\n"
         str+="\t\tf[i]=_mm256_xor_si256(f[i],delta);\n\t}\n"
         str+="}\n"
@@ -1718,7 +1718,7 @@ def modcmv() :
         str+="\tspint zero=_mm256_setzero_si256();\n"
         str+="\tspint delta,mask=_mm256_sub_epi32(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-        str+="\t\tdelta=_mm256_and_si256(_mm_xor_si256(g[i],f[i]),mask);\n"
+        str+="\t\tdelta=_mm256_and_si256(_mm256_xor_si256(g[i],f[i]),mask);\n"
         str+="\t\tf[i]=_mm256_xor_si256(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
