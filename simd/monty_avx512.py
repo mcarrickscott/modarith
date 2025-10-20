@@ -1824,7 +1824,8 @@ def modimp() :
     #str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
-    str+="\t\tunsigned char bc=b[i],ec=0,fc=0,gc=0,hc=0,jc=0,kc=0,mc=0;\n"
+    str+="\t\tunsigned char bc=0,ec=0,fc=0,gc=0,hc=0,jc=0,kc=0,mc=0;\n"
+    str+="\t\tif (b!=NULL) bc=b[i];\n"
     str+="\t\tif (e!=NULL) ec=e[i];\n"
     str+="\t\tif (f!=NULL) fc=f[i];\n"
     str+="\t\tif (g!=NULL) gc=g[i];\n"

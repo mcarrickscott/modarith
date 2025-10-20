@@ -1213,7 +1213,8 @@ def modimp() :
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
     
-    str+="\t\ts[0]=(uint32_t)b[i]; \n"
+    str+="\t\tif (b!=NULL) s[0]=(uint32_t)b[i];\n"
+    str+="\t\telse s[0]=0;\n"
     str+="\t\tif (e!=NULL) s[1]=(uint32_t)e[i];\n"
     str+="\t\telse s[1]=0;\n"
     str+="\t\ta[0]=vadd_u32(a[0],vld1_u32(s));\n\t}\n"

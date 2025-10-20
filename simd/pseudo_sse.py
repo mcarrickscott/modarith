@@ -1215,8 +1215,10 @@ def modimp() :
     #str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
-    str+="\t\tif (e!=NULL) a[0]=_mm_add_epi32(a[0],_mm_setc_epi32((unsigned char)b[i],(unsigned char)e[i]));\n"
-    str+="\t\telse a[0]=_mm_add_epi32(a[0],_mm_setc_epi32((unsigned char)b[i],0));\n"
+    str+="\t\tunsigned char bc=0,ec=0;\n"
+    str+="\t\tif (b!=NULL) bc=b[i];\n"
+    str+="\t\tif (e!=NULL) ec=e[i];\n"
+    str+="\t\ta[0]=_mm_add_epi32(a[0],_mm_setc_epi32(bc,ec));\n"
     str+="\t}\n"
     
     #str+="\t\ta[0]+=(spint)(unsigned char)b[i];\n\t}\n"
