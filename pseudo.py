@@ -291,11 +291,11 @@ def getZM(str,row,n,m) :
                 if row==0 :
                     str+=" t+=d{}+(dpint)lo*(dpint)0x{:x};".format(row,mm)
                 else :
-                    if bad_overflow :
+                    if bad_overflow_mul :
                         str+=" t+=d{}+(hi+(dpint)lo)*(dpint)0x{:x};".format(row,mm)
                     else :
                         str+=" t+=d{}+(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(row,mm)
-                if bad_overflow :
+                if bad_overflow_mul :
                     str+=" hi=(dpint)(udpint)((udpint)tt>>{}u);".format(base)
                 else :
                     str+=" hi=(spint)(udpint)((udpint)tt>>{}u);".format(base)
@@ -335,11 +335,11 @@ def getZM(str,row,n,m) :
             if row==0 :
                 str+=" t+=(dpint)lo*(dpint)0x{:x};".format(mm)
             else :
-                if bad_overflow :
+                if bad_overflow_mul :
                     str+=" t+=(hi+(dpint)lo)*(dpint)0x{:x};".format(mm)
                 else :
                     str+=" t+=(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(mm)
-            if bad_overflow :
+            if bad_overflow_mul :
                 str+=" hi=tt>>{}u;".format(base)
             else :
                 str+=" hi=(spint)(tt>>{}u);".format(base)
@@ -466,11 +466,11 @@ def getZS(str,row,n,m) :
             if row==0 :
                 str+=" t2+=(udpint)lo*(udpint)0x{:x};".format(mm)
             else :
-                if bad_overflow :
+                if bad_overflow_sqr :
                     str+=" t2+=(hi+(udpint)lo)*(udpint)0x{:x};".format(mm)
                 else :
                     str+=" t2+=(udpint)(spint)(lo+hi)*(udpint)0x{:x};".format(mm)
-            if bad_overflow :
+            if bad_overflow_sqr :
                 str+=" hi=tt>>{}u;".format(base)
             else :
                 str+=" hi=(spint)(tt>>{}u);".format(base)
@@ -567,7 +567,7 @@ def modmul(n,m) :
 
     if overflow :
         str+="\tspint lo;\n"
-        if bad_overflow :
+        if bad_overflow_mul :
             str+="\tdpint hi;\n"   # could overflow single type
         else :
             str+="\tspint hi;\n"
@@ -614,7 +614,7 @@ def modsqr(n,m) :
 
     if overflow :
         str+="\tspint lo;\n"
-        if bad_overflow :
+        if bad_overflow_sqr :
             str+="\tudpint hi;\n"
         else :
             str+="\tspint hi;\n"
@@ -1550,17 +1550,24 @@ else :
     print("Using standard Comba for modmul")
 
 overflow=False
-bad_overflow=False
+bad_overflow_mul=False
+bad_overflow_sqr=False
 if (b-1)*(b-1)*mm*N >= 2**(2*WL) :
     overflow=True
     print("Possibility of overflow... using alternate method")
+    if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
+        bad_overflow_mul=True
+        bad_overflow_sqr=True
     if karatsuba :
         if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
-            bad_overflow=True
-    else :
-        if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
-            bad_overflow=True
-if bad_overflow :
+            bad_overflow_mul=True
+    #if karatsuba :
+    #    if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
+    #        bad_overflow=True
+    #else :
+    #    if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
+    #        bad_overflow=True
+if bad_overflow_mul :
     print("Overflow requires extra resource")
 
 # faster reduction
