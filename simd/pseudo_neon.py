@@ -1493,7 +1493,6 @@ def header() :
     print("#define spint uint32x2_t")
     print("#define udpint uint64x2_t")
     print("#define dpint uint64x2_t\n")
-    print("#define store_t uint32_t\n")
 
     print("#define Wordlength{} 32".format(DECOR))
     print("#define Nlimbs{} {}".format(DECOR,N))

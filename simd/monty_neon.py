@@ -47,6 +47,7 @@ if arduino :    # If arduino, count microseconds
     cyclesorsecs=False 
 compiler="gcc"  # gcc, clang or icx
 cyclescounter=True # use Bernstein's cpu cycle counter, otherwise just provide timings
+karatsuba=True # default setting. Usually True is optimal for NEON on ARM64
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
@@ -54,7 +55,7 @@ generic=True # set to False if algorithm is known in advance, in which case moda
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 fully_propagate=False # recommended set to True for Production code
-PSCR=False # Power Side Channel Resistant conditional moves and swaps
+PSCR=True # Power Side Channel Resistant conditional moves and swaps
 
 import sys
 import subprocess
@@ -73,6 +74,8 @@ def ispowerof2(n) :
 def getbase(n) :
     limbs=int(n/WL)
     limit=2*WL
+    if karatsuba :
+        limit=2*WL-1
     while (True) :
         limbs=limbs+1
         if limbs==1 :   # must be at least 2 limbs
@@ -219,7 +222,7 @@ def process_prime(p,base,N) :
 
 def intrinsics() :
     str="// t=a*c where t, a is 64 bits and c is a small constant\n"
-    str+="static inline dpint vmulct_n_u64(dpint a,int b) {\n"
+    str+="static inline udpint vmulct_n_u64(udpint a,int b) {\n"
     str+="\tudpint pp1=vmull_n_u32(vmovn_u64(a),b);\n"
     str+="\tudpint pp2=vmull_n_u32(vmovn_u64(vshrq_n_u64(a,32)),b);\n"
     str+="\treturn vaddq_u64(pp1,vshlq_n_u64(pp2,32));\n"  
@@ -475,6 +478,20 @@ def modneg(n) :
 def getZMU(str,i) :
     first=True
     global maxnum
+    
+    if karatsuba :
+        str+="\tst=vreinterpretq_s64_u64(t);\n"
+        if i==0 :
+            str+="\tu=d0; st = u;"
+            maxnum+=maxdigit*maxdigit
+        else :
+            str+="\tu=vaddq_s64(u,d{}); st=vaddq_s64(st,u);".format(i)
+            #str+="\tu+=d{}; t+=u;".format(i)
+            for m in range(i,int(i/2),-1) :
+                str+=" st=vmlal_s32(st,vsub_s32(vreinterpret_s32_u32(a[{}]),vreinterpret_s32_u32(a[{}])),vsub_s32(vreinterpret_s32_u32(b[{}]),vreinterpret_s32_u32(b[{}])));".format(m,i - m, i - m, m)
+                maxnum+=maxdigit*maxdigit
+        str+="\tt=vreinterpretq_u64_s64(st);\n"
+        return str
 
     k=0
     while (k<=i) :
@@ -491,7 +508,13 @@ def getZMU(str,i) :
 
 # add column of partial products from multiplication on way down
 def getZMD(str,i) :
-
+    if karatsuba :
+        str+="\tst=vreinterpretq_s64_u64(t);\n"
+        str+="\tu=vsubq_s64(u,d{}); st=vaddq_s64(st,u); ".format(i-N)
+        for m in range(N-1,int(i/2),-1) :
+            str+="st=vmlal_s32(st,vsub_s32(vreinterpret_s32_u32(a[{}]),vreinterpret_s32_u32(a[{}])),vsub_s32(vreinterpret_s32_u32(b[{}]),vreinterpret_s32_u32(b[{}]))); ".format(m, i - m, i - m, m)
+        str+="\tt=vreinterpretq_u64_s64(st);\n"
+        return str
     first=True
     k=i-(N-1)
     while (k<=N-1) :
@@ -668,8 +691,13 @@ def modmul(n) :
         str+="void inline modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
     else :
         str+="void modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
-    str+="\tdpint t=vdupq_n_u64(0);\n"
+    str+="\tudpint t=vdupq_n_u64(0);\n"
     #str+="\tdpint t=0;\n"
+
+    if karatsuba :
+        str+="\tdpint st,u;\n"
+        for i in range(0,N) :
+            str+="\tdpint d{}=vmull_s32(vreinterpret_s32_u32(a[{}]),vreinterpret_s32_u32(b[{}]));\n".format(i, i, i)
 
     str+="\tspint one=vdup_n_u32(1);\n"
     if PM :
@@ -761,10 +789,13 @@ def modmul(n) :
             str+=" spint v{}=vand_u32(vmovn_u64(t),mask); ".format(i) 
             #str+=" spint v{}=((spint)t & mask); ".format(i)
         if i==N-1 :
-            print("// Overflow limit   =",2**(2*WL))
-            print("// maximum possible =",maxnum)
-            if maxnum >= 2**(2*WL) :
-                print("//Warning: Overflow possibility detected - change radix ")
+            if karatsuba :
+                print("// Run using Comba in modmul for tighter overflow check ")
+            else :
+                print("// Overflow limit   =",2**(2*WL))
+                print("// maximum possible =",maxnum)
+                if maxnum >= 2**(2*WL) :
+                    print("//Warning: Overflow possibility detected - change radix ")
         str+=" t=vshrq_n_u64(t,{});\n".format(base)
         #str+=" t>>={};\n".format(base)
         maxnum=2**(2*WL-base)
@@ -2041,8 +2072,10 @@ def header() :
     print("#define sspint int32x2_t")
     print("#define spint uint32x2_t")
     print("#define udpint uint64x2_t")
-    print("#define dpint uint64x2_t\n")
-    print("#define store_t uint32_t\n")
+    if karatsuba :
+        print("#define dpint int64x2_t\n")
+    else :
+        print("#define dpint uint64x2_t\n")
 
     print("#define Wordlength{} 32".format(DECOR))
     print("#define Nlimbs{} {}".format(DECOR,N))
@@ -2324,7 +2357,10 @@ ROI=makebig(roi,base,N)
 mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
 print("Compiler is "+compiler)
-print("Using standard Comba for modmul")
+if karatsuba :
+    print("Using Karatsuba for modmul")
+else :
+    print("Using standard Comba for modmul")
 
 # process prime, check if "virtual" extra limb required
 ppw,E=process_prime(p,base,N)
@@ -2385,7 +2421,8 @@ maxnum=0
 from contextlib import redirect_stdout
 
 # Note that the accumulated partial products must not exceed the double precision limit. 
-#  this limit can be 2**(2*WL)
+# If NOT using karatsuba this limit can be 2**(2*WL), otherwise 2**(2*WL-1)
+# If NOT using karatsuba use unsigned integer types to store limbs, otherwise use signed types
 
 DECOR=""
 modulus=p

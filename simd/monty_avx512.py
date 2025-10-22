@@ -263,16 +263,6 @@ def intrinsics() :
     str+="\treturn _mm512_set_epi32(0,c7,0,c6,0,c5,0,c4,0,c3,0,c2,0,c1,0,c0);\n"
     str+="}\n" 
 
-    str+="// load from memory\n"
-    str+="static inline spint load(store_t *mem) {\n"
-    str+="\treturn _mm512_loadu_si512((spint *)mem);\n"
-    str+="}\n"
-
-    str+="// store to memory\n"
-    str+="static inline void store(store_t *mem,spint x) {\n"
-    str+="\t_mm512_storeu_si512((spint *)mem,x);\n"
-    str+="}\n"
-
     return str
 
 #conditional add of x*p
@@ -2035,7 +2025,6 @@ def header() :
     print("#define spint __m512i")
     print("#define udpint __m512i")
     print("#define dpint __m512i\n")
-    print("#define store_t uint64_t\n")
 
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))
