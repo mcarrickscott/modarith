@@ -221,11 +221,11 @@ def getZM(str,row,n,m,base) :
                 if row==0 :
                     str+=" t+=d{}+(lo as DPINT)*0x{:x};".format(row,mm)
                 else :
-                    if bad_overflow :
+                    if bad_overflow_mul :
                         str+=" t+=d{}+((lo as DPINT)+hi)*0x{:x};".format(row,mm)
                     else :
                         str+=" t+=d{}+((lo+hi) as DPINT)*0x{:x};".format(row,mm)
-                if bad_overflow :
+                if bad_overflow_mul :
                     str+=" hi=tt>>{};".format(base)
                 else :
                     str+=" hi=(tt>>{}) as SPINT;".format(base)
@@ -265,11 +265,11 @@ def getZM(str,row,n,m,base) :
             if row==0 :
                 str+=" t+=(lo as DPINT)*0x{:x};".format(mm)
             else :
-                if bad_overflow :
+                if bad_overflow_mul :
                     str+=" t+=((lo as DPINT)+hi)*0x{:x};".format(mm)
                 else :
                     str+=" t+=((lo+hi) as DPINT)*0x{:x};".format(mm)
-            if bad_overflow :
+            if bad_overflow_mul :
                 str+=" hi=tt>>{};".format(base)
             else :
                 str+=" hi=(tt>>{}) as SPINT;".format(base)   
@@ -394,11 +394,11 @@ def getZS(str,row,n,m,base) :
             if row==0 :
                 str+=" t2+=(lo as UDPINT)*0x{:x};".format(mm)
             else :
-                if bad_overflow :
+                if bad_overflow_sqr :
                     str+=" t2+=((lo as UDPINT)+hi)*0x{:x};".format(mm)
                 else :
                     str+=" t2+=((lo+hi) as UDPINT)*0x{:x};".format(mm)
-            if bad_overflow :
+            if bad_overflow_sqr :
                 str+=" hi=tt>>{};".format(base)
             else :
                 str+=" hi=(tt>>{}) as SPINT;".format(base)
@@ -484,7 +484,7 @@ def modmul(n,m,base) :
             str+="\tlet mut tt:DPINT;\n"
     if overflow :
         str+="\tlet mut lo:SPINT;\n"
-        if bad_overflow :
+        if bad_overflow_mul :
             str+="\tlet mut hi:DPINT;\n"
         else :
             str+="\tlet mut hi:SPINT;\n"
@@ -524,7 +524,7 @@ def modsqr(n,m,base) :
 
     if overflow :
         str+="\tlet mut lo:SPINT;\n"
-        if bad_overflow :
+        if bad_overflow_sqr :
             str+="\tlet mut hi:UDPINT;\n"
         else :
             str+="\tlet mut hi:SPINT;\n"
@@ -1124,7 +1124,10 @@ def time_modinv(n,base,r) :
 
 def main() :
     str="fn main() {\n"
-    str+='\tprintln!("Rust code - timing some functions - please wait");\n'
+
+    str+='\tprintln!("Rust Code generated from command line : python {} {} {}");\n'.format(sys.argv[0], sys.argv[1], sys.argv[2])
+    str+='\tprintln!("Timing some functions - please wait");\n'
+
     str+="\ttime_modmul();\n"
     str+="\ttime_modsqr();\n"
     str+="\ttime_modinv();\n"
@@ -1301,17 +1304,24 @@ else :
     print("Using standard Comba for modmul")
 
 overflow=False
-bad_overflow=False
+bad_overflow_mul=False
+bad_overflow_sqr=False
 if (b-1)*(b-1)*mm*N >= 2**(2*WL) :
     overflow=True
     print("Possibility of overflow... using alternate method")
+    if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
+        bad_overflow_mul=True
+        bad_overflow_sqr=True
     if karatsuba :
         if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
-            bad_overflow=True
-    else :
-        if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
-            bad_overflow=True
-if bad_overflow :
+            bad_overflow_mul=True
+    #if karatsuba :
+    #    if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
+    #        bad_overflow=True
+    #else :
+    #    if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
+    #        bad_overflow=True
+if bad_overflow_mul :
     print("Overflow requires extra resource")
 
 # faster reduction
@@ -1319,7 +1329,6 @@ fred=False
 if bits(N+1)+base+bits(mm)<WL :
     fred=True
     print("Tighter reduction")
-
 
 # check if multiplication can be done single precision
 EPM=False

@@ -49,7 +49,6 @@ decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
 generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
-check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 PSCR=False # Power Side Channel Resistant conditional moves and swaps
 
@@ -1983,7 +1982,8 @@ def functions() :
 
 def main() :
     str="int main() {\n"
-    str+='\tprintf("C code - timing some functions - please wait\\n");\n'
+    str+='\tprintf("C Code generated from command line : python {} {}\\n");\n'.format(sys.argv[0], sys.argv[1])
+    str+='\tprintf("Timing some functions - please wait\\n");\n'
     str+="\ttime_modmul();\n"
     str+="\ttime_modsqr();\n"
     str+="\ttime_modinv();\n"
@@ -2345,10 +2345,6 @@ f.close()
 
 if formatted :
     subprocess.call("clang-format -i "+fnamec, shell=True)  # tidy up the format
-
-if check: 
-    subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem --suppress=checkersReport "+fnamec, shell=True)  # tidy up the format
-
 
 if field :
     print("field code is in field.c")

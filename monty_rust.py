@@ -1595,7 +1595,9 @@ def time_modinv(n,base,r) :
 
 def main() :
     str="fn main() {\n"
-    str+='\tprintln!("Rust code - timing some functions - please wait");\n'
+    str+='\tprintln!("Rust Code generated from command line : python {} {} {}");\n'.format(sys.argv[0], sys.argv[1], sys.argv[2])
+    str+='\tprintln!("Timing some functions - please wait");\n'
+
     str+="\ttime_modmul();\n"
     str+="\ttime_modsqr();\n"
     str+="\ttime_modinv();\n"

@@ -1834,7 +1834,8 @@ def functions() :
 
 def main() :
     str="int main() {\n"
-    str+='\tprintf("C code - timing some functions - please wait\\n");\n'
+    str+='\tprintf("C Code generated from command line : python {} {} {}\\n");\n'.format(sys.argv[0], sys.argv[1], sys.argv[2])
+    str+='\tprintf("Timing some functions - please wait\\n");\n'
     if cyclescounter :
         str+='\tprintf("%s %s\\n",cpucycles_implementation(),cpucycles_version());\n'
     str+="\ttime_modmul();\n"
