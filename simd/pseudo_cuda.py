@@ -4,6 +4,8 @@
 #
 # This version generates 32-bit code that runs on Nvidia GPUs
 # Can execute multiple operations in parallel
+# Assumes presence of Nvidia graphics hardware GPUs, and tookit, and nvcc CUDA compiler
+# Tested on GeForce MX570A
 #
 # In particular this script generates code for primes like
 #
@@ -14,7 +16,7 @@
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
 # Execute this program as: python3 pseudo_cuda.py X25519
-# Production code is output to file field.c
+# Production code is output to file field.cu
 # 
 # Mike Scott 22nd April 2024
 # TII
@@ -886,7 +888,7 @@ def redc(n) :
 def modcsw() :
     str="//conditional swap g and f if d=1\n"
     str+="//strongly recommend inlining be disabled using compiler specific syntax\n"
-    str+="__device__ __noinline__"
+    str+="__device__ __noinline__ "
     if makestatic :
         str+="static "
     str+="void modcsw{}(int b,volatile spint *g,volatile spint *f) {{\n".format(DECOR)
@@ -1472,15 +1474,6 @@ f.close()
 subprocess.call("nvcc -O2 time.cu -o time", shell=True)
 print("For timings run ./time")
 
-
-# to determine code size
-makestatic=False
-with open('field.c', 'w') as f:
-    with redirect_stdout(f):
-        header()
-        functions()
-f.close()
-
 if decoration :
     if noname :
         DECOR="_"+str(n)+str(m)+"_ct"
@@ -1488,15 +1481,15 @@ if decoration :
         DECOR="_"+prime+"_ct"
 
 makestatic=True
-with open('field.c', 'w') as f:
+with open('field.cu', 'w') as f:
     with redirect_stdout(f):
         header()
         functions()
 f.close()
 
 if formatted :
-    subprocess.call("clang-format -i field.c", shell=True)  # tidy up the format
+    subprocess.call("clang-format -i field.cu", shell=True)  # tidy up the format
 
-print("Field code is in field.c")
+print("Field code is in field.cu")
 
 sys.exit(base)

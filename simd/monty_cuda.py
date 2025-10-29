@@ -3,6 +3,8 @@
 # 
 # This version generates 32-bit code that runs on Nvidia GPUs
 # Can execute multiple operations in parallel
+# Assumes presence of Nvidia graphics hardware GPUs, and tookit, and nvcc CUDA compiler
+# Tested on GeForce MX570A
 #
 # In particular this script generates code for the NIST field primes
 #
@@ -16,7 +18,7 @@
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
 #
 # How to use. 
-# (1) First execute this program: python3 monty_cuda.py NIST256. Output code is written to file field.c or group.c
+# (1) First execute this program: python3 monty_cuda.py NIST256. Output code is written to file field.cu or group.cu
 # (2) All constants and inputs must be converted to Montgomery nresidue form by calling nres()
 # (3) All final outputs must be converted back to integer form by calling redc()
 #
@@ -1852,11 +1854,9 @@ if p==0 :
         p=eval(prime)
     noname=True    # unnamed prime
 
-fnamec='field.c'
-fnameo='field.o'
+fnamec='field.cu'
 if not field :
-    fnamec='group.c'
-    fnameo='group.o'
+    fnamec='group.cu'
 
 n=p.bit_length() 
 if n<120 or pow(3,p-1,p)!=1 :
@@ -2027,15 +2027,6 @@ f.close()
 subprocess.call("nvcc -O2 time.cu -o time", shell=True)
 print("For timings run ./time")
 
-
-# to determine code size
-makestatic=False
-with open(fnamec, 'w') as f:
-    with redirect_stdout(f):
-        header()
-        functions()
-f.close()
-
 if decoration :
     if PM :
         if noname :
@@ -2060,8 +2051,8 @@ if formatted :
     subprocess.call("clang-format -i "+fnamec, shell=True)  # tidy up the format
 
 if field :
-    print("field code is in field.c")
+    print("field code is in field.cu")
 else :
-    print("group code is in group.c")
+    print("group code is in group.cu")
 
 sys.exit(base)

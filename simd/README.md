@@ -12,12 +12,12 @@ is currently quite patchy.
 Recall that the script generated code is fully constant time. Therefore more than one simultaneous but independent calculation can be 
 performed, one in each lane.
 
-# RFC7748
+## RFC7748
 
 RFC7748 defines a simple but powerful elliptic curve key exchange algorithm. For example it lies at the heart of the TLS and Signal
 protocols. Here we provide a simple implementation.
 
-# Quick Start on an Intel/AMD desktop/laptop PC
+## Quick Start on an Intel/AMD desktop/laptop PC
 
 The setup is the same as for the original scripts. Make sure all dependencies are available. 
 Generate the finite field arithmetic for an X25519 elliptic curve
@@ -36,8 +36,32 @@ is performed. Next generate the finite field arithmetic for the larger X448 curv
 
 Replace the *field.c* code in *rfc7748_simd.c* and compile and run the program again.
 
+# Experimental SIMT implementation
+
+Versions of the scripts are now provided that generate code suitable for Nvidia GPUs. Code is generated in CUDA which is
+basically C/C++ for GPUs. GPUs allow massive throughput at the cost of latency. Each core implements a simple and rather slow 32-bit 
+architecture -- but there are typically thousands of them. To use these scripts an Nvidia graphics card is required, plus the Nvidia 
+CUDA software development toolkit -- in particular the nvcc compiler.  
+
+## Quick Start
+
+The setup is the same as for the original scripts. Make sure all dependencies are available. 
+Generate the finite field arithmetic for an X25519 elliptic curve
+
+	python3 pseudo_cuda.py X25519
+
+First run the *time* application which has been created by the script to get benchmark timings. Next drop the generated file *field.cu* 
+into *rfc7748_simt.cu*. Compile as
+
+	nvcc -O2 rfc7748_simt.c -lcpucycles -o rfc7748_simt
+
+When the program is run, a pair of test vectors from RFC7748 are calculated simultaneously, timings are taken, and a double key exchange is performed. Next generate the finite field arithmetic for the larger X448 curve 
+
+	python3 monty_cuda.py X448
+
+Replace the *field.cu* code in *rfc7748_simt.cu* and compile and run the program again.
+
 # Application
 
-Two, four or eight protocol executions can be carried out simultaneously, which can be somewhat faster that executing them serially, one 
-after another. For example a TLS server can calculate both its own public key and a shared secret at the same time.
+Two, four or eight or more protocol executions can be carried out simultaneously, which can be somewhat faster that executing them serially, one after another. For example a TLS server can calculate both its own public key and a shared secret at the same time.
 
