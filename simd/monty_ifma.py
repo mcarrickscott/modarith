@@ -409,7 +409,7 @@ def flat(n) :
     else :
         str+="spint flatten(spint *n) {\n"
     if E :
-        str+="\tint q=(1<<{}u);\n".format(base)
+        str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
     str+="\tspint one=_mm_set2_epi64(1);\n"
     str+="\tspint carry=prop(n);\n"
     str+="\tspint mpy;\n"
@@ -430,7 +430,7 @@ def modfsb(n) :
     else :
         str+="spint modfsb{}(spint *n) {{\n".format(DECOR)
     if E: 
-        str+="\tint q=(1<<{}u);\n".format(base)
+        str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
     str+="\tspint mpy;\n" 
     str+=subp(1)
     str+="\treturn flatten(n);\n}\n"
@@ -449,7 +449,7 @@ def modadd(n) :
     str+="\tspint mpy;\n"
     if not algorithm :
         if E: 
-            str+="\tint q=(1<<{}u);\n".format(base)
+            str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
         str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=_mm_add_epi64(a[{}],b[{}]);\n".format(i,i,i)
@@ -475,10 +475,10 @@ def modsub(n) :
     str+="\tspint mpy;\n" 
     if not algorithm :
         if E: 
-            str+="\tint q=(1<<{}u);\n".format(base)
+            str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
         str+="\tspint carry;\n"
     else :
-        str+="\tint q=(1<<{}u);\n".format(base)
+        str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
     for i in range(0,N) :
         str+="\tn[{}]=_mm_sub_epi64(a[{}],b[{}]);\n".format(i,i,i)
         #str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
@@ -504,10 +504,10 @@ def modneg(n) :
     str+="\tspint zero=_mm_setzero_si128();\n"
     if not algorithm :
         if E: 
-            str+="\tint q=(1<<{}u);\n".format(base)
+            str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
         str+="\tspint carry;\n"
     else :
-        str+="\tint q=(1<<{}u);\n".format(base)
+        str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
     for i in range(0,N) :
         str+="\tn[{}]=_mm_sub_epi64(zero,b[{}]);\n".format(i,i)
         #str+="\tn[{}]=(spint)0-b[{}];\n".format(i,i)

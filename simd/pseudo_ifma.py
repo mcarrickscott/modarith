@@ -331,7 +331,7 @@ def modneg(n,m) :
         str+="\tcarry=prop(n);\n"
         str+=caddp()
     else :
-        str+=addp(mp)
+        str+=addp()
     str+="\t(void)prop(n);\n" 
     str+="}\n"
     return str
