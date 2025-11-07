@@ -368,7 +368,7 @@ def getZM(str,row,n,m) :
                 #str+=" t+=(dpint)lo*(dpint)0x{:x};".format(mm)
             else :
                 if bad_overflow :
-                    str+=" t=vadd_u64(t,vmulct_n_u6(vaddw_u32(hi,lo),0x{:x}));".format(mm)
+                    str+=" t=vadd_u64(t,vmulct_n_u64(vaddw_u32(hi,lo),0x{:x}));".format(mm)
                     #str+=" t+=(hi+(dpint)lo)*(dpint)0x{:x};".format(mm)
                 else :
                     str+=" t=vmlal_n_u32(t,vadd_u32(lo,hi),0x{:x});".format(mm)
