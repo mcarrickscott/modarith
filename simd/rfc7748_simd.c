@@ -152,13 +152,15 @@ static char mask() {
 void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const char *bu2,char *bv2) {
     int i;
     uint32_t kt[2];
-    int swap1,swap2,sb1,sb2;
+    int swp[2],sb[2];
     spint swap,a24;
     char ck1[Nbytes],ck2[Nbytes];
     char cu1[Nbytes],cu2[Nbytes];
     spint u[Nlimbs]; spint x1[Nlimbs]; spint x2[Nlimbs]; spint x3[Nlimbs]; spint z2[Nlimbs]; spint z3[Nlimbs];
     spint A[Nlimbs]; spint B[Nlimbs]; spint AA[Nlimbs]; spint BB[Nlimbs]; spint C[Nlimbs]; spint D[Nlimbs]; spint E[Nlimbs];
     char msk=mask();
+    const char *cu[8]={cu1,cu2,NULL,NULL,NULL,NULL,NULL,NULL}; // up to 8 lanes may be supported -- avx512
+    char *bv[8]={bv1,bv2,NULL,NULL,NULL,NULL,NULL,NULL};
 
     for (i=0;i<Nbytes;i++) {
         ck1[i]=bk1[i];
@@ -177,7 +179,7 @@ void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const c
     clamp(ck2); 
 
 // import into internal representation
-    modimp(cu1,cu2,u);
+    modimp(cu,u);
 
     modcpy(u,x1);  // x_1=u
     modone(x2);    // x_2=1
@@ -185,21 +187,21 @@ void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const c
     modcpy(u,x3);  // x_3=u
     modone(z3);    // z_3=1
 
-    a24=tospint(A24,A24);
+    a24=MR_SET_ALL_LANES_TO_CONSTANT(A24);
 
-    swap1=swap2=0;
+    swp[0]=swp[1]=0;
     for (i=Nbits-1;i>=0;i--)
     {
-        sb1=bit(i,ck1);
-        sb2=bit(i,ck2);
+        sb[0]=bit(i,ck1);
+        sb[1]=bit(i,ck2);
 
-        swap1^=sb1; swap2^=sb2;
+        swp[0]^=sb[0]; swp[1]^=sb[1];
 
-        swap=tospint(swap1,swap2);
+        swap=MR_SET_EACH_LANE_TO_CONSTANT(swp);
         modcsw(swap,x2,x3);
         modcsw(swap,z2,z3);
         
-        swap1=sb1; swap2=sb2;
+        swp[0]=sb[0]; swp[1]=sb[1];
             
         modadd(x2,z2,A);        // A = x_2 + z_2
         modsqr(A,AA);           // AA = A^2
@@ -228,7 +230,7 @@ void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const c
 
     modmul(x2,z2,x2);   
 
-    modexp(x2,bv1,bv2);
+    modexp(x2,bv);
     reverse(bv1); // convert to little endian
     reverse(bv2);
 }
