@@ -466,16 +466,16 @@ def getZMU(str,i) :
     global maxnum
 
     if karatsuba :
+        str+="\tst=MR_CAST64_US(t);\n"
         if i==0 :
-            str+="\tu=d0; t = u;"
+            str+="\tu=d0; st = u;"
             maxnum+=maxdigit*maxdigit
         else :
-            str+="\tu=MR_ADD64S(u,d{}); t=MR_ADD64S(t,u);".format(i)
-            #str+="\tu+=d{}; t+=u;".format(i)
+            str+="\tu=MR_ADD64S(u,d{}); st=MR_ADD64S(st,u);".format(i)
             for m in range(i,int(i/2),-1) :
-                str+=" t=MR_MULADDS(t, MR_SUB32S(a[{}],a[{}]),MR_SUB32S(b[{}],b[{}])   ); ".format(m,i - m, i - m, m)
-                #str+=" t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i - m, i - m, m)
+                str+=" st=MR_MULADDS(st,MR_SUB32S(MR_CAST32_US(a[{}]),MR_CAST32_US(a[{}])),MR_SUB32S(MR_CAST32_US(b[{}]),MR_CAST32_US(b[{}])));".format(m,i - m, i - m, m)
                 maxnum+=maxdigit*maxdigit
+        str+="\tt=MR_CAST64_SU(st);\n"
         return str
 
     k=0
@@ -495,11 +495,10 @@ def getZMU(str,i) :
 def getZMD(str,i) :
     if karatsuba :
         str+="\tst=MR_CAST64_US(t);\n"
-        str+="\tu=MR_SUB64S(u,d{}); t=MR_ADD64S(t,u); ".format(i-N)
-        #str+="\tu-=d{}; t+=u; ".format(i - N)
+        str+="\tu=MR_SUB64S(u,d{}); st=MR_ADD64S(st,u); ".format(i-N)
         for m in range(N-1,int(i/2),-1) :
-            str+="t=MR_MULADDS(t, MR_SUB32S(a[{}],a[{}]),MR_SUB32S(b[{}],b[{}])   ); ".format(m, i - m, i - m, m)
-            #str+="t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m, i - m, i - m, m)
+            str+="st=MR_MULADDS(st,MR_SUB32S(MR_CAST32_US(a[{}]),MR_CAST32_US(a[{}])),MR_SUB32S(MR_CAST32_US(b[{}]),MR_CAST32_US(b[{}]))); ".format(m, i - m, i - m, m)
+        str+="\tt=MR_CAST64_SU(st);\n"
         return str
 
     first=True
@@ -683,7 +682,7 @@ def modmul(n) :
     #str+="\tdpint t=0;\n"
 
     if karatsuba :
-        str+="\tdpint u;\n"
+        str+="\tdpint st,u;\n"
         for i in range(0,N) :
             str+="\tdpint d{}=MR_MUL32S(MR_CAST32_US(a[{}]),MR_CAST32_US(b[{}]));\n".format(i, i, i)
             #str+="\tdpint d{}=(dpint)a[{}]*(dpint)b[{}];\n".format(i, i, i)

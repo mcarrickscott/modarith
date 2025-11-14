@@ -25,7 +25,7 @@
 #define MR_ADD32S(X,Y) _mm_add_epi32(X,Y)
 #define MR_ADD32U(X,Y) _mm_add_epi32(X,Y)
 #define MR_MULADDU(T,X,Y) ({spint PP=_mm_mul_epu32(X,Y); _mm_add_epi64(T,PP);})
-#define MR_MULADDS(T,X,Y) {spint PP=_mm_mul_epi32(X,Y); _mm_add_epi64(T,PP);}
+#define MR_MULADDS(T,X,Y) ({spint PP=_mm_mul_epi32(X,Y); _mm_add_epi64(T,PP);})
 #define MR_MUL64_CONSTANT(X,C) ({spint S=MR_SET_ALL_LANES_TO_CONSTANT(C); spint PP1=_mm_mul_epu32(X,S); spint PP2=_mm_mul_epu32(_mm_srli_epi64(X,32),S); _mm_add_epi64(PP1,_mm_slli_epi64(PP2,32));})
 #define MR_MUL32_CONSTANT(X,C) ({spint S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm_mul_epu32(X,S);})
 #define MR_MULADD32_CONSTANT(T,X,C) ({spint S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm_add_epi64(T,_mm_mul_epu32(X,S));})
