@@ -393,7 +393,7 @@ def getZMU(str,i) :
         else :
             str+="\tu+=d{}; t+=u;".format(i)
             for m in range(i,int(i/2),-1) :
-                str+=" t+=(((c[{}] as SSPINT)-(c[{}] as SSPINT)) as DPINT) * (((b[{}] as SSPINT)-(b[{}] as SSPINT)) as DPINT); ".format(m,i - m, i - m, m)
+                str+=" t+=((   (  (c[{}]-c[{}]) as SSPINT)  as SDPINT) * ((b[{}]-b[{}]) as SSPINT) as SDPINT) as DPINT; ".format(m,i - m, i - m, m)
                 maxnum+=maxdigit*maxdigit
         return str
 
@@ -414,7 +414,7 @@ def getZMD(str,i) :
     if karatsuba :
         str+="\tu-=d{}; t+=u; ".format(i - N)
         for m in range(N-1,int(i/2),-1) :
-            str+="t+=(((c[{}] as SSPINT)-(c[{}] as SSPINT)) as DPINT) * (((b[{}] as SSPINT)-(b[{}] as SSPINT)) as DPINT); ".format(m, i - m, i - m, m)
+            str+="t+=((((c[{}]-c[{}]) as SSPINT) as SDPINT) * ((b[{}]-b[{}]) as SSPINT) as SDPINT) as DPINT; ".format(m, i - m, i - m, m)
         return str
 
     first=True
@@ -437,19 +437,19 @@ def getZSU(str,i) :
     while k<j :
         hap=True
         if first :
-            str+="\ttot=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,i-k)
+            str+="\ttot=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,i-k)
             first=False
         else :
-            str+=" tot+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,i-k)
+            str+=" tot+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,i-k)
         k+=1
         j-=1
     if hap:
         str+=" tot*=2;"
     if i%2==0:
         if first :
-            str+="\ttot=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(int(i/2),int(i/2))
+            str+="\ttot=(c[{}] as DPINT)*(c[{}] as DPINT);".format(int(i/2),int(i/2))
         else :
-            str+=" tot+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(int(i/2),int(i/2))
+            str+=" tot+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(int(i/2),int(i/2))
     if i==0 :
         str+=" t=tot;"
     else :
@@ -465,19 +465,19 @@ def getZSD(str,i) :
     while k<i-k :
         hap=True
         if first :
-            str+="\ttot=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,i-k)
+            str+="\ttot=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,i-k)
             first=False
         else :
-            str+=" tot+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,i-k)
+            str+=" tot+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,i-k)
         k+=1
         j-=1
     if hap :
         str+=" tot*=2;"
     if i%2==0:
         if first :
-            str+="\ttot=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(int(i/2),int(i/2))
+            str+="\ttot=(c[{}] as DPINT)*(c[{}] as DPINT);".format(int(i/2),int(i/2))
         else :
-            str+=" tot+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(int(i/2),int(i/2))
+            str+=" tot+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(int(i/2),int(i/2))
     str+=" t+=tot; "
     return str
 
@@ -524,16 +524,16 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
     if abs(n)>1 :
         e=ispowerof2(n)
         if e > 0  :
-            str+=" t+=(v{} as UDPINT)<<{}; ".format(j,e)
+            str+=" t+=(v{} as DPINT)<<{}; ".format(j,e)
             maxnum+=maxdigit*2**e
         else :
-            str+=" t+=(v{} as UDPINT)*(p{} as UDPINT); ".format(j,i)
+            str+=" t+=(v{} as DPINT)*(p{} as DPINT); ".format(j,i)
             maxnum+=maxdigit*ppw[i]
     if n == 1 :
         if mask_set :
             str+=" s+=v{}; ".format(j)
         else :
-            str+=" t+=v{} as UDPINT; ".format(j)
+            str+=" t+=v{} as DPINT; ".format(j)
             maxnum+=maxdigit
     if n == -1 :
         if mask_set :
@@ -543,10 +543,10 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
                 str+=" s-=v{}; ".format(j)
         else: 
             if not gone_neg :
-                str+=" t+=(q-v{}) as UDPINT;".format(j)
+                str+=" t+=(q-v{}) as DPINT;".format(j)
                 maxnum+=maxdigit
             else :
-                str+=" t-=v{} as UDPINT; ".format(j)
+                str+=" t-=v{} as DPINT; ".format(j)
         gone_neg=True
     return str,gone_neg
 
@@ -563,11 +563,11 @@ def modmli(n,base) :
         str+="pub "
     str+="fn modmli(b: usize,c: &mut [SPINT]) {\n"
     if trin>0 :
-        str+="\tlet mut t=0 as UDPINT;\n"
+        str+="\tlet mut t=0 as DPINT;\n"
         str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
 
         for i in range(0,N) :
-            str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(i)
+            str+="\tt+=(c[{}] as DPINT)*(b as DPINT); ".format(i)
             str+="c[{}]=(t as SPINT) & mask; t=t>>{};\n".format(i,base)
 
         str+="// reduction pass\n\n"  
@@ -594,16 +594,16 @@ def modmli(n,base) :
                         str+="\tlet p{}={} as SPINT;\n".format(i,hex(-d))
 
         str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
-        str+="\tlet mut t=0 as UDPINT;\n"
+        str+="\tlet mut t=0 as DPINT;\n"
         str+="\tlet r=0x{:x} as SPINT;\n".format((2**(n+base))//p)
         for i in range(0,N-1) :
-            str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(i)
+            str+="\tt+=(c[{}] as DPINT)*(b as DPINT); ".format(i)
             str+="c[{}]=(t as SPINT) & mask; t=t>>{};\n".format(i,base)
-        str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(N-1)
+        str+="\tt+=(c[{}] as DPINT)*(b as DPINT); ".format(N-1)
         str+="c[{}]=t as SPINT;\n".format(N-1)
         str+="\t\n//Barrett-Dhem reduction\n"
         str+="\tlet h = (t>>{}) as SPINT;\n".format((n-WL)%base)
-        str+="\tlet q=(((h as UDPINT)*(r as UDPINT))>>{}) as SPINT;\n".format(WL)  
+        str+="\tlet q=(((h as DPINT)*(r as DPINT))>>{}) as SPINT;\n".format(WL)  
 
 # required to propagate carries?
         propc=False
@@ -622,21 +622,24 @@ def modmli(n,base) :
                 continue
             if d==1 :
                 str+="\tc[{}]-=q;\n".format(i)
+                continue
             e=ispowerof2(d)
             if e>0 :
                 if i<N-1 :
-                    str+="\tt=(q as UDPINT)<<{}; c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(e,i,i+1,base)
+                    str+="\tt=(q as DPINT)<<{}; c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(e,i,i+1,base)
                 else :
                     str+="\tc[{}]-=q<<{};\n".format(i,e)
             else :
                 if d<0 :
-                    str+="\tt=(q as UDPINT)*(p{} as UDPINT); c[{}]+=(t as SPINT)&mask; c[{}]+=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
+                    str+="\tt=(q as DPINT)*(p{} as DPINT); c[{}]+=(t as SPINT)&mask; c[{}]+=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
                 else :
                     if i<N-1 :
-                        str+="\tt=(q as UDPINT)*(p{} as UDPINT); c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
+                        str+="\tt=(q as DPINT)*(p{} as DPINT); c[{}]-=(t as SPINT)&mask; c[{}]-=(t>>{}) as SPINT;\n".format(i,i,i+1,base)
                     else :
                         str+="\tc[{}]-=q*p{};\n".format(i,i)
                         #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+        if E:
+            str+="\tc[{}]-=q<<{};\n".format(N-1,base)
         if propc :
             str+="\tprop(c);\n"
         else :
@@ -869,8 +872,8 @@ def modsqr(n,base) :
         str+="pub "
     str+="fn modsqr(c: &mut [SPINT]) {\n"
 
-    str+="\tlet mut t:UDPINT;\n"
-    str+="\tlet mut tot:UDPINT;\n"
+    str+="\tlet mut t:DPINT;\n"
+    str+="\tlet mut tot:DPINT;\n"
     str+="\tlet mut s:SPINT;\n"
     for i in range(0,N) :
         if i==0 and PM :
@@ -890,12 +893,12 @@ def modsqr(n,base) :
         str+=" let v0=(((t as SPINT)*ndash)& mask) as SPINT;"
         if PM :
             gone_neg=True
-            str+=" t+=({}*(q-v0)) as UDPINT; ".format(M)
+            str+=" t+=({}*(q-v0)) as DPINT; ".format(M)
         else :
             if ppw[0]==1 :
-                str+=" t+=v0 as UDPINT;"
+                str+=" t+=v0 as DPINT;"
             else :
-                str+=" t+=(v0 as UDPINT) * (p0 as UDPINT);"
+                str+=" t+=(v0 as DPINT) * (p0 as DPINT);"
 
     else :
         str+=" let v0=((t as SPINT) & mask) as SPINT;"
@@ -907,7 +910,7 @@ def modsqr(n,base) :
     for i in range(1,N) :
         if gone_neg :
             if PM :
-                str+=" t+=({}*mask) as UDPINT;".format(M)
+                str+=" t+=({}*mask) as DPINT;".format(M)
             else :
                 str+=" s=mask as SPINT;"
                 mask_set=True
@@ -918,18 +921,18 @@ def modsqr(n,base) :
             str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" t+=s as UDPINT;"
+            str+=" t+=s as DPINT;"
             mask_set=False   
 
         if fullmonty :
             str+=" let v{}=(((t as SPINT)*ndash) & mask) as SPINT; ".format(i)
             if PM :
-                str+=" t-=({}*v{}) as UDPINT; ".format(M,i)
+                str+=" t-=({}*v{}) as DPINT; ".format(M,i)
             else :
                 if ppw[0]==1 :
-                    str+=" t+=v{} as UDPINT; ".format(i)
+                    str+=" t+=v{} as DPINT; ".format(i)
                 else :
-                    str+=" t+=(v{} as UDPINT)*(p0 as UDPINT); ".format(i)
+                    str+=" t+=(v{} as DPINT)*(p0 as DPINT); ".format(i)
         else :
             str+=" let v{}=((t as SPINT) & mask) as SPINT;".format(i)
         str+=" t>>={};\n".format(base)
@@ -939,7 +942,7 @@ def modsqr(n,base) :
     str=getZSD(str,N)
     if gone_neg :
         if PM :
-            str+=" t+=({}*mask) as UDPINT;".format(M)
+            str+=" t+=({}*mask) as DPINT;".format(M)
         else :
             str+=" s=mask as SPINT;"
             mask_set=True
@@ -950,17 +953,17 @@ def modsqr(n,base) :
             str,gone_neg=sqr_process(N-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" t+=s as UDPINT;"
+            str+=" t+=s as DPINT;"
             mask_set=False   
         if fullmonty :
             str+=" let v{}=(((t as SPINT)*ndash) & mask) as SPINT; ".format(N)
             if PM :
-                str+=" t-=({}*v{}) as UDPINT; ".format(M,N)
+                str+=" t-=({}*v{}) as DPINT; ".format(M,N)
             else :
                 if ppw[0]==1 :
-                    str+=" t+=v{} as UDPINT; ".format(N)
+                    str+=" t+=v{} as DPINT; ".format(N)
                 else :
-                    str+=" t+=(v{} as UDPINT)*(p0 as UDPINT); ".format(N)
+                    str+=" t+=(v{} as DPINT)*(p0 as DPINT); ".format(N)
         else :
             str+=" let v{}=((t as SPINT) & mask) as SPINT; ".format(N)
         str+=" t>>={};\n".format(base)
@@ -969,7 +972,7 @@ def modsqr(n,base) :
         for i in range(N+1,2*N) :
             if gone_neg :
                 if PM :
-                    str+=" t+=({}*mask) as UDPINT;".format(M)
+                    str+=" t+=({}*mask) as DPINT;".format(M)
                 else :
                     str+= "s=mask as SPINT;"
                     mask_set=True
@@ -979,7 +982,7 @@ def modsqr(n,base) :
                 str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" t+=s as UDPINT;"
+                str+=" t+=s as DPINT;"
                 mask_set=False   
             str+=" c[{}]=((t as SPINT) & mask) as SPINT; ".format(i-N-1)
             str+=" t>>={};\n".format(base)
@@ -992,11 +995,11 @@ def modsqr(n,base) :
 
         if gone_neg :
             if PM :
-                str+=" t+=(v{}-{}) as UDPINT;".format(N,M)
+                str+=" t+=(v{}-{}) as DPINT;".format(N,M)
             else :
-                str+=" t+=(v{}-1) as UDPINT;".format(N)
+                str+=" t+=(v{}-1) as DPINT;".format(N)
         else :
-            str+=" t+=v{} as UDPINT;".format(N)
+            str+=" t+=v{} as DPINT;".format(N)
         str+=" c[{}] = t as SPINT;\n".format(N-1)
     else :
         for i in range(N,2*N-1) :
@@ -1005,7 +1008,7 @@ def modsqr(n,base) :
                 str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" t+=s as UDPINT;"
+                str+=" t+=s as DPINT;"
                 mask_set=False   
             if i==2*N-1 :
                 break
@@ -1015,7 +1018,7 @@ def modsqr(n,base) :
                 str=getZSD(str,i+1)
                 if gone_neg :
                     if PM :
-                        str+=" t+=({}*mask) as UDPINT;".format(M)
+                        str+=" t+=({}*mask) as DPINT;".format(M)
                     else :
                         str+= "s=mask as SPINT;"
                         mask_set=True
@@ -1938,11 +1941,8 @@ with open('time.rs', 'w') as f:
         print("use std::time::Instant;")
         print("pub type SPINT = u{};".format(WL))
         print("pub type SSPINT = i{};".format(WL))
-        print("pub type UDPINT = u{};".format(2*WL))
-        if karatsuba :
-            print("pub type DPINT = i{};".format(2*WL))
-        else :
-            print("pub type DPINT = u{};".format(2*WL))
+        print("pub type DPINT = u{};".format(2*WL))
+        print("pub type SDPINT = i{};".format(2*WL))
         print(prop(n,base))
         print(flat(n,base))
         print(modfsb(n,base))
@@ -1983,19 +1983,14 @@ with open(fname, 'w') as f:
         if makepublic :
             print("pub type SPINT = u{};".format(WL))
             print("pub type SSPINT = i{};".format(WL))
-            print("pub type UDPINT = u{};".format(2*WL))
-            if karatsuba :
-                print("pub type DPINT = i{};".format(2*WL))
-            else :
-                print("pub type DPINT = u{};".format(2*WL))
+            print("pub type DPINT = u{};".format(2*WL))
+            print("pub type SDPINT = i{};".format(2*WL))
+
         else :
             print("type SPINT = u{};".format(WL))
             print("type SSPINT = i{};".format(WL))
-            print("type UDPINT = u{};".format(2*WL))
-            if karatsuba :
-                print("type DPINT = i{};".format(2*WL))
-            else :
-                print("type DPINT = u{};".format(2*WL))
+            print("type DPINT = u{};".format(2*WL))
+            print("type SDPINT = i{};".format(2*WL))
 
         print(prop(n,base))
         print(flat(n,base))

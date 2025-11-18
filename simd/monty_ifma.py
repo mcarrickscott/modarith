@@ -1015,6 +1015,7 @@ def modmli(n) :
             if d==1 :
                 str+="\tc[{}]=_mm_sub_epi64(c[{},q);\n".format(i,i)
                 #str+="\tc[{}]-=q;\n".format(i)
+                continue
             e=ispowerof2(d)
             if e>0 :
                 if i<N-1 :
@@ -1036,6 +1037,9 @@ def modmli(n) :
                         str+="\tc[{}]=_mm_sub_epi64(c[{}],tl);\n".format(i,i)
                         #str+="\tc[{}]-=q*p{};\n".format(i,i)
                         #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+        if E:
+            str+="\tc[{}]=_mm_sub_epi64(c[{}],_mm_slli_epi64(q,{}u));\n".format(N-1,N-1,base)
+            #str+="\tc[{}]-=(q<<{}u);\n".format(N-1,base)
 #        str+="*/\n"
 #        str+="\tspint t[{}];\n".format(N)
 #        str+="\tmodint{}(b,t);\n".format(DECOR)

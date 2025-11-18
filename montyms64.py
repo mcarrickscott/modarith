@@ -1009,6 +1009,7 @@ def modmli(n) :
                 continue
             if d==1 :
                 str+="\tc[{}]-=q;\n".format(i)
+                continue
             e=ispowerof2(d)
             if e>0 :
                 if i<N-1 :
@@ -1024,6 +1025,8 @@ def modmli(n) :
                     else :
                         str+="\tc[{}]-=q*p{};\n".format(i,i)
                         #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+        if E:
+            str+="\tc[{}]-=(q<<{}u);\n".format(N-1,base)
         if propc :
             str+="\t(void)prop(c);\n"
         else :

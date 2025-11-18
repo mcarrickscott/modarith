@@ -12,7 +12,7 @@
 # NIST521 = 2^521-1
 #
 # requires addchain utility in the path - see https://github.com/mmcloughlin/addchain 
-#
+
 # Execute this program as: python3 pseudo_simd.py X25519
 # Production code is output to file field.c
 # 
@@ -43,6 +43,7 @@ if use_rdtsc :
     cyclescounter=False
 if cyclescounter :
     use_rdtsc=False
+karatsuba=False  # default setting
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
@@ -58,6 +59,8 @@ import subprocess
 def getbase(n) :
     limbs=int(n/WL)
     limit=2*WL
+    if karatsuba :
+        limit=2*WL-1
     while (True) :
         limbs=limbs+1
         if limbs==1 :   # must be at least 2 limbs
@@ -323,6 +326,56 @@ def getZM(str,row,n,m) :
     k=row+1
     L=N-1
 
+    if karatsuba :
+        i=row+N
+        if row<N-1 :
+            str+="\ttt=MR_SUB64U(d{},d{}); ".format(N-1,row)
+            for m in range(N-1,int(i/2),-1) :
+                str+="tt=MR_CAST64_SU(MR_MULADDS(MR_CAST64_US(tt),MR_SUB32S(MR_CAST32_US(a[{}]),MR_CAST32_US(a[{}])),MR_SUB32S(MR_CAST32_US(b[{}]),MR_CAST32_US(b[{}]))   ) );".format(m,i-m, i-m, m)
+                #str+="tt+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i-m, i-m, m)
+            if overflow :
+                str+=" lo=MR_AND(MR_CAST6432(tt),mask);"
+                #str+=" lo=(spint)tt & mask;"
+                if row==0 :
+                    str+=" t=MR_ADD64U(t,MR_ADD64U(d{},MR_MUL32_W_CONSTANT(lo,0x{:x})));".format(row,mm)
+                    #str+=" t+=d{}+(dpint)lo*(dpint)0x{:x};".format(row,mm)
+                else :
+                    if bad_overflow_mul :
+                        str+=" t=MR_ADD64U(t,MR_ADD64U(d{},MR_MUL64_CONSTANT(MR_ADD6432U(hi,lo),0x{:x})));".format(row,mm)
+                        #str+=" t+=d{}+(dpint)((hi+(dpint)lo)*0x{:x});".format(row,mm)
+                    else :
+                        str+=" t=MR_ADD64U(t,MR_ADD64U(d{}, MR_MUL32_W_CONSTANT(MR_ADD32U(lo,hi),0x{:x}) ));".format(row,mm)
+                        #str+=" t+=d{}+(dpint)(lo+hi)*0x{:x};".format(row,mm)
+                if bad_overflow_mul :
+                    str+=" hi=MR_SHR64U(tt,{}u);".format(base)
+                    #str+=" hi=((dpint)tt>>{}u);".format(base)
+                else :
+                    str+=" hi=MR_CAST6432(MR_SHR64U(tt,{}u));".format(base)
+                    #str+=" hi=(spint)((dpint)tt>>{}u);".format(base)
+            else :
+                str+="tt=MR_MUL64_CONSTANT(tt,0x{:x});".format(mm);
+                str+=" t=MR_ADD64U(t,MR_ADD64U(d{},tt));".format(row)
+
+                #str+="tt*=0x{:x};".format(mm)
+                #str+=" t+=d{}+tt;".format(row)
+        else :
+            str+="\tt=MR_ADD64U(t,d{});".format(N-1)
+            #str+="\tt+=d{};".format(N-1)
+        i=row
+        for m in range(i,int(i/2),-1) :
+            str+=" t=MR_CAST64_SU(MR_MULADDS(MR_CAST64_US(t),MR_SUB32S(MR_CAST32_US(a[{}]),MR_CAST32_US(a[{}])),MR_SUB32S(MR_CAST32_US(b[{}]),MR_CAST32_US(b[{}]))  )  );".format(m,i - m, i - m, m)
+            #str+=" t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i - m, i - m, m) 
+        if row==N-1 and overflow :
+            if bad_overflow_mul :
+                str+=" t=MR_ADD64U(t,MR_MUL64_CONSTANT(hi,0x{:x}));".format(mm)
+            else :
+                str+=" t=MR_ADD64U(t,MR_MUL32_W_CONSTANT(hi,0x{:x}));".format(mm)
+
+            #str+=" t+=(dpint)hi*0x{:x};".format(mm)
+        str+=" spint v{}=MR_AND(MR_CAST6432(t),mask); t=MR_SHR64U(t,{}u);\n".format(row,base)
+        #str+=" spint v{}=(spint)t & mask; t=(t>>{}u);\n".format(row,base)
+        return str
+
     first=True
     while k<N :
         if EPM :
@@ -347,13 +400,13 @@ def getZM(str,row,n,m) :
                 str+=" t=MR_MULADD32_CONSTANT(t,lo,0x{:x});".format(mm)
                 #str+=" t+=(dpint)lo*(dpint)0x{:x};".format(mm)
             else :
-                if bad_overflow :
-                    str+=" t=MR_ADD64U(t,MR_MUL64_CONSTANT(MR_ADD64U(hi,lo),0x{:x}));".format(mm)   
+                if bad_overflow_mul :
+                    str+=" t=MR_ADD64U(t,MR_MUL64_CONSTANT(MR_ADD6432U(hi,lo),0x{:x}));".format(mm)   
                     #str+=" t+=(hi+(dpint)lo)*(dpint)0x{:x};".format(mm)
                 else :
                     str+=" t=MR_MULADD32_CONSTANT(t,MR_ADD32U(lo,hi),0x{:x});".format(mm)
                     #str+=" t+=(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(mm)
-            if bad_overflow :
+            if bad_overflow_mul :
                 str+=" hi=MR_SHR64U(tt,{}u);".format(base)
                 #str+=" hi=tt>>{}u;".format(base)
             else :
@@ -379,7 +432,10 @@ def getZM(str,row,n,m) :
             #str+=" t+=(dpint)a[{}]*(dpint)b[{}];".format(k,row-k)
         k+=1
     if row==N-1 and overflow :
-        str+=" t=MR_MULADD32_CONSTANT(t,hi,0x{:x});".format(mm)
+        if bad_overflow_mul :
+            str+=" t=MR_ADD64U(t,MR_MUL64_CONSTANT(hi,0x{:x}));".format(mm)
+        else :
+            str+=" t=MR_MULADD32_CONSTANT(t,hi,0x{:x});".format(mm)
         #str+=" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
     str+=" spint v{}=MR_AND(MR_CAST6432(t),mask); t=MR_SHR64U(t,{}u);\n".format(row,base)
     #str+=" spint v{}=(spint)t & mask; t=t>>{}u;\n".format(row,base)
@@ -404,23 +460,23 @@ def getZS(str,row,n,m) :
                 else :
                     str+=" "   
                 str+="t=MR_MULADDU(t,ma{},ta{});".format(k,L)
-                #str+="t+=(udpint)ma{}*(udpint)ta{};".format(k,L)
+                #str+="t+=(dpint)ma{}*(dpint)ta{};".format(k,L)
             else :
                 if first :
                     str+="\tt=MR_MULADDU(t,ma{},a[{}]);".format(k,L)
-                    #str+="\tt+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                    #str+="\tt+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
                     first=False
                 else :
                     str+=" t=MR_MULADDU(t,ma{},a[{}]);".format(k,L)
-                    #str+=" t+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                    #str+=" t+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
         else :
             if first :
                 str+="\ttt=MR_MUL32U(a[{}],a[{}]);".format(k,L)
-                #str+="\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                #str+="\ttt=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
                 first=False
             else :
                 str+=" tt=MR_MULADDU(tt,a[{}],a[{}]);".format(k,L)
-                #str+=" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                #str+=" tt+=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
 
         L-=1
         k+=1
@@ -435,15 +491,15 @@ def getZS(str,row,n,m) :
             else :
                 str+=" " 
             str+="t=MR_MULADDU(t,ma{},a[{}]);".format(k,k)    
-            #str+="t+=(udpint)ma{}*(udpint)a[{}];".format(k,k)
+            #str+="t+=(dpint)ma{}*(dpint)a[{}];".format(k,k)
         else :
             if first :
                 str+="\ttt=MR_MUL32U(a[{}],a[{}]);".format(k,k)
-                #str+="\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                #str+="\ttt=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
                 first=False
             else :
                 str+=" tt=MR_MULADDU(tt,a[{}],a[{}]);".format(k,k)
-                #str+=" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                #str+=" tt+=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
     first=True
     if row<N-1:
         if overflow :
@@ -470,15 +526,15 @@ def getZS(str,row,n,m) :
     while k<L :
         if EPM and dble :
             str+="t=MR_MULADDU(t,a[{}],ta{});".format(k,L)
-            #str+="t+=(udpint)a[{}]*(udpint)ta{};".format(k,L)
+            #str+="t+=(dpint)a[{}]*(dpint)ta{};".format(k,L)
         else :
             if first :
                 str+="t2=MR_MUL32U(a[{}],a[{}]);".format(k,L)
-                #str+="t2=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                #str+="t2=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
                 first=False
             else :
                 str+=" t2=MR_MULADDU(t2,a[{}],a[{}]);".format(k,L)
-                #str+=" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                #str+=" t2+=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
         k+=1
         L-=1
 
@@ -489,33 +545,36 @@ def getZS(str,row,n,m) :
     if k==L :
         if EPM :
             str+=" t=MR_MULADDU(t,a[{}],a[{}]);".format(k,k)
-            #str+=" t+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+            #str+=" t+=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
         else :
             if first :
                 str+="t2=MR_MUL32U(a[{}],a[{}]);".format(k,k)
-                #str+="t2=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                #str+="t2=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
                 first=False
             else :
                 str+=" t2=MR_MULADDU(t2,a[{}],a[{}]);".format(k,k)
-                #str+=" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                #str+=" t2+=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
  
 
     if overflow :
         if row==N-1 : 
-            str+=" t=MR_MULADD32_CONSTANT(t,hi,0x{:x});".format(mm)
-            #str+=" t+=(udpint)hi*(udpint)0x{:x};".format(mm)
+            if bad_overflow_sqr :
+                str+=" t=MR_ADD64U(t,MR_MUL64_CONSTANT(hi,0x{:x}));".format(mm)
+            else :
+                str+=" t=MR_MULADD32_CONSTANT(t,hi,0x{:x});".format(mm)
+            #str+=" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
         else :
             if row==0 :
                 str+=" t2=MR_MULADD32_CONSTANT(t2,lo,0x{:x});".format(mm)
-                #str+=" t2+=(udpint)lo*(udpint)0x{:x};".format(mm)
+                #str+=" t2+=(dpint)lo*(dpint)0x{:x};".format(mm)
             else :
-                if bad_overflow :
-                    str+=" t2=MR_ADD64U(t2,MR_MUL64_CONSTANT(MR_ADD64U(hi,lo),0x{:x}));".format(mm)
-                    #str+=" t2+=(hi+(udpint)lo)*(udpint)0x{:x};".format(mm)
+                if bad_overflow_sqr :
+                    str+=" t2=MR_ADD64U(t2,MR_MUL64_CONSTANT(MR_ADD6432U(hi,lo),0x{:x}));".format(mm)
+                    #str+=" t2+=(hi+(dpint)lo)*(dpint)0x{:x};".format(mm)
                 else :
                     str+=" t2=MR_MULADD32_CONSTANT(t2,MR_ADD32U(lo,hi),0x{:x});".format(mm)
-                    #str+=" t2+=(udpint)(spint)(lo+hi)*(udpint)0x{:x};".format(mm)
-            if bad_overflow :
+                    #str+=" t2+=(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(mm)
+            if bad_overflow_sqr :
                 str+=" hi=MR_SHR64U(tt,{}u);".format(base)
                 #str+=" hi=tt>>{}u;".format(base)
             else :
@@ -556,7 +615,7 @@ def second_pass(str,n,m) :
         str+= "\tcarry=MR_ADD32U(MR_SHR32U(s,{}),MR_SHR32U(ut,{}));\n".format(base,base)
 
     else :
-        str+="\tudpint ut=(udpint)t;\n"    
+        str+="\tdpint ut=(dpint)t;\n"    
         if xcess>0 :
             str+="\tspint smask=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format((1<<(base-xcess))-1)
             str+="\tut=MR_ADD6432U(MR_SHL64U(ut,{}),MR_SHR32U(v{},{})); v{}=MR_AND(v{},smask);\n".format(xcess,N-1,base-xcess,N-1,N-1)
@@ -604,20 +663,25 @@ def modmul(n,m) :
         str+="void inline modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
     else :
         str+="void modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
-
     str+="\tdpint t=MR_DZERO();\n"
-    #str+="\tdpint t=0;\n"
-
-    if  EPM  :
-        for i in range(1,N) :
-            str+="\tspint ma{}=MR_MUL32_CONSTANT(a[{}],0x{:x});".format(i,i,m)
-            #str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
-    else :
+    if karatsuba :
         str+="\tdpint tt;\n"
+        str+="\tdpint d0=MR_MUL32U(a[0],b[0]);\n"
+        #str+="\tdpint d0=(dpint)a[0]*(dpint)b[0];\n"
+        for i in range(1,N) :
+            str+="\tdpint d{}=MR_ADD64U(d{},MR_MUL32U(a[{}],b[{}]));\n".format(i,i-1,i,i)
+            #str+="\tdpint d{}=d{}+(dpint)a[{}]*(dpint)b[{}];\n".format(i, i-1, i, i)
+    else:
+        if  EPM  :
+            for i in range(1,N) :
+                str+="\tspint ma{}=MR_MUL32_CONSTANT(a[{}],0x{:x});".format(i,i,m)
+                #str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
+        else :
+            str+="\tdpint tt;\n"
 
     if overflow :
         str+="\tspint lo;\n"
-        if bad_overflow :
+        if bad_overflow_mul :
             str+="\tdpint hi;\n"   # could overflow single type
         else :
             str+="\tspint hi;\n"
@@ -649,8 +713,8 @@ def modsqr(n,m) :
     else :
         str+="void modsqr{}(const spint *a,spint *c) {{\n".format(DECOR)
     
-    str+="\tudpint t=MR_DZERO();\n"
-    #str+="\tudpint t=0;\n"
+    str+="\tdpint t=MR_DZERO();\n"
+    #str+="\tdpint t=0;\n"
 
     if  EPM  :
         for i in range(1,N) :
@@ -660,8 +724,8 @@ def modsqr(n,m) :
             str+="\tspint ma{}=MR_MUL32_CONSTANT(a[{}],0x{:x});\n".format(i,i,mm)
             #str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
     else :
-        str+="\tudpint tt;\n"
-        str+="\tudpint t2;\n"
+        str+="\tdpint tt;\n"
+        str+="\tdpint t2;\n"
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
     str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT((1<<{}u)-1);\n".format(base)
@@ -669,8 +733,8 @@ def modsqr(n,m) :
 
     if overflow :
         str+="\tspint lo;\n"
-        if bad_overflow :
-            str+="\tudpint hi;\n"
+        if bad_overflow_sqr :
+            str+="\tdpint hi;\n"
         else :
             str+="\tspint hi;\n"
 
@@ -694,8 +758,8 @@ def modmli(n,m) :
         str+="void inline modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     else :
         str+="void modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
-    str+="\tudpint t=MR_DZERO();\n"
-    #str+="\tudpint t=0;\n"
+    str+="\tdpint t=MR_DZERO();\n"
+    #str+="\tdpint t=0;\n"
 
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
@@ -706,7 +770,7 @@ def modmli(n,m) :
     for i in range(0,N) :
         str+="\tt=MR_MULADDU(t,a[{}],bw); ".format(i)
         str+="spint v{}=MR_AND(MR_CAST6432(t),mask); t=MR_SHR64U(t,{}u);\n".format(i,base)
-        #str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+        #str+="\tt+=(dpint)a[{}]*(dpint)b; ".format(i)
         #str+="spint v{}=(spint)t & mask; t=t>>{}u;\n".format(i,base)
 
     str=second_pass(str,n,m)
@@ -1366,7 +1430,6 @@ def header() :
         if NLANES==2 :
             print("#define sspint __m128i")
             print("#define spint __m128i")
-            print("#define udpint __m128i")
             print("#define dpint __m128i")
             print("#define SIMD_ENGINE SSE4")
             print("#define SIMD_LANES 2\n")
@@ -1374,7 +1437,6 @@ def header() :
             print("#include <immintrin.h>\n")
             print("#define sspint __m256i")
             print("#define spint __m256i")
-            print("#define udpint __m256i")
             print("#define dpint __m256i")
             print("#define SIMD_ENGINE AVX2")
             print("#define SIMD_LANES 4\n")
@@ -1382,7 +1444,6 @@ def header() :
             print("#include <immintrin.h>\n")
             print("#define sspint __m512i")
             print("#define spint __m512i")
-            print("#define udpint __m512i")
             print("#define dpint __m512i")
             print("#define SIMD_ENGINE AVX512")
             print("#define SIMD_LANES 8\n")
@@ -1391,8 +1452,8 @@ def header() :
         if NLANES==2 :
             print("#define sspint int32x2_t")
             print("#define spint uint32x2_t")
-            print("#define udpint uint64x2_t")
             print("#define dpint uint64x2_t")
+            print("#define sdpint int64x2_t")
             print("#define SIMD_ENGINE NEON")
             print("#define SIMD_LANES 2\n")
     print('#include "simd.h"')
@@ -1610,16 +1671,24 @@ ROI=makebig(roi,base,N)
 mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
 print("Compiler is "+compiler) 
-print("Using standard Comba for modmul")
+if karatsuba :
+    print("Using Karatsuba for modmul")
+else : 
+    print("Using standard Comba for modmul")
 
 overflow=False
-bad_overflow=False
+bad_overflow_mul=False
+bad_overflow_sqr=False
 if (b-1)*(b-1)*mm*N >= 2**(2*WL) :
     overflow=True
     print("Possibility of overflow... using alternate method")
     if (N-1)*(b-1)**2 >= 2**(2*WL-3) :
-        bad_overflow=True
-if bad_overflow :
+        bad_overflow_mul=True
+        bad_overflow_sqr=True
+    if karatsuba :
+        if (N-1)*(b-1)**2 >= 2**(2*WL-4) :
+            bad_overflow_mul=True
+if bad_overflow_mul :
     print("Overflow requires extra resource")
 
 # faster reduction
@@ -1648,6 +1717,8 @@ if m*(2**(2*WL-base+xcess)+2**(base-xcess)) >= 2**(2*base) :
 from contextlib import redirect_stdout
 
 # Note that the accumulated partial products must not exceed the double precision limit. 
+# If NOT using karatsuba this limit can be 2**(2*WL), otherwise 2**(2*WL-1)
+# If NOT using karatsuba use unsigned integer types to store limbs, otherwise use signed types
 
 DECOR=""
 modulus=p

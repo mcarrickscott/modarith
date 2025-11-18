@@ -396,7 +396,7 @@ def getZMU(str,i) :
         else :
             str+="\tu+=d{}; t+=u;".format(i)
             for m in range(i,int(i/2),-1) :
-                str+=" t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i - m, i - m, m)
+                str+=" t+=(dpint)((sdpint)(sspint)(a[{}]-a[{}])*(sdpint)(sspint)(b[{}]-b[{}])); ".format(m,i - m, i - m, m)
                 maxnum+=maxdigit*maxdigit
         return str
 
@@ -417,7 +417,7 @@ def getZMD(str,i) :
     if karatsuba :
         str+="\tu-=d{}; t+=u; ".format(i - N)
         for m in range(N-1,int(i/2),-1) :
-            str+="t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m, i - m, i - m, m)
+            str+="t+=(dpint)((sdpint)(sspint)(a[{}]-a[{}])*(sdpint)(sspint)(b[{}]-b[{}])); ".format(m, i - m, i - m, m)
         return str
 
     first=True
@@ -440,19 +440,19 @@ def getZSU(str,i) :
     while k<j :
         hap=True
         if first :
-            str+="\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+="\ttot=(dpint)a[{}]*a[{}];".format(k,i-k)
             first=False
         else :
-            str+=" tot+=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+=" tot+=(dpint)a[{}]*a[{}];".format(k,i-k)
         k+=1
         j-=1
     if hap:
         str+=" tot*=2;"
     if i%2==0:
         if first :
-            str+="\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+            str+="\ttot=(dpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
         else :
-            str+=" tot+=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+            str+=" tot+=(dpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
     if i==0 :
         str+=" t=tot;"
     else :
@@ -468,19 +468,19 @@ def getZSD(str,i) :
     while k<i-k :
         hap=True
         if first :
-            str+="\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+="\ttot=(dpint)a[{}]*a[{}];".format(k,i-k)
             first=False
         else :
-            str+=" tot+=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+=" tot+=(dpint)a[{}]*a[{}];".format(k,i-k)
         k+=1
         j-=1
     if hap :
         str+=" tot*=2;"
     if i%2==0:
         if first :
-            str+="\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+            str+="\ttot=(dpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
         else :
-            str+=" tot+=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+            str+=" tot+=(dpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
     str+=" t+=tot; "
     return str
 
@@ -495,7 +495,7 @@ def mul_process(i,j,str,gone_neg,mask_set) :
     if abs(n)>1 :
         e=ispowerof2(n)
         if e > 0  :
-            str+=" t+=(dpint)(udpint)((udpint)v{}<<{}u); ".format(j,e)
+            str+=" t+=(dpint)(dpint)((dpint)v{}<<{}u); ".format(j,e)
             maxnum+=maxdigit*2**e
         else :
             str+=" t+=(dpint)v{}*(dpint)p{}; ".format(j,i)
@@ -527,16 +527,16 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
     if abs(n)>1 :
         e=ispowerof2(n)
         if e > 0  :
-            str+=" t+=(udpint)v{}<<{}u; ".format(j,e)
+            str+=" t+=(dpint)v{}<<{}u; ".format(j,e)
             maxnum+=maxdigit*2**e
         else :
-            str+=" t+=(udpint)v{}*p{}; ".format(j,i)
+            str+=" t+=(dpint)v{}*p{}; ".format(j,i)
             maxnum+=maxdigit*ppw[i]
     if n == 1 :
         if mask_set :
             str+=" s+=v{}; ".format(j)
         else :
-            str+=" t+=(udpint)v{}; ".format(j)
+            str+=" t+=(dpint)v{}; ".format(j)
             maxnum+=maxdigit
     if n == -1 :
         if mask_set :
@@ -546,10 +546,10 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
                 str+=" s-=v{}; ".format(j)
         else: 
             if not gone_neg :
-                str+=" t+=(udpint)(spint)(q-v{});".format(j)
+                str+=" t+=(dpint)(spint)(q-v{});".format(j)
                 maxnum+=maxdigit
             else :
-                str+=" t-=(udpint)v{}; ".format(j)
+                str+=" t-=(dpint)v{}; ".format(j)
         gone_neg=True
     return str,gone_neg
 
@@ -777,14 +777,14 @@ def modmli(n) :
         str+="static "
     str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
     if trin>0 :
-        str+="\tudpint t=0;\n"
+        str+="\tdpint t=0;\n"
 
         #str+="\tspint carry;\n"
         str+="\tspint s;\n"
         str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
         for i in range(0,N) :
-            str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+            str+="\tt+=(dpint)a[{}]*(dpint)b; ".format(i)
             str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
 
         str+="// reduction pass\n\n"  
@@ -810,16 +810,16 @@ def modmli(n) :
                         str+="\tspint p{}={}u;\n".format(i,hex(-d))
 
         str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
-        str+="\tudpint t=0;\n"
+        str+="\tdpint t=0;\n"
         str+="\tspint q,h,r=0x{:x};\n".format((2**(n+base))//p)
         for i in range(0,N-1) :
-            str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+            str+="\tt+=(dpint)a[{}]*(dpint)b; ".format(i)
             str+="c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
-        str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
+        str+="\tt+=(dpint)a[{}]*(dpint)b; ".format(N-1)
         str+="c[{}]=(spint)t;\n".format(N-1)
         str+="\t\n//Barrett-Dhem reduction\n"
         str+="\th = (spint)(t>>{}u);\n".format((n-WL)%base)
-        str+="\tq=(spint)(((udpint)h*(udpint)r)>>{}u);\n".format(WL)  
+        str+="\tq=(spint)(((dpint)h*(dpint)r)>>{}u);\n".format(WL)  
 
 # required to propagate carries?
         propc=False
@@ -838,21 +838,24 @@ def modmli(n) :
                 continue
             if d==1 :
                 str+="\tc[{}]-=q;\n".format(i)
+                continue
             e=ispowerof2(d)
             if e>0 :
                 if i<N-1 :
-                    str+="\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
+                    str+="\tt=(dpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
                 else :
                     str+="\tc[{}]-=q<<{}u;\n".format(i,e)
             else :
                 if d<0 :
-                    str+="\tt=(udpint)q*(udpint)p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
+                    str+="\tt=(dpint)q*(dpint)p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
                 else :
                     if i<N-1 :
-                        str+="\tt=(udpint)q*(udpint)p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(i,i,i+1,base)
+                        str+="\tt=(dpint)q*(dpint)p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(i,i,i+1,base)
                     else :
                         str+="\tc[{}]-=q*p{};\n".format(i,i)
                         #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
+        if E:
+            str+="\tc[{}]-=(q<<{}u);\n".format(N-1,base)
         if propc :
             str+="\t(void)prop(c);\n"
         else :
@@ -876,8 +879,8 @@ def modsqr(n) :
         str+="static "
     str+="void modsqr{}(const spint *a,spint *c) {{\n".format(DECOR)
 
-    str+="\tudpint tot;\n"
-    str+="\tudpint t=0;\n"
+    str+="\tdpint tot;\n"
+    str+="\tdpint t=0;\n"
     for i in range(0,N) :
         if i==0 and PM :
             continue
@@ -896,12 +899,12 @@ def modsqr(n) :
         str+=" spint v0=(((spint)t*ndash)& mask);"
         if PM :
             gone_neg=True
-            str+=" t+=(udpint)(spint)((spint){}*(q-v0)); ".format(M)
+            str+=" t+=(dpint)(spint)((spint){}*(q-v0)); ".format(M)
         else :
             if ppw[0]==1 :
-                str+=" t+=(udpint)v0;"
+                str+=" t+=(dpint)v0;"
             else :
-                str+=" t+=(udpint)v0 * p0;"
+                str+=" t+=(dpint)v0 * p0;"
 
     else :
         str+=" spint v0=((spint)t & mask);"
@@ -913,7 +916,7 @@ def modsqr(n) :
     for i in range(1,N) :
         if gone_neg :
             if PM :
-                str+=" t+=(udpint)(spint)((spint){}*mask);".format(M)
+                str+=" t+=(dpint)(spint)((spint){}*mask);".format(M)
             else :
                 if not s_is_declared :
                     str+=" spint s=(spint)mask;"
@@ -928,18 +931,18 @@ def modsqr(n) :
             str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" t+=(udpint)s;"
+            str+=" t+=(dpint)s;"
             mask_set=False   
 
         if fullmonty :
             str+=" spint v{}=(((spint)t*ndash) & mask); ".format(i)
             if PM :
-                str+=" t-=(udpint)(spint)((spint){}*v{}); ".format(M,i)
+                str+=" t-=(dpint)(spint)((spint){}*v{}); ".format(M,i)
             else :
                 if ppw[0]==1 :
-                    str+=" t+=(udpint)v{};".format(i)
+                    str+=" t+=(dpint)v{};".format(i)
                 else :
-                    str+=" t+=(udpint)v{} * p0;".format(i)
+                    str+=" t+=(dpint)v{} * p0;".format(i)
         else :
             str+=" spint v{}=((spint)t & mask);".format(i)
         str+=" t>>={};\n".format(base)
@@ -949,7 +952,7 @@ def modsqr(n) :
     str=getZSD(str,N)
     if gone_neg :
         if PM :
-            str+=" t+=(udpint)(spint)((spint){}*mask);".format(M)
+            str+=" t+=(dpint)(spint)((spint){}*mask);".format(M)
         else :
             if not s_is_declared :
                 str+=" spint s=(spint)mask;"
@@ -964,17 +967,17 @@ def modsqr(n) :
             str,gone_neg=sqr_process(N-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" t+=(udpint)s;"
+            str+=" t+=(dpint)s;"
             mask_set=False   
         if fullmonty :
             str+=" spint v{}=(((spint)t*ndash) & mask); ".format(N)
             if PM :
-                str+=" t-=(udpint)(spint)((spint){}*v{}); ".format(M,N)
+                str+=" t-=(dpint)(spint)((spint){}*v{}); ".format(M,N)
             else :
                 if ppw[0]==1 :
-                    str+=" t+=(udpint)v{};".format(N)
+                    str+=" t+=(dpint)v{};".format(N)
                 else :
-                    str+=" t+=(udpint)v{} * p0;".format(N)
+                    str+=" t+=(dpint)v{} * p0;".format(N)
         else :
             str+=" spint v{}=((spint)t & mask); ".format(N)
         str+=" t>>={};\n".format(base)
@@ -983,7 +986,7 @@ def modsqr(n) :
         for i in range(N+1,2*N) :
             if gone_neg :
                 if PM :
-                    str+=" t+=(udpint)(spint)((spint){}*mask);".format(M)
+                    str+=" t+=(dpint)(spint)((spint){}*mask);".format(M)
                 else :
                     if not s_is_declared :
                         str+=" spint s=(spint)mask;"
@@ -997,7 +1000,7 @@ def modsqr(n) :
                 str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" t+=(udpint)s;"
+                str+=" t+=(dpint)s;"
                 mask_set=False   
             str+=" c[{}]=((spint)t & mask); ".format(i-N-1)
             str+=" t>>={};\n".format(base)
@@ -1010,11 +1013,11 @@ def modsqr(n) :
 
         if gone_neg :
             if PM :
-                str+=" t+=(udpint)(spint)(v{}-(spint){});".format(N,M)
+                str+=" t+=(dpint)(spint)(v{}-(spint){});".format(N,M)
             else :
-                str+=" t+=(udpint)(spint)(v{}-(spint)1);".format(N)
+                str+=" t+=(dpint)(spint)(v{}-(spint)1);".format(N)
         else :
-            str+=" t+=(udpint)v{};".format(N)
+            str+=" t+=(dpint)v{};".format(N)
         str+=" c[{}] = (spint)t;\n".format(N-1)
     else :
         for i in range(N,2*N-1) :
@@ -1023,7 +1026,7 @@ def modsqr(n) :
                 str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" t+=(udpint)s;"
+                str+=" t+=(dpint)s;"
                 mask_set=False   
             if i==2*N-1 :
                 break
@@ -1033,7 +1036,7 @@ def modsqr(n) :
                 str=getZSD(str,i+1)
                 if gone_neg :
                     if PM :
-                        str+=" t+=(udpint)(spint)((spint){}*mask);".format(M)
+                        str+=" t+=(dpint)(spint)((spint){}*mask);".format(M)
                     else :
                         if not s_is_declared :
                             str+=" spint s=(spint)mask;"
@@ -1043,7 +1046,7 @@ def modsqr(n) :
                         mask_set=True
         if gone_neg :
             if PM :
-                str+="\tt-=(udpint){};".format(M)
+                str+="\tt-=(dpint){};".format(M)
             else :
                 str+="\tt-=1u;"
         str+="\tc[{}] = (spint)t;\n".format(N-1)
@@ -1634,12 +1637,10 @@ def header() :
     print("#include <stdint.h>\n")
     print("#define sspint int{}_t".format(WL))
     print("#define spint uint{}_t".format(WL))
+    print("#define dpint uint{}_t".format(2*WL))
+    print("#define sdpint int{}_t\n".format(2*WL))
 
-    print("#define udpint uint{}_t".format(2*WL))
-    if karatsuba :
-        print("#define dpint int{}_t\n".format(2*WL))
-    else :
-        print("#define dpint uint{}_t\n".format(2*WL))
+
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))
     print("#define Radix{} {}".format(DECOR,base))

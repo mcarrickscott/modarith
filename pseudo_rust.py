@@ -215,7 +215,7 @@ def getZM(str,row,n,m,base) :
         if row<N-1 :
             str+="\ttt=d{}-d{}; ".format(N-1,row)
             for m in range(N-1,int(i/2),-1) :
-                str+="tt+=(((c[{}] as SSPINT)-(c[{}] as SSPINT)) as DPINT) * (((b[{}] as SSPINT)-(b[{}] as SSPINT)) as DPINT); ".format(m,i-m, i-m, m)
+                str+="tt+=((((c[{}]-c[{}]) as SSPINT) as SDPINT) * ((b[{}]-b[{}]) as SSPINT) as SDPINT) as DPINT; ".format(m,i-m, i-m, m)
             if overflow :
                 str+=" lo=(tt as SPINT)&mask;"
                 if row==0 :
@@ -237,7 +237,7 @@ def getZM(str,row,n,m,base) :
 
         i=row
         for m in range(i,int(i/2),-1) :
-           str+=" t+=(((c[{}] as SSPINT)-(c[{}] as SSPINT)) as DPINT) * (((b[{}] as SSPINT)-(b[{}] as SSPINT)) as DPINT); ".format(m,i - m, i - m, m) 
+           str+=" t+=((((c[{}]-c[{}]) as SSPINT) as SDPINT) * ((b[{}]-b[{}]) as SSPINT) as SDPINT) as DPINT; ".format(m,i - m, i - m, m) 
         if row==N-1 and overflow :
             str+=" t+=(hi as DPINT)*0x{:x};".format(mm)
         str+=" let v{}=(t as SPINT) & mask; t=t>>{};\n".format(row,base)
@@ -311,19 +311,19 @@ def getZS(str,row,n,m,base) :
                     str+="\t"
                 else :
                     str+=" "
-                str+="t+=(mc{} as UDPINT)*(tc{} as UDPINT);".format(k,L)
+                str+="t+=(mc{} as DPINT)*(tc{} as DPINT);".format(k,L)
             else :
                 if first :
-                    str+="\tt+=(mc{} as UDPINT)*(c[{}] as UDPINT);".format(k,L)
+                    str+="\tt+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
                     first=False
                 else :
-                    str+=" t+=(mc{} as UDPINT)*(c[{}] as UDPINT);".format(k,L)
+                    str+=" t+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
         else :
             if first :
-                str+="\ttt=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,L)
+                str+="\ttt=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,L)
                 first=False
             else :
-                str+=" tt+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,L)
+                str+=" tt+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,L)
         L-=1
         k+=1
     if dble :
@@ -335,13 +335,13 @@ def getZS(str,row,n,m,base) :
                 str+="\t"
             else :
                 str+=" "  
-            str+="t+=(mc{} as UDPINT)*(c[{}] as UDPINT);".format(k,k)
+            str+="t+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,k)
         else :
             if first :
-                str+="\ttt=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,k)
+                str+="\ttt=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,k)
                 first=False
             else :
-                str+=" tt+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,k)
+                str+=" tt+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,k)
     first=True
     if row<N-1:
         if overflow :
@@ -364,13 +364,13 @@ def getZS(str,row,n,m,base) :
 
     while k<L :
         if EPM and dble :
-            str+="t+=(c[{}] as UDPINT)*(tc{} as UDPINT);".format(k,L)
+            str+="t+=(c[{}] as DPINT)*(tc{} as DPINT);".format(k,L)
         else :
             if first :
-                str+="t2=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,L)
+                str+="t2=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,L)
                 first=False
             else :
-                str+=" t2+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,L)
+                str+=" t2+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,L)
         k+=1
         L-=1
 
@@ -379,25 +379,25 @@ def getZS(str,row,n,m,base) :
             str+=" t2*=2;"
     if k==L :
         if EPM :
-            str+=" t+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,k)
+            str+=" t+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,k)
         else :
             if first :
-                str+="t2=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,k)
+                str+="t2=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,k)
                 first=False
             else :
-                str+=" t2+=(c[{}] as UDPINT)*(c[{}] as UDPINT);".format(k,k)
+                str+=" t2+=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,k)
  
     if overflow :
         if row==N-1 : 
-            str+=" t+=(hi as UDPINT)*0x{:x};".format(mm)
+            str+=" t+=(hi as DPINT)*0x{:x};".format(mm)
         else :
             if row==0 :
-                str+=" t2+=(lo as UDPINT)*0x{:x};".format(mm)
+                str+=" t2+=(lo as DPINT)*0x{:x};".format(mm)
             else :
                 if bad_overflow_sqr :
-                    str+=" t2+=((lo as UDPINT)+hi)*0x{:x};".format(mm)
+                    str+=" t2+=((lo as DPINT)+hi)*0x{:x};".format(mm)
                 else :
-                    str+=" t2+=((lo+hi) as UDPINT)*0x{:x};".format(mm)
+                    str+=" t2+=((lo+hi) as DPINT)*0x{:x};".format(mm)
             if bad_overflow_sqr :
                 str+=" hi=tt>>{};".format(base)
             else :
@@ -425,9 +425,9 @@ def second_pass(str,n,m,base) :
         if xcess>0 :
             str+= "\tut=(ut<<{})+(nv>>{}); nv&=0x{:x};\n".format(xcess,base-xcess,smask)
     else :
-        str+="\tlet mut ut=t as UDPINT;\n"
+        str+="\tlet mut ut=t as DPINT;\n"
         if xcess>0 :
-            str+= "\tut=(ut<<{})+((nv>>{}) as UDPINT); nv&=0x{:x};\n".format(xcess,base-xcess,smask)
+            str+= "\tut=(ut<<{})+((nv>>{}) as DPINT); nv&=0x{:x};\n".format(xcess,base-xcess,smask)
 
     k=0
     if m>1 :
@@ -436,7 +436,7 @@ def second_pass(str,n,m,base) :
     if carry_on :
         str+= "\tlet mut s=v0+((ut as SPINT)&mask);\n"
         str+= "\tc[0]=(s&mask) as SPINT;\n"
-        str+="\tut=((s>>{}) as UDPINT)+(ut>>{});\n".format(base,base)
+        str+="\tut=((s>>{}) as DPINT)+(ut>>{});\n".format(base,base)
         str+="\ts=v1+((ut as SPINT) & mask);\n"
         str+= "\tc[1]=(s&mask) as SPINT;\n"
         k+=1
@@ -511,21 +511,21 @@ def modsqr(n,m,base) :
     if makepublic :
         str+="pub "
     str+="fn modsqr(c: &mut [SPINT]) {\n"
-    str+="\tlet mut t=0 as UDPINT;\n"
+    str+="\tlet mut t=0 as DPINT;\n"
     if EPM :
        for i in range(1,N) :
            str+="\tlet tc{}=c[{}]*2;\n".format(i,i)
        for i in range(1,N) :
            str+="\tlet mc{}=c[{}]*0x{:x};\n".format(i,i,mm)     
     else :
-        str+="\tlet mut tt:UDPINT;\n"
-        str+="\tlet mut t2:UDPINT;\n"
+        str+="\tlet mut tt:DPINT;\n"
+        str+="\tlet mut t2:DPINT;\n"
     str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
 
     if overflow :
         str+="\tlet mut lo:SPINT;\n"
         if bad_overflow_sqr :
-            str+="\tlet mut hi:UDPINT;\n"
+            str+="\tlet mut hi:DPINT;\n"
         else :
             str+="\tlet mut hi:SPINT;\n"
 
@@ -547,11 +547,11 @@ def modmli(n,m,base) :
     if makepublic :
         str+="pub "
     str+="fn modmli(b: usize,c: &mut [SPINT]) {\n"
-    str+="\tlet mut t=0 as UDPINT;\n"
+    str+="\tlet mut t=0 as DPINT;\n"
     str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
 
     for i in range(0,N) :
-        str+="\tt+=(c[{}] as UDPINT)*(b as UDPINT); ".format(i)
+        str+="\tt+=(c[{}] as DPINT)*(b as DPINT); ".format(i)
         str+="let v{}=(t as SPINT) & mask; t=t>>{};\n".format(i,base)
 
     str=second_pass(str,n,m,base)
@@ -1372,11 +1372,8 @@ with open('time.rs', 'w') as f:
         print("use std::time::Instant;")
         print("pub type SPINT = u{};".format(WL))
         print("pub type SSPINT = i{};".format(WL))
-        print("pub type UDPINT = u{};".format(2*WL))
-        if karatsuba :
-            print("pub type DPINT = i{};".format(2*WL))
-        else :
-            print("pub type DPINT = u{};".format(2*WL))
+        print("pub type DPINT = u{};".format(2*WL))
+        print("pub type SDPINT = i{};".format(2*WL))
         print(prop(n,base))
         print(flat(n,base))
         print(modfsb(n,base))
@@ -1406,19 +1403,13 @@ with open('field.rs', 'w') as f:
         if makepublic :
             print("pub type SPINT = u{};".format(WL))
             print("pub type SSPINT = i{};".format(WL))
-            print("pub type UDPINT = u{};".format(2*WL))
-            if karatsuba :
-                print("pub type DPINT = i{};".format(2*WL))
-            else :
-                print("pub type DPINT = u{};".format(2*WL))
+            print("pub type DPINT = u{};".format(2*WL))
+            print("pub type SDPINT = i{};".format(2*WL))
         else :
             print("type SPINT = u{};".format(WL))
             print("type SSPINT = i{};".format(WL))
-            print("type UDPINT = u{};".format(2*WL))
-            if karatsuba :
-                print("type DPINT = i{};".format(2*WL))
-            else :
-                print("type DPINT = u{};".format(2*WL))
+            print("type DPINT = u{};".format(2*WL))
+            print("type SDPINT = i{};".format(2*WL))
         print(prop(n,base))
         print(flat(n,base))
         print(modfsb(n,base))

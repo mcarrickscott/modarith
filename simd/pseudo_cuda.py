@@ -255,20 +255,20 @@ def getZM(str,row,n,m) :
         if row<N-1 :
             str+="\ttt=d{}-d{}; ".format(N-1,row)
             for m in range(N-1,int(i/2),-1) :
-                str+="tt+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i-m, i-m, m)
+                str+="tt+=(dpint)((sdpint)(sspint)(a[{}]-a[{}])*(sdpint)(sspint)(b[{}]-b[{}])); ".format(m,i-m, i-m, m)
             if overflow :
                 str+=" lo=(spint)tt & mask;"
                 if row==0 :
-                    str+=" t+=d{}+(dpint)lo*(dpint)0x{:x};".format(row,mm)
+                    str+=" t+=d{}+(dpint)lo*0x{:x};".format(row,mm)
                 else :
                     if bad_overflow_mul :
-                        str+=" t+=d{}+(hi+(dpint)lo)*(dpint)0x{:x};".format(row,mm)
+                        str+=" t+=d{}+(hi+(dpint)lo)*0x{:x};".format(row,mm)
                     else :
-                        str+=" t+=d{}+(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(row,mm)
+                        str+=" t+=d{}+(dpint)(lo+hi)*0x{:x};".format(row,mm)
                 if bad_overflow_mul :
-                    str+=" hi=(dpint)(udpint)((udpint)tt>>{}u);".format(base)
+                    str+=" hi=(tt>>{}u);".format(base)
                 else :
-                    str+=" hi=(spint)(udpint)((udpint)tt>>{}u);".format(base)
+                    str+=" hi=(spint)(tt>>{}u);".format(base)
             else :
                 str+="tt*=0x{:x};".format(mm)
                 str+=" t+=d{}+tt;".format(row)
@@ -277,10 +277,10 @@ def getZM(str,row,n,m) :
 
         i=row
         for m in range(i,int(i/2),-1) :
-           str+=" t+=(dpint)(sspint)((sspint)a[{}]-(sspint)a[{}])*(dpint)(sspint)((sspint)b[{}]-(sspint)b[{}]); ".format(m,i - m, i - m, m) 
+           str+=" t+=(dpint)((sdpint)(sspint)(a[{}]-a[{}])*(sdpint)(sspint)(b[{}]-b[{}])); ".format(m,i - m, i - m, m)
         if row==N-1 and overflow :
-            str+=" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
-        str+=" spint v{}=(spint)t & mask; t=(dpint)(udpint)((udpint)t>>{}u);\n".format(row,base)
+            str+=" t+=(dpint)hi*0x{:x};".format(mm)
+        str+=" spint v{}=(spint)t & mask; t=(t>>{}u);\n".format(row,base)
         return str
 
     first=True
@@ -351,19 +351,19 @@ def getZS(str,row,n,m) :
                     str+="\t"
                 else :
                     str+=" "                
-                str+="t+=(udpint)ma{}*(udpint)ta{};".format(k,L)
+                str+="t+=(dpint)ma{}*(dpint)ta{};".format(k,L)
             else :
                 if first :
-                    str+="\tt+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                    str+="\tt+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
                     first=False
                 else :
-                    str+=" t+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                    str+=" t+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
         else :
             if first :
-                str+="\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+="\ttt=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
                 first=False
             else :
-                str+=" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+=" tt+=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
 
         L-=1
         k+=1
@@ -376,13 +376,13 @@ def getZS(str,row,n,m) :
                 str+="\t"
             else :
                 str+=" "  
-            str+="t+=(udpint)ma{}*(udpint)a[{}];".format(k,k)
+            str+="t+=(dpint)ma{}*(dpint)a[{}];".format(k,k)
         else :
             if first :
-                str+="\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+="\ttt=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
                 first=False
             else :
-                str+=" tt+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+=" tt+=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
     first=True
     if row<N-1:
         if overflow :
@@ -405,13 +405,13 @@ def getZS(str,row,n,m) :
 
     while k<L :
         if EPM and dble :
-            str+="t+=(udpint)a[{}]*(udpint)ta{};".format(k,L)
+            str+="t+=(dpint)a[{}]*(dpint)ta{};".format(k,L)
         else :
             if first :
-                str+="t2=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+="t2=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
                 first=False
             else :
-                str+=" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
+                str+=" t2+=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
         k+=1
         L-=1
 
@@ -420,26 +420,26 @@ def getZS(str,row,n,m) :
             str+=" t2*=2;"
     if k==L :
         if EPM :
-            str+=" t+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+            str+=" t+=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
         else :
             if first :
-                str+="t2=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+="t2=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
                 first=False
             else :
-                str+=" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
+                str+=" t2+=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
  
 
     if overflow :
         if row==N-1 : 
-            str+=" t+=(udpint)hi*(udpint)0x{:x};".format(mm)
+            str+=" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
         else :
             if row==0 :
-                str+=" t2+=(udpint)lo*(udpint)0x{:x};".format(mm)
+                str+=" t2+=(dpint)lo*(dpint)0x{:x};".format(mm)
             else :
                 if bad_overflow_sqr :
-                    str+=" t2+=(hi+(udpint)lo)*(udpint)0x{:x};".format(mm)
+                    str+=" t2+=(hi+(dpint)lo)*(dpint)0x{:x};".format(mm)
                 else :
-                    str+=" t2+=(udpint)(spint)(lo+hi)*(udpint)0x{:x};".format(mm)
+                    str+=" t2+=(dpint)(spint)(lo+hi)*(dpint)0x{:x};".format(mm)
             if bad_overflow_sqr :
                 str+=" hi=tt>>{}u;".format(base)
             else :
@@ -476,10 +476,10 @@ def second_pass(str,n,m) :
         str+= "\tcarry=(s>>{})+(ut>>{});\n".format(base,base)
 
     else :
-        str+="\tudpint ut=(udpint)t;\n"    
+        str+="\tdpint ut=(dpint)t;\n"    
         if xcess>0 :
             smask=(1<<(base-xcess))-1
-            str+= "\tut=(ut<<{})+(udpint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+            str+= "\tut=(ut<<{})+(dpint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
 
         if m>1 :
             str+= "\tut*=0x{:x};\n".format(m)
@@ -487,7 +487,7 @@ def second_pass(str,n,m) :
         str+= "\tc[0]=(s&mask);\n"
 
         if carry_on :
-            str+="\tut=(udpint)(s>>{})+(ut>>{});\n".format(base,base)
+            str+="\tut=(dpint)(s>>{})+(ut>>{});\n".format(base,base)
             str+="\ts=v1+((spint)ut & mask);\n"
             str+= "\tc[1]=(s&mask);\n"
             k+=1
@@ -566,7 +566,7 @@ def modsqr(n,m) :
 
     str+="void modsqr{}(const spint *a,spint *c) {{\n".format(DECOR)
     
-    str+="\tudpint t=0;\n"
+    str+="\tdpint t=0;\n"
 
     if  EPM  :
         for i in range(1,N) :
@@ -574,8 +574,8 @@ def modsqr(n,m) :
         for i in range(1,N) :
             str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
     else :
-        str+="\tudpint tt;\n"
-        str+="\tudpint t2;\n"
+        str+="\tdpint tt;\n"
+        str+="\tdpint t2;\n"
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
     str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
@@ -583,7 +583,7 @@ def modsqr(n,m) :
     if overflow :
         str+="\tspint lo;\n"
         if bad_overflow_sqr :
-            str+="\tudpint hi;\n"
+            str+="\tdpint hi;\n"
         else :
             str+="\tspint hi;\n"
 
@@ -605,14 +605,14 @@ def modmli(n,m) :
     if makestatic :
         str+="static "
     str+="void modmli{}(const spint *a,int b,spint *c) {{\n".format(DECOR)
-    str+="\tudpint t=0;\n"
+    str+="\tdpint t=0;\n"
 
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
     str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
     for i in range(0,N) :
-        str+="\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+        str+="\tt+=(dpint)a[{}]*(dpint)b; ".format(i)
         str+="spint v{}=(spint)t & mask; t=t>>{}u;\n".format(i,base)
 
     str=second_pass(str,n,m)
@@ -1173,12 +1173,8 @@ def header() :
     print("#include <stdint.h>\n")
     print("#define sspint int{}_t".format(WL))
     print("#define spint uint{}_t".format(WL))
-
-    print("#define udpint uint{}_t".format(2*WL))
-    if karatsuba :
-        print("#define dpint int{}_t\n".format(2*WL))
-    else :
-        print("#define dpint uint{}_t\n".format(2*WL))
+    print("#define dpint uint{}_t".format(2*WL))
+    print("#define sdpint int{}_t".format(2*WL))
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))
     print("#define Radix{} {}".format(DECOR,base))
