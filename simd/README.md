@@ -56,7 +56,7 @@ Generate the finite field arithmetic for an X25519 elliptic curve
 First run the *time* application which has been created by the script to get benchmark timings. Next drop the generated file *field.cu* 
 into *rfc7748_simt.cu*. Compile as
 
-	nvcc -O2 rfc7748_simt.c -lcpucycles -o rfc7748_simt
+	nvcc -O2 rfc7748_simt.cu -lcpucycles -o rfc7748_simt
 
 When the program is run, a pair of test vectors from RFC7748 are calculated simultaneously, timings are taken, and a double key exchange is performed. Next generate the finite field arithmetic for the larger X448 curve 
 
