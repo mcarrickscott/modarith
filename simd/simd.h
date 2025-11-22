@@ -107,11 +107,11 @@
 #define MR_ADD32S(X,Y) _mm512_add_epi32(X,Y)
 #define MR_ADD32U(X,Y) _mm512_add_epi32(X,Y)
 #define MR_MULADDU(T,X,Y) ({__m512i PP=_mm512_mul_epu32(X,Y); _mm512_add_epi64(T,PP);})
-#define MR_MULADDS(T,X,Y) {__m256i PP=_mm512_mul_epi32(X,Y); _mm512_add_epi64(T,PP);}
-#define MR_MUL64_CONSTANT(X,C) ({__m256i S=MR_SET_ALL_LANES_TO_CONSTANT(C); __m256i PP1=_mm512_mul_epu32(X,S); __m256i PP2=_mm512_mul_epu32(_mm512_srli_epi64(X,32),S); _mm512_add_epi64(PP1,_mm512_slli_epi64(PP2,32));})
-#define MR_MUL32_CONSTANT(X,C) ({__m256i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_mul_epu32(X,S);})
-#define MR_MUL32_W_CONSTANT(X,C) ({__m256i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_mul_epu32(X,S);})
-#define MR_MULADD32_CONSTANT(T,X,C) ({__m256i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_add_epi64(T,_mm512_mul_epu32(X,S));})
+#define MR_MULADDS(T,X,Y) {__m512i PP=_mm512_mul_epi32(X,Y); _mm512_add_epi64(T,PP);}
+#define MR_MUL64_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); __m512i PP1=_mm512_mul_epu32(X,S); __m512i PP2=_mm512_mul_epu32(_mm512_srli_epi64(X,32),S); _mm512_add_epi64(PP1,_mm512_slli_epi64(PP2,32));})
+#define MR_MUL32_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_mul_epu32(X,S);})
+#define MR_MUL32_W_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_mul_epu32(X,S);})
+#define MR_MULADD32_CONSTANT(T,X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_add_epi64(T,_mm512_mul_epu32(X,S));})
 #define MR_MUL32U(X,Y) _mm512_mul_epu32(X,Y)
 #define MR_MUL32U_N(X,Y) _mm512_mul_epu32(X,Y)
 #define MR_SUB32U(X,Y) _mm512_sub_epi32(X,Y)
