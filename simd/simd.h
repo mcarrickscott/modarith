@@ -18,7 +18,7 @@
 #define MR_ANDNOT(X,Y) _mm_andnot_si128(X,Y)
 #define MR_OR(X,Y) _mm_or_si128(X,Y)
 #define MR_XOR(X,Y) _mm_xor_si128(X,Y)
-#define MR_SET_ALL_LANES_TO_CONSTANT(C) _mm_set_epi32(0,C,0,C)
+#define MR_SET_ALL_LANES_TO_CONSTANT(C) _mm_set1_epi64x(C)
 #define MR_SET_EACH_LANE_TO_CONSTANT(C) _mm_set_epi32(0,C[1],0,C[0])
 #define MR_ADD64U(X,Y) _mm_add_epi64(X,Y)
 #define MR_ADD32S(X,Y) _mm_add_epi32(X,Y)
@@ -60,13 +60,13 @@
 #define MR_ANDNOT(X,Y) _mm256_andnot_si256(X,Y)
 #define MR_OR(X,Y) _mm256_or_si256(X,Y)
 #define MR_XOR(X,Y) _mm256_xor_si256(X,Y)
-#define MR_SET_ALL_LANES_TO_CONSTANT(C) _mm256_set_epi32(0,C,0,C,0,C,0,C)
+#define MR_SET_ALL_LANES_TO_CONSTANT(C) _mm256_set1_epi64x(C)
 #define MR_SET_EACH_LANE_TO_CONSTANT(C) _mm256_set_epi32(0,C[3],0,C[2],0,C[1],0,C[0])
 #define MR_ADD64U(X,Y) _mm256_add_epi64(X,Y)
 #define MR_ADD32S(X,Y) _mm256_add_epi32(X,Y)
 #define MR_ADD32U(X,Y) _mm256_add_epi32(X,Y)
 #define MR_MULADDU(T,X,Y) ({__m256i PP=_mm256_mul_epu32(X,Y); _mm256_add_epi64(T,PP);})
-#define MR_MULADDS(T,X,Y) {__m256i PP=_mm256_mul_epi32(X,Y); _mm256_add_epi64(T,PP);}
+#define MR_MULADDS(T,X,Y) ({__m256i PP=_mm256_mul_epi32(X,Y); _mm256_add_epi64(T,PP);})
 #define MR_MUL64_CONSTANT(X,C) ({__m256i S=MR_SET_ALL_LANES_TO_CONSTANT(C); __m256i PP1=_mm256_mul_epu32(X,S); __m256i PP2=_mm256_mul_epu32(_mm256_srli_epi64(X,32),S); _mm256_add_epi64(PP1,_mm256_slli_epi64(PP2,32));})
 #define MR_MUL32_CONSTANT(X,C) ({__m256i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm256_mul_epu32(X,S);})
 #define MR_MUL32_W_CONSTANT(X,C) ({__m256i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm256_mul_epu32(X,S);})
@@ -93,6 +93,9 @@
 
 #endif
 
+// Here we assume the property AVX-512DQ is available. If so we get a faster MR_MUL64_CONSTANT(X,C). See below
+// Note that if this property (which requires AVX-512 support) is available a similar optimization could be appled to AVX2 and SSE (see above)
+
 #if SIMD_ENGINE == AVX512
 
 #define MR_ZERO() _mm512_setzero_si512()
@@ -101,14 +104,15 @@
 #define MR_ANDNOT(X,Y) _mm512_andnot_si512(X,Y)
 #define MR_OR(X,Y) _mm512_or_si512(X,Y)
 #define MR_XOR(X,Y) _mm512_xor_si512(X,Y)
-#define MR_SET_ALL_LANES_TO_CONSTANT(C) _mm512_set_epi32(0,C,0,C,0,C,0,C,0,C,0,C,0,C,0,C)
+#define MR_SET_ALL_LANES_TO_CONSTANT(C) _mm512_set1_epi64(C)
 #define MR_SET_EACH_LANE_TO_CONSTANT(C) _mm512_set_epi32(0,C[7],0,C[6],0,C[5],0,C[4],0,C[3],0,C[2],0,C[1],0,C[0])
 #define MR_ADD64U(X,Y) _mm512_add_epi64(X,Y)
 #define MR_ADD32S(X,Y) _mm512_add_epi32(X,Y)
 #define MR_ADD32U(X,Y) _mm512_add_epi32(X,Y)
 #define MR_MULADDU(T,X,Y) ({__m512i PP=_mm512_mul_epu32(X,Y); _mm512_add_epi64(T,PP);})
-#define MR_MULADDS(T,X,Y) {__m512i PP=_mm512_mul_epi32(X,Y); _mm512_add_epi64(T,PP);}
-#define MR_MUL64_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); __m512i PP1=_mm512_mul_epu32(X,S); __m512i PP2=_mm512_mul_epu32(_mm512_srli_epi64(X,32),S); _mm512_add_epi64(PP1,_mm512_slli_epi64(PP2,32));})
+#define MR_MULADDS(T,X,Y) ({__m512i PP=_mm512_mul_epi32(X,Y); _mm512_add_epi64(T,PP);})
+#define MR_MUL64_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_mullo_epi64(X,S);})
+//#define MR_MUL64_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); __m512i PP1=_mm512_mul_epu32(X,S); __m512i PP2=_mm512_mul_epu32(_mm512_srli_epi64(X,32),S); _mm512_add_epi64(PP1,_mm512_slli_epi64(PP2,32));})
 #define MR_MUL32_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_mul_epu32(X,S);})
 #define MR_MUL32_W_CONSTANT(X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_mul_epu32(X,S);})
 #define MR_MULADD32_CONSTANT(T,X,C) ({__m512i S=MR_SET_ALL_LANES_TO_CONSTANT(C); _mm512_add_epi64(T,_mm512_mul_epu32(X,S));})

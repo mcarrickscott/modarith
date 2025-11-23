@@ -16,7 +16,7 @@
 //
 // python monty_XXX.py X448
 //
-// where XXX can be simd (or ifma)
+// where XXX is usually simd (but could be ifma)
 //
 // If avx2 or avx-512 are chosen from pseudo_simd.py or monty_simd.py, only first two lanes are used here
 //
