@@ -18,7 +18,7 @@
 # Execute this program as: python3 pseudo_cuda.py X25519
 # Production code is output to file field.cu
 # 
-# Mike Scott 22nd April 2024
+# Mike Scott 24th November 2025
 # TII
 #
 

@@ -16,7 +16,7 @@
 # Execute this program as: python3 pseudo_simd.py X25519
 # Production code is output to file field.c
 # 
-# Mike Scott 12th December 2025
+# Mike Scott 24th November 2025
 # TII
 #
 

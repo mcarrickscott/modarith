@@ -2,7 +2,7 @@
 // Montgomery curve key exchange code, as used by TLS
 // Use associated python scripts to generate code for X25519 or X448, but easily modified for other Montgomery curves
 //
-// Mike Scott 13th October 2025
+// Mike Scott 24th November 2025
 // TII
 //
 // The scripts generate code using SIMD intrinsics so that multiple protocol runs can be executed simultaneously

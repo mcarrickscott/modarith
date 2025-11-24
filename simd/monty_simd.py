@@ -33,7 +33,7 @@
 #
 # and now the majority of the multiplications in the Montgomery reduction are by 0, and can be eliminated.
 #
-# Mike Scott 12th December 2025
+# Mike Scott 24th November 2025
 # TII
 #
 
