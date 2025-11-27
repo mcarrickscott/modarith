@@ -37,6 +37,12 @@
 
 # Some default settings
 
+NLANES=2 # Number of available SIMD 64-bit lanes in AVX-IFMA architecture (could be 2, 4 or 8)
+if NLANES<2 :
+    NLANES=2
+if NLANES>8 :
+    NLANES=8
+
 cyclesorsecs=True     # count cycles otherwise seconds
 compiler="gcc" # gcc, clang or icx (inlining can sometimes cause icx to hang)
 cyclescounter=True # use Bernstein's cpucycle counter, otherwise just provide timings
@@ -190,109 +196,6 @@ def process_prime(p,base,N) :
         ppw.append(carry)
     return ppw,E
 
-def intrinsics() :
-    str="// set both lanes to same constant\n"
-    str+="static inline spint _mm_set2_epi64(int64_t c) {\n"
-    str+="\treturn _mm_set_epi64x((int64_t)c,(int64_t)c);\n"
-    str+="}\n" 
-    
-    str+="// set each lane to a constant\n"
-    str+="static inline spint _mm_setc_epi64(int64_t c0,int64_t c1) {\n"
-    str+="\treturn _mm_set_epi64x(c1,c0);\n"
-    str+="}\n" 
-
-    str+="// t+=a*b\n"
-    str+="static inline void accum(spint *tl,spint *th,spint a,spint b) {\n"
-    str+="\t*tl=_mm_madd52lo_epu64(*tl,a,b);\n"
-    str+="\t*th=_mm_madd52hi_epu64(*th,a,b);\n"
-    str+="}\n\n"
-
-    str+="// t+=s\n"
-    str+="static inline void add(spint *tl,spint *th,spint a,spint b) {\n"
-    str+="\t*tl=_mm_add_epi64(*tl,a);\n"
-    str+="\t*th=_mm_add_epi64(*th,b);\n"
-    str+="}\n\n"
-
-    str+="// t-=s\n"
-    str+="static inline void sub(spint *tl,spint *th,spint a,spint b) {\n"
-    str+="\t*tl=_mm_sub_epi64(*tl,a);\n"
-    str+="\t*th=_mm_sub_epi64(*th,b);\n"
-    str+="}\n\n"
-
-    str+="// t+=(lo+hi)*spm. Note (lo+hi) could be > 2^52\n"
-    str+="static inline void accumx(spint *tl,spint *th,spint lo,spint hi,spint spm) {\n"
-    str+="\tspint s=_mm_add_epi64(lo,hi);\n"
-    str+="\t*tl=_mm_madd52lo_epu64(*tl,s,spm);\n"
-    str+="\t*th=_mm_madd52hi_epu64(*th,s,spm);\n"
-    str+="\t*th=_mm_madd52lo_epu64(*th,_mm_srli_epi64(s,52),spm);\n"
-    str+="}\n\n"
-
-    str+="// t+= (v<<s)\n"
-    str+="static inline void accumsl(spint *tl,spint *th,spint v,char s) {\n"
-    str+="\tspint wl, wh;\n"
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
-    str+="\twl=_mm_and_si128(_mm_slli_epi64(v,s),mask);\n"
-    str+="\twh=_mm_srli_epi64(v,52-s);\n"
-    str+="\tadd(tl,th,wl,wh);\n"
-    str+="}\n\n"
-
-    str+="// t=a*b\n"
-    str+="static inline void mul(spint *tl,spint *th,spint a,spint b) {\n"
-    str+="\tspint r=_mm_setzero_si128();\n"
-    str+="\t*tl=_mm_madd52lo_epu64(r,a,b);\n"
-    str+="\t*th=_mm_madd52hi_epu64(r,a,b);\n"
-    str+="}\n\n"
-
-    str+="// t>>52\n"
-    str+="static inline void shiftr(spint *tl,spint *th){\n"
-    str+="\t*tl=_mm_srai_epi64(*tl,52);\n"  # arithmetic as could be negative
-    str+="\t*tl=_mm_add_epi64(*tl,*th);\n"
-    str+="\t*th=_mm_setzero_si128();\n"
-    str+="}\n\n"
-
-    str+="// r=t>>52\n"
-    str+="static inline spint shiftout(spint tl,spint th,char s) {\n"
-    str+="\tspint r=_mm_srai_epi64(tl,s);\n"
-    str+="\tr=_mm_add_epi64(r,_mm_slli_epi64(th,52-s));\n"
-    str+="\treturn r;\n"
-    str+="}\n\n"
-
-# bit of a problem here! How to efficiently multiply 64-bit value by small number
-
-    str+="// t*=m\n"
-    str+="static inline spint muls(spint tb,int64_t m) {\n"
-    str+="\tspint spm=_mm_set2_epi64(m);\n"
-    str+="\tspint tp=_mm_srli_epi64(tb,32);\n"
-    str+="\tspint pp1=_mm_mul_epu32(tb,spm);\n"
-    str+="\tspint pp2=_mm_mul_epu32(tp,spm);\n"
-    str+="\treturn _mm_add_epi64(pp1,_mm_slli_epi64(pp2,32));\n"
-    str+="}\n"
-
-    str+="// return high part of a*b\n"
-    str+="static inline spint mulhi(spint a,spint b) {\n"
-    str+="\tspint zero=_mm_setzero_si128();\n"
-    str+="\treturn _mm_madd52hi_epu64(zero,a,b);\n"
-    str+="}\n"
-
-    str+="// t*=m\n"
-    str+="static inline void muli(spint *tl,spint *th,int64_t m) {\n"
-    str+="\t*tl=muls(*tl,m);\n"
-    str+="\t*th=muls(*th,m);\n"
-    str+="}\n"
-
-    str+="// t<<s\n"
-    str+="static inline void shiftl(spint *tl,spint *th,char s) {\n"
-    str+="\t*th = _mm_slli_epi64(*th,s);\n"
-    str+="\t*tl = _mm_slli_epi64(*tl,s);\n"
-    str+="}\n\n"
-
-    str+="// set each lane to a constant\n"
-    str+="static inline spint tospint(int c0,int c1) {\n"
-    str+="\treturn _mm_set_epi64x(c1,c0);\n"
-    str+="}\n" 
-
-    return str
-
 #conditional add of x*p
 def caddp(x) :
     str=""
@@ -300,21 +203,21 @@ def caddp(x) :
         if ppw[i]==0 :
             continue
         if ppw[i]==-1:
-            str+="\tmpy=_mm_set2_epi64({}u);\n".format(x)
-            str+="\tn[{}]=_mm_sub_epi64(n[{}],_mm_and_si128(mpy,carry));\n".format(i,i)
+            str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT({}u);\n".format(x)
+            str+="\tn[{}]=MR_SUB64U(n[{}],MR_AND(mpy,carry));\n".format(i,i)
             #str+="\tn[{}]-=(spint){}u&carry;\n".format(i,x)
             continue
         if ppw[i]<0:
-            str+="\tmpy=_mm_set2_epi64(0x{:x}u);\n".format(-ppw[i]*x)
-            str+="\tn[{}]=_mm_sub_epi64(n[{}],_mm_and_si128(mpy,carry));\n".format(i,i)
+            str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(-ppw[i]*x)
+            str+="\tn[{}]=MR_SUB64U(n[{}],MR_AND(mpy,carry));\n".format(i,i)
             #str+="\tn[{}]-=((spint)0x{:x}u)&carry;\n".format(i,-ppw[i]*x)
             continue
-        str+="\tmpy=_mm_set2_epi64(0x{:x}u);\n".format(ppw[i]*x)
-        str+="\tn[{}]=_mm_add_epi64(n[{}],_mm_and_si128(mpy,carry));\n".format(i,i)
+        str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(ppw[i]*x)
+        str+="\tn[{}]=MR_ADD64U(n[{}],MR_AND(mpy,carry));\n".format(i,i)
         #str+="\tn[{}]+=((spint)0x{:x}u)&carry;\n".format(i,ppw[i]*x)
     if E:
-        str+="\tmpy=_mm_set2_epi64({}u*q);\n".format(x)
-        str+="\tn[{}]=_mm_add_epi64(n[{}],mpy);\n".format(N-1,N-1)
+        str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT({}u*q);\n".format(x)
+        str+="\tn[{}]=MR_ADD64U(n[{}],mpy);\n".format(N-1,N-1)
         #str+="\tn[{}]+=((spint){}u*q)&carry;\n".format(N-1,x)
     return str
 
@@ -325,21 +228,21 @@ def addp(x) :
         if ppw[i]==0 :
             continue
         if ppw[i]==-1:
-            str+="\tmpy=_mm_set2_epi64({}u);\n".format(x)
-            str+="\tn[{}]=_mm_sub_epi64(n[{}],mpy);\n".format(i,i)
+            str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT({}u);\n".format(x)
+            str+="\tn[{}]=MR_SUB64U(n[{}],mpy);\n".format(i,i)
             #str+="\tn[{}]-=(spint){};\n".format(i,x)
             continue
         if ppw[i]<0:
-            str+="\tmpy=_mm_set2_epi64(0x{:x}u);\n".format(-ppw[i]*x)
-            str+="\tn[{}]=_mm_sub_epi64(n[{}],mpy);\n".format(i,i)
+            str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(-ppw[i]*x)
+            str+="\tn[{}]=MR_SUB64U(n[{}],mpy);\n".format(i,i)
             #str+="\tn[{}]-=((spint)0x{:x}u);\n".format(i,-ppw[i]*x)
             continue
-        str+="\tmpy=_mm_set2_epi64(0x{:x}u);\n".format(ppw[i]*x)
-        str+="\tn[{}]=_mm_add_epi64(n[{}],mpy);\n".format(i,i)
+        str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(ppw[i]*x)
+        str+="\tn[{}]=MR_ADD64U(n[{}],mpy);\n".format(i,i)
         #str+="\tn[{}]+=((spint)0x{:x}u);\n".format(i,ppw[i]*x)
     if E:
-        str+="\tmpy=_mm_set2_epi64({}u*q);\n".format(x)
-        str+="\tn[{}]=_mm_add_epi64(n[{}],mpy);\n".format(N-1,N-1)
+        str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT({}u*q);\n".format(x)
+        str+="\tn[{}]=MR_ADD64U(n[{}],mpy);\n".format(N-1,N-1)
         #str+="\tn[{}]+=((spint){}u*q);\n".format(N-1,x)
     return str
 
@@ -350,21 +253,21 @@ def subp(x) :
         if ppw[i]==0 :
             continue
         if ppw[i]==-1:
-            str+="\tmpy=_mm_set2_epi64({}u);\n".format(x)
-            str+="\tn[{}]=_mm_add_epi64(n[{}],mpy);\n".format(i,i)
+            str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT({}u);\n".format(x)
+            str+="\tn[{}]=MR_ADD64U(n[{}],mpy);\n".format(i,i)
             #str+="\tn[{}]+=(spint){}u;\n".format(i,x)
             continue
         if ppw[i]<0:
-            str+="\tmpy=_mm_set2_epi64(0x{:x}u);\n".format(-ppw[i]*x)
-            str+="\tn[{}]=_mm_add_epi64(n[{}],mpy);\n".format(i,i)
+            str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(-ppw[i]*x)
+            str+="\tn[{}]=MR_ADD64U(n[{}],mpy);\n".format(i,i)
             #str+="\tn[{}]+=(spint)0x{:x}u;\n".format(i,-ppw[i]*x)
             continue
-        str+="\tmpy=_mm_set2_epi64(0x{:x}u);\n".format(ppw[i]*x)
-        str+="\tn[{}]=_mm_sub_epi64(n[{}],mpy);\n".format(i,i)
+        str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(ppw[i]*x)
+        str+="\tn[{}]=MR_SUB64U(n[{}],mpy);\n".format(i,i)
         #str+="\tn[{}]-=(spint)0x{:x}u;\n".format(i,ppw[i]*x)
     if E:
-        str+="\tmpy=_mm_set2_epi64({}u*q);\n".format(x)
-        str+="\tn[{}]=_mm_sub_epi64(n[{}],mpy);\n".format(N-1,N-1)
+        str+="\tmpy=MR_SET_ALL_LANES_TO_CONSTANT({}u*q);\n".format(x)
+        str+="\tn[{}]=MR_SUB64U(n[{}],mpy);\n".format(N-1,N-1)
         #str+="\tn[{}]-=(spint){}u*q;\n".format(N-1,x)
     return str
 
@@ -373,29 +276,29 @@ def prop(n) :
     str="//propagate carries\n"
     str+="static spint inline prop(spint *n) {\n"
     str+="\tint i;\n"
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<{}u)-1);\n".format(base)
+    str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<{}u)-1);\n".format(base)
     #str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
     str+="\tsspint carry=(sspint)n[0];\n"
-    str+="\tcarry=_mm_srai_epi64(carry,{}u);\n".format(base)
+    str+="\tcarry=MR_SRA64S(carry,{}u);\n".format(base)
     #str+="\tcarry>>={}u;\n".format(base)
 
-    str+="\tn[0]=_mm_and_si128(n[0], mask);\n"
+    str+="\tn[0]=MR_AND(n[0], mask);\n"
     #str+="\tn[0]&=mask;\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N-1)
 
-    str+="\t\tcarry=_mm_add_epi64(carry,n[i]);\n"
-    str+="\t\tn[i]=_mm_and_si128(carry,mask);\n"
-    str+="\t\tcarry=_mm_srai_epi64(carry, {}u);\n".format(base)
+    str+="\t\tcarry=MR_ADD64U(carry,n[i]);\n"
+    str+="\t\tn[i]=MR_AND(carry,mask);\n"
+    str+="\t\tcarry=MR_SRA64S(carry, {}u);\n".format(base)
 
     #str+="\t\tcarry+=(sspint)n[i];\n"
     #str+="\t\tn[i] = (spint)carry & mask;\n"
     #str+="\t\tcarry>>={}u;\n".format(base)
 
     str+="\t}\n"
-    str+="\tn[{}]=_mm_add_epi64(n[{}],carry);\n".format(N-1,N-1)
+    str+="\tn[{}]=MR_ADD64U(n[{}],carry);\n".format(N-1,N-1)
     #str+="\tn[{}]+=(spint)carry;\n".format(N-1)
-    str+="\treturn (_mm_srai_epi64(n[{}],{}u));\n}}\n".format(N-1,WL-1)
+    str+="\treturn (MR_SRA64S(n[{}],{}u));\n}}\n".format(N-1,WL-1)
     #str+="\treturn -((n[{}]>>1)>>{}u);\n}}\n".format(N-1,WL-2)
     return str
 
@@ -410,12 +313,12 @@ def flat(n) :
         str+="spint flatten(spint *n) {\n"
     if E :
         str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
-    str+="\tspint one=_mm_set2_epi64(1);\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     str+="\tspint carry=prop(n);\n"
     str+="\tspint mpy;\n"
     str+=caddp(1)
     str+="\t(void)prop(n);\n"
-    str+="\treturn _mm_and_si128(carry,one);\n"
+    str+="\treturn MR_AND(carry,one);\n"
     #str+="\treturn (carry&1);\n"
     str+="}\n"
     return str
@@ -452,7 +355,7 @@ def modadd(n) :
             str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
         str+="\tspint carry;\n"
     for i in range(0,N) :
-        str+="\tn[{}]=_mm_add_epi64(a[{}],b[{}]);\n".format(i,i,i)
+        str+="\tn[{}]=MR_ADD64U(a[{}],b[{}]);\n".format(i,i,i)
         #str+="\tn[{}]=a[{}]+b[{}];\n".format(i,i,i)
     if not algorithm :
         str+=subp(2)
@@ -480,7 +383,7 @@ def modsub(n) :
     else :
         str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
     for i in range(0,N) :
-        str+="\tn[{}]=_mm_sub_epi64(a[{}],b[{}]);\n".format(i,i,i)
+        str+="\tn[{}]=MR_SUB64U(a[{}],b[{}]);\n".format(i,i,i)
         #str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
     if not algorithm :
         str+="\tcarry=prop(n);\n"
@@ -501,7 +404,7 @@ def modneg(n) :
     else :
         str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
     str+="\tspint mpy;\n"
-    str+="\tspint zero=_mm_setzero_si128();\n"
+    str+="\tspint zero=MR_ZERO();\n"
     if not algorithm :
         if E: 
             str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
@@ -509,7 +412,7 @@ def modneg(n) :
     else :
         str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)
     for i in range(0,N) :
-        str+="\tn[{}]=_mm_sub_epi64(zero,b[{}]);\n".format(i,i)
+        str+="\tn[{}]=MR_SUB64U(zero,b[{}]);\n".format(i,i)
         #str+="\tn[{}]=(spint)0-b[{}];\n".format(i,i)
     if not algorithm :
         str+="\tcarry=prop(n);\n"
@@ -524,29 +427,31 @@ def modneg(n) :
 def getZMU(str,i) :
     first=True
     global maxnum
-
     k=0
     while (k<=i) :
         if first :
-            str+="\taccum(&tl,&th,a[{}],b[{}]);".format(k,i-k)    #"\tt+=(dpint)a[{}]*b[{}];".format(k,i-k)
+            str+="\ttl=MR_MULADD_LO(tl,a[{}],b[{}]); th=MR_MULADD_HI(th,a[{}],b[{}]);".format(k,i-k,k,i-k)
+            #str+="\taccum(&tl,&th,a[{}],b[{}]);".format(k,i-k)    #"\tt+=(dpint)a[{}]*b[{}];".format(k,i-k)
             first=False
         else :
-            str+=" accum(&tl,&th,a[{}],b[{}]);".format(k,i-k)     #" t+=(dpint)a[{}]*b[{}];".format(k,i-k)
+            str+=" tl=MR_MULADD_LO(tl,a[{}],b[{}]); th=MR_MULADD_HI(th,a[{}],b[{}]);".format(k,i-k,k,i-k)
+            #str+=" accum(&tl,&th,a[{}],b[{}]);".format(k,i-k)     #" t+=(dpint)a[{}]*b[{}];".format(k,i-k)
         k+=1
         maxnum+=maxdigit*maxdigit
     return str
 
 # add column of partial products from multiplication on way down
 def getZMD(str,i) :
-
     first=True
     k=i-(N-1)
     while (k<=N-1) :
         if first :
             first=False
-            str+="\taccum(&tl,&th,a[{}],b[{}]);".format(k,i-k)     #"\tt+=(dpint)a[{}]*b[{}];".format(k,i-k)
+            str+="\ttl=MR_MULADD_LO(tl,a[{}],b[{}]); th=MR_MULADD_HI(th,a[{}],b[{}]);".format(k,i-k,k,i-k)
+            #str+="\taccum(&tl,&th,a[{}],b[{}]);".format(k,i-k)     #"\tt+=(dpint)a[{}]*b[{}];".format(k,i-k)
         else :
-            str+=" accum(&tl,&th,a[{}],b[{}]);".format(k,i-k)    #" t+=(dpint)a[{}]*b[{}];".format(k,i-k)
+            str+=" tl=MR_MULADD_LO(tl,a[{}],b[{}]); th=MR_MULADD_HI(th,a[{}],b[{}]);".format(k,i-k,k,i-k)
+            #str+=" accum(&tl,&th,a[{}],b[{}]);".format(k,i-k)    #" t+=(dpint)a[{}]*b[{}];".format(k,i-k)
         k+=1
     return str
 
@@ -559,23 +464,33 @@ def getZSU(str,i) :
     while k<j :
         hap=True
         if first :
-            str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(k,i-k)    #"\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+="\ttotl=MR_ZERO();\n"
+            str+="\ttoth=MR_ZERO();\n"
+            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
+            #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(k,i-k)    #"\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
             first=False
         else :
-            str+=" accum(&totl,&toth,a[{}],a[{}]);".format(k,i-k)   #" tot+=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+=" totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
+            #str+=" accum(&totl,&toth,a[{}],a[{}]);".format(k,i-k)   #" tot+=(udpint)a[{}]*a[{}];".format(k,i-k)
         k+=1
         j-=1
     if hap:
-        str+=" add(&totl,&toth,totl,toth);"        #" tot*=2;"
+        str+=" totl=MR_ADD64U(totl,totl); toth=MR_ADD64U(toth,toth);"
+        #str+=" add(&totl,&toth,totl,toth);"        #" tot*=2;"
     if i%2==0:
         if first :
-            str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #"\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+            str+="\ttotl=MR_ZERO();\n"
+            str+="\ttoth=MR_ZERO();\n"
+            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2))
+            #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #"\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
         else :
-            str+=" accum(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #" tot+=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+            str+=" totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2)) 
+            #str+=" accum(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #" tot+=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
     if i==0 :
-        str+="tl=totl; th=toth;"   #" t=tot;"
+        str+="tl=totl; th=toth;\n"   #" t=tot;"
     else :
-        str+="add(&tl,&th,totl,toth); "   #" t+=tot; "
+        str+="tl=MR_ADD64U(tl,totl); th=MR_ADD64U(th,toth);\n"
+        #str+="add(&tl,&th,totl,toth); "   #" t+=tot; "
     return str
 
 # add column of partial products from squaring on way down
@@ -587,20 +502,30 @@ def getZSD(str,i) :
     while k<i-k :
         hap=True
         if first :
-            str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(k,i-k)     #"\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+="\ttotl=MR_ZERO();\n"
+            str+="\ttoth=MR_ZERO();\n"
+            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
+            #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(k,i-k)     #"\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
             first=False
         else :
-            str+=" accum(&totl,&toth,a[{}],a[{}]);".format(k,i-k)    #" tot+=(udpint)a[{}]*a[{}];".format(k,i-k)
+            str+=" totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
+            #str+=" accum(&totl,&toth,a[{}],a[{}]);".format(k,i-k)    #" tot+=(udpint)a[{}]*a[{}];".format(k,i-k)
         k+=1
         j-=1
     if hap :
-        str+=" add(&totl,&toth,totl,toth);"    #" tot*=2;"
+        str+=" totl=MR_ADD64U(totl,totl); toth=MR_ADD64U(toth,toth);"
+        #str+=" add(&totl,&toth,totl,toth);"    #" tot*=2;"
     if i%2==0:
         if first :
-            str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #"\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+            str+="\ttotl=MR_ZERO();\n"
+            str+="\ttoth=MR_ZERO();\n"
+            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2)) 
+            #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #"\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
         else :
-            str+=" accum(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))     #" tot+=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
-    str+="add(&tl,&th,totl,toth); "   #" t+=tot; "
+            str+=" totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2))
+            #str+=" accum(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))     #" tot+=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
+    str+="tl=MR_ADD64U(tl,totl); th=MR_ADD64U(th,toth); "
+    #str+="add(&tl,&th,totl,toth); "   #" t+=tot; "
     return str
 
 # process ppw[i] element, where i is index of the prime p, j is index of v
@@ -614,34 +539,36 @@ def mul_process(i,j,str,gone_neg,mask_set) :
     if abs(n)>1 :
         e=ispowerof2(n)
         if e > 0  :
-            str+=" accumsl(&tl,&th,v{},{}u); ".format(j,e)   #" t+=(dpint)(udpint)((udpint)v{}<<{}u); ".format(j,e)
+            str+=" tl=MR_ADDSHL(tl,v{},{}u); th=MR_ADDSHR(th,v{},{}u); ".format(j,e,j,e)
+            #str+=" accumsl(&tl,&th,v{},{}u); ".format(j,e)   #" t+=(dpint)(udpint)((udpint)v{}<<{}u); ".format(j,e)
             maxnum+=maxdigit*2**e
         else :
-            str+=" accum(&tl,&th,v{},p{}); ".format(j,i)  #" t+=(dpint)v{}*(dpint)p{}; ".format(j,i)
+            str+=" tl=MR_MULADD_LO(tl,v{},p{}); th=MR_MULADD_HI(th,v{},p{}); ".format(j,i,j,i)
+            #str+=" accum(&tl,&th,v{},p{}); ".format(j,i)  #" t+=(dpint)v{}*(dpint)p{}; ".format(j,i)
             maxnum+=maxdigit*ppw[i]
     if n == 1 :
         if mask_set :
-            str+=" s=_mm_add_epi64(s,v{}); ".format(j)
+            str+=" s=MR_ADD64U(s,v{}); ".format(j)
             #str+=" s+=v{}; ".format(j)
         else :
-            str+=" tl=_mm_add_epi64(tl,v{}); ".format(j)
+            str+=" tl=MR_ADD64U(tl,v{}); ".format(j)
             #str+=" add(&tl,&th,v{},0); ".format(j)   #" t+=(dpint)v{}; ".format(j)
             maxnum+=maxdigit
     if n == -1 :
         if mask_set :
             if not gone_neg :
-                str+=" s=_mm_add_epi64(s,_mm_sub_epi64(q,v{}));".format(j)
+                str+=" s=MR_ADD64U(s,MR_SUB64U(q,v{}));".format(j)
                 #str+=" s+=q-v{};".format(j)
             else :
-                str+=" s=_mm_sub_epi64(s,v{}); ".format(j)
+                str+=" s=MR_SUB64U(s,v{}); ".format(j)
                 #str+=" s-=v{}; ".format(j)
         else: 
             if not gone_neg :
-                str+=" tl=_mm_add_epi64(tl,_mm_sub_epi64(q,v{}));".format(j)
+                str+=" tl=MR_ADD64U(tl,MR_SUB64U(q,v{}));".format(j)
                 #str+=" add(&tl,&th,q-v{},0);".format(j)       #" t+=(dpint)(spint)(q-v{});".format(j)
                 maxnum+=maxdigit
             else :
-                str+=" tl=_mm_sub_epi64(tl,v{});".format(j)
+                str+=" tl=MR_SUB64U(tl,v{});".format(j)
                 #str+=" sub(&tl,&th,v{},0);".format(j)       #" t-=(dpint)v{}; ".format(j)
         gone_neg=True
     return str,gone_neg
@@ -652,34 +579,36 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
     if abs(n)>1 :
         e=ispowerof2(n)
         if e > 0  :
-            str+=" accumsl(&tl,&th,v{},{}u); ".format(j,e)  #" t+=(udpint)v{}<<{}u; ".format(j,e)
+            str+=" tl=MR_ADDSHL(tl,v{},{}u); th=MR_ADDSHR(th,v{},{}u); ".format(j,e,j,e)
+            #str+=" accumsl(&tl,&th,v{},{}u); ".format(j,e)  #" t+=(udpint)v{}<<{}u; ".format(j,e)
             maxnum+=maxdigit*2**e
         else :
-            str+=" accum(&tl,&th,v{},p{}); ".format(j,i)    #" t+=(udpint)v{}*p{}; ".format(j,i)
+            str+=" tl=MR_MULADD_LO(tl,v{},p{}); th=MR_MULADD_HI(th,v{},p{});".format(j,i,j,i)  
+            #str+=" accum(&tl,&th,v{},p{}); ".format(j,i)    #" t+=(udpint)v{}*p{}; ".format(j,i)
             maxnum+=maxdigit*ppw[i]
     if n == 1 :
         if mask_set :
-            str+=" s=_mm_add_epi64(s,v{}); ".format(j)
+            str+=" s=MR_ADD64U(s,v{}); ".format(j)
             #str+=" s+=v{}; ".format(j)
         else :
-            str+=" tl=_mm_add_epi64(tl,v{}); ".format(j)
+            str+=" tl=MR_ADD64U(tl,v{}); ".format(j)
             #str+=" add(&tl,&th,v{},0); ".format(j)      #" t+=(udpint)v{}; ".format(j)
             maxnum+=maxdigit
     if n == -1 :
         if mask_set :
             if not gone_neg :
-                str+=" s=_mm_add_epi64(s,_mm_sub_epi64(q,v{}));".format(j)
+                str+=" s=MR_ADD64U(s,MR_SUB64U(q,v{}));".format(j)
                 #str+=" s+=q-v{};".format(j)
             else :
-                str+=" s=_mm_sub_epi64(s,v{}); ".format(j)
+                str+=" s=MR_SUB64U(s,v{}); ".format(j)
                 #str+=" s-=v{}; ".format(j)
         else: 
             if not gone_neg :
-                str+=" tl=_mm_add_epi64(tl,_mm_sub_epi64(q,v{}));".format(j)
+                str+=" tl=MR_ADD64U(tl,MR_SUB64U(q,v{}));".format(j)
                 #str+=" add(&tl,&th,q-v{},0);".format(j)   #" t+=(udpint)(spint)(q-v{});".format(j)
                 maxnum+=maxdigit
             else :
-                str+=" tl=_mm_sub_epi64(tl,v{});".format(j)
+                str+=" tl=MR_SUB64U(tl,v{});".format(j)
                 #str+=" sub(&tl,&th,v{},0); ".format(j)    #" t-=(udpint)v{}; ".format(j)
         gone_neg=True
     return str,gone_neg
@@ -698,7 +627,7 @@ def modmul(n) :
     else :
         str+="void modmul{}(const spint *a,const spint *b,spint *c) {{\n".format(DECOR)
 
-    str+="\tspint tl=_mm_setzero_si128(), th=_mm_setzero_si128();\n"
+    str+="\tspint tl=MR_ZERO(), th=MR_ZERO();\n"
 
     for i in range(0,N) :
         if i==0 and PM :
@@ -706,45 +635,50 @@ def modmul(n) :
         n=ppw[i]
         if abs(n)>1 :
             if i==0 or ispowerof2(n)<0 :
-                str+="\tspint p{}=_mm_set2_epi64({}u);\n".format(i,hex(ppw[i]))
+                str+="\tspint p{}=MR_SET_ALL_LANES_TO_CONSTANT({}u);\n".format(i,hex(ppw[i]))
                 #str+="\tspint p{}={}u;\n".format(i,hex(ppw[i]))
-    str+="\tspint q=_mm_set2_epi64((int64_t)1<<{}u);\n".format(base)
+    str+="\tspint q=MR_SET_ALL_LANES_TO_CONSTANT((int64_t)1<<{}u);\n".format(base)
     #str+="\tspint q=((spint)1<<{}u); // q is unsaturated radix \n".format(base)
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<{}u)-1);\n".format(base)
+    str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<{}u)-1);\n".format(base)
     #str+="\tspint mask=(spint)(q-(spint)1);\n"
-    str+="\tspint zero=_mm_setzero_si128();\n"
-    str+="\tspint one=_mm_set2_epi64(1);\n"
+    str+="\tspint zero=MR_ZERO();\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     if fullmonty :
-        str+="\tspint ndash=_mm_set2_epi64(0x{:x}u);\n".format(ndash)
+        str+="\tspint ndash=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(ndash)
         #str+="\tspint ndash=0x{:x}u;\n".format(ndash)
     maxnum=0
     str=getZMU(str,0)
     gone_neg=False 
 
     if PM :
-        str+="spint wl,wh;\n"
-        str+="spint sm=_mm_set2_epi64({});\n".format(M)
+        str+="spint wl;\n"
+        str+="spint sm=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format(M)
     
     if fullmonty :
-        str+=" spint v0=_mm_and_si128(_mm_madd52lo_epu64(zero,tl,ndash),mask);"
+        str+=" spint v0=MR_AND(MR_MULLO52(tl,ndash),mask);"
         #str+=" spint v0=((tl*ndash)&mask);"    #" spint v0=(((spint)t*ndash)&mask);"
         if PM :
             gone_neg=True
-            str+=" mul(&wl,&wh,sm,_mm_sub_epi64(q,v0)); "
-            str+=" add(&tl,&th,wl,wh); "
+            str+="\twl=MR_ZERO();\n"
+            #str+="\twh=MR_ZERO();\n"
+            str+=" wl=MR_MULADD_LO_64(wl,sm,MR_SUB64U(q,v0));  "
+            #str+=" mul(&wl,&wh,sm,MR_SUB64U(q,v0)); "
+            str+=" tl=MR_ADD64U(tl,wl);  "
+            #str+=" add(&tl,&th,wl,wh); "
             #str+=" add(&tl,&th,(spint){}*(q-v0),0); ".format(M)    #" t+=(dpint)(spint)((spint){}*(q-v0)); ".format(M)
             maxnum+=M*maxdigit
         else :
             if ppw[0]==1 :
-                str+=" tl=_mm_add_epi64(tl,v0); "
+                str+=" tl=MR_ADD64U(tl,v0); "
                 #str+=" add(&tl,&th,v0,0); "    #" t+=(dpint)v0;"
             else :
-                str+=" accum(&tl,&th,v0,p0);"   #" t+=(dpint)v0 * (dpint)p0;"
+                str+=" tl=MR_MULADD_LO(tl,v0,p0); th=MR_MULADD_HI(th,v0,p0);"
+                #str+=" accum(&tl,&th,v0,p0);"   #" t+=(dpint)v0 * (dpint)p0;"
             maxnum+=ppw[0]*maxdigit
     else :
-        str+="spint v0=_mm_and_si128(tl,mask);"
+        str+="spint v0=MR_AND(tl,mask);"
         #str+="spint v0=(tl & mask);"   #" spint v0=((spint)t & mask);"
-    str+=" shiftr(&tl,&th);\n"  #" t>>={};\n".format(base)
+    str+=" tl=MR_SHR52(tl,th); th=MR_ZERO(); \n"  #" t>>={};\n".format(base)
     maxnum=2**(2*WL-base)
     str=getZMU(str,1)
     mask_set=False
@@ -752,8 +686,12 @@ def modmul(n) :
     for i in range(1,N) :
         if gone_neg :
             if PM :
-                str+=" mul(&wl,&wh,sm,mask); "
-                str+=" add(&tl,&th,wl,wh);"
+                str+="\twl=MR_ZERO();\n"
+                #str+="\twh=MR_ZERO();\n"
+                str+=" wl=MR_MULADD_LO_64(wl,sm,mask);  "
+                #str+=" mul(&wl,&wh,sm,mask); "
+                str+=" tl=MR_ADD64U(tl,wl);"
+                #str+=" add(&tl,&th,wl,wh);"
                 #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)    #" t+=(dpint)(spint)((spint){}*mask);".format(M)
                 maxnum+=M*maxdigit
             else :
@@ -770,34 +708,39 @@ def modmul(n) :
             str,gone_neg=mul_process(i-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" tl=_mm_add_epi64(tl,s);"
+            str+=" tl=MR_ADD64U(tl,s);"
             #str+=" add(&tl,&th,s,0);"   #" t+=(dpint)s;"
             maxnum+=maxdigit
             mask_set=False
 
         if fullmonty :
-            str+=" spint v{}=_mm_and_si128(_mm_madd52lo_epu64(zero,tl,ndash),mask); ".format(i)
+            str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(i)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(i)    #" spint v{}=(((spint)t*ndash) & mask); ".format(i)
             if PM :
-                str+=" mul(&wl,&wh,sm,v{}); ".format(i)
-                str+=" sub(&tl,&th,wl,wh); "
+                str+="\twl=MR_ZERO();\n"
+                #str+="\twh=MR_ZERO();\n"
+                str+=" wl=MR_MULADD_LO_64(wl,sm,v{});  ".format(i,i)
+                #str+=" mul(&wl,&wh,sm,v{}); ".format(i)
+                str+=" tl=MR_SUB64U(tl,wl);  "
+                #str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,i)    #" t-=(dpint)(spint)((spint){}*v{}); ".format(M,i)
             else :
                 if ppw[0]==1 :
-                    str+=" tl=_mm_add_epi64(tl,v{});".format(i)
+                    str+=" tl=MR_ADD64U(tl,v{});".format(i)
                     #str+=" add(&tl,&th,v{},0);".format(i)  #" t+=(dpint)v{};".format(i)
                 else :
-                    str+=" accum(&tl,&th,v{},p0);".format(i)  #" t+=(dpint)v{} * (dpint)p0;".format(i)
+                    str+=" tl=MR_MULADD_LO(tl,v{},p0); th=MR_MULADD_HI(th,v{},p0);".format(i,i)
+                    #str+=" accum(&tl,&th,v{},p0);".format(i)  #" t+=(dpint)v{} * (dpint)p0;".format(i)
                 maxnum+=ppw[0]*maxdigit
         else :
-            str+=" spint v{}=_mm_and_si128(tl,mask); ".format(i)
+            str+=" spint v{}=MR_AND(tl,mask); ".format(i)
             #str+=" spint v{}=(tl & mask); ".format(i)    #" spint v{}=((spint)t & mask); ".format(i)
         if i==N-1 :
             print("// Overflow limit   =",2**(2*WL))
             print("// maximum possible =",maxnum)
             if maxnum >= 2**(2*WL) :
                 print("//Warning: Overflow possibility detected - change radix ")
-        str+=" shiftr(&tl,&th);\n"   #" t>>={};\n".format(base)
+        str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"   #" t>>={};\n".format(base)
         maxnum=2**(2*WL-base)
         if i<N-1 :
             str= getZMU(str,i+1)
@@ -805,8 +748,12 @@ def modmul(n) :
     str=getZMD(str,N)
     if gone_neg :
         if PM :
-            str+=" mul(&wl,&wh,sm,mask); "
-            str+=" add(&tl,&th,wl,wh);"
+            str+="\twl=MR_ZERO();\n"
+            #str+="\twh=MR_ZERO();\n"
+            str+=" wl=MR_MULADD_LO_64(wl,sm,mask);  "
+            #str+=" mul(&wl,&wh,sm,mask); "
+            str+=" tl=MR_ADD64U(tl,wl); "
+            #str+=" add(&tl,&th,wl,wh);"
             #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(dpint)(spint)((spint){}*mask);".format(M)
         else :
             if not s_is_declared :
@@ -823,35 +770,44 @@ def modmul(n) :
             str,gone_neg=mul_process(N-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" tl=_mm_add_epi64(tl,s);"
+            str+=" tl=MR_ADD64U(tl,s);"
             #str+=" add(&tl,&th,s,0);"  #" t+=(dpint)s;"
             mask_set=False        
 
         if fullmonty :
-            str+=" spint v{}=_mm_and_si128(_mm_madd52lo_epu64(zero,tl,ndash),mask); ".format(N)
+            str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(N)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(N)    #" spint v{}=(((spint)t*ndash) & mask); ".format(N)
             if PM :
-                str+=" mul(&wl,&wh,sm,v{}); ".format(N)
-                str+=" sub(&tl,&th,wl,wh); "
+                str+="\twl=MR_ZERO();\n"
+                #str+="\twh=MR_ZERO();\n"
+                str+=" wl=MR_MULADD_LO_64(wl,sm,v{});  ".format(N,N)
+                #str+=" mul(&wl,&wh,sm,v{}); ".format(N)
+                str+=" tl=MR_SUB64U(tl,wl);  "
+                #str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,N)   #" t-=(dpint)(spint)((spint){}*v{}); ".format(M,N)
             else :
                 if ppw[0]==1 :
-                    str+=" tl=_mm_add_epi64(tl,v{});".format(N)
+                    str+=" tl=MR_ADD64U(tl,v{});".format(N)
                     #str+=" add(&tl,&th,v{},0);".format(N)   #" t+=(dpint)v{};".format(N)
                 else :
-                    str+=" accum(&tl,&th,v{},p0);".format(N)   #" t+=(dpint)v{} * (dpint)p0;".format(N)
+                    str+=" tl=MR_MULADD_LO(tl,v{},p0); th=MR_MULADD_HI(th,v{},p0);".format(N,N)
+                    #str+=" accum(&tl,&th,v{},p0);".format(N)   #" t+=(dpint)v{} * (dpint)p0;".format(N)
         else :
-            str+=" spint v{}=_mm_and_si128(tl,mask); ".format(N)
+            str+=" spint v{}=MR_AND(tl,mask); ".format(N)
             #str+=" spint v{}=(tl & mask); ".format(N)    #" spint v{}=((spint)t & mask); ".format(N)
-        str+=" shiftr(&tl,&th);\n"       #" t>>={};\n".format(base)
+        str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"       #" t>>={};\n".format(base)
 
         str=getZMD(str,N+1)
 
         for i in range(N+1,2*N) :
             if gone_neg :
                 if PM :
-                    str+=" mul(&wl,&wh,sm,mask); "
-                    str+=" add(&tl,&th,wl,wh);"
+                    str+="\twl=MR_ZERO();\n"
+                    #str+="\twh=MR_ZERO();\n"
+                    str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
+                    #str+=" mul(&wl,&wh,sm,mask); "
+                    str+=" tl=MR_ADD64U(tl,wl); "
+                    #str+=" add(&tl,&th,wl,wh);"
                     #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(dpint)(spint)((spint){}*mask);".format(M)
                 else :
                     if not s_is_declared :
@@ -865,13 +821,13 @@ def modmul(n) :
                 str,gone_neg=mul_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" tl=_mm_add_epi64(tl,s);"
+                str+=" tl=MR_ADD64U(tl,s);"
                 #str+=" add(&tl,&th,s,0);"  #" t+=(dpint)s;"
                 mask_set=False        
 
-            str+=" c[{}]=_mm_and_si128(tl,mask); ".format(i-N-1)
+            str+=" c[{}]=MR_AND(tl,mask); ".format(i-N-1)
             #str+=" c[{}]=(tl & mask); ".format(i-N-1)    #" c[{}]=((spint)t & mask); ".format(i-N-1)
-            str+=" shiftr(&tl,&th);\n"   #" t>>={};\n".format(base)
+            str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"   #" t>>={};\n".format(base)
 
             #if i<=2*N-1 :
             if i<2*N-2 :
@@ -881,13 +837,13 @@ def modmul(n) :
         
         if gone_neg :
             if PM :
-                str+=" tl=_mm_add_epi64(tl,_mm_sub_epi64(v{},sm));".format(N)
+                str+=" tl=MR_ADD64U(tl,MR_SUB64U(v{},sm));".format(N)
                 #str+=" add(&tl,&th,v{}-(spint){},0);".format(N,M)     #" t+=(dpint)(spint)(v{}-(spint){});".format(N,M)
             else :
-                str+=" tl=_mm_add_epi64(tl,_mm_sub_epi64(v{},one));".format(N) 
+                str+=" tl=MR_ADD64U(tl,MR_SUB64U(v{},one));".format(N) 
                 #str+=" add(&tl,&th,v{}-(spint)1,0);".format(N)    #" t+=(dpint)(spint)(v{}-(spint)1);".format(N)
         else :
-            str+="  tl=_mm_add_epi64(tl,v{});".format(N)
+            str+="  tl=MR_ADD64U(tl,v{});".format(N)
             #str+="  add(&tl,&th,v{},0);".format(N)  #" t+=(dpint)v{};".format(N)
 
         str+=" c[{}] = tl;\n".format(N-1)    #" c[{}] = (spint)t;\n".format(N-1)
@@ -898,21 +854,25 @@ def modmul(n) :
                 str,gone_neg=mul_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" tl=_mm_add_epi64(tl,s);"
+                str+=" tl=MR_ADD64U(tl,s);"
                 #str+=" add(&tl,&th,s,0);"  #" t+=(dpint)s;"
                 mask_set=False   
 
             if i==2*N-1 :
                 break
-            str+=" c[{}]=_mm_and_si128(tl,mask); ".format(i-N)
+            str+=" c[{}]=MR_AND(tl,mask); ".format(i-N)
             #str+=" c[{}]=(tl & mask); ".format(i-N)    #" c[{}]=((spint)t & mask); ".format(i-N)
-            str+=" shiftr(&tl,&th);\n" #" t>>={};\n".format(base)
+            str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n" #" t>>={};\n".format(base)
             if i<=2*N-3 :
                 str=getZMD(str,i+1)
                 if gone_neg :
                     if PM :
-                        str+=" mul(&wl,&wh,sm,mask); "
-                        str+=" add(&tl,&th,wl,wh);"
+                        str+="\twl=MR_ZERO();\n"
+                        #str+="\twh=MR_ZERO();\n"
+                        str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
+                        #str+=" mul(&wl,&wh,sm,mask); "
+                        str+=" tl=MR_ADD64U(tl,wl); "
+                        #str+=" add(&tl,&th,wl,wh);"
                         #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)   #" t+=(dpint)(spint)((spint){}*mask);".format(M)
                     else :
                         if not s_is_declared :
@@ -923,10 +883,10 @@ def modmul(n) :
                         mask_set=True
         if gone_neg :
             if PM :
-                str+="\ttl=_mm_sub_epi64(tl,sm);"
+                str+="\ttl=MR_SUB64U(tl,sm);"
                 #str+="\tsub(&tl,&th,{},0);".format(M)   #"\tt-=(dpint){};".format(M)
             else :
-                str+="\ttl=_mm_sub_epi64(tl,one);"
+                str+="\ttl=MR_SUB64U(tl,one);"
                 #str+="\tsub(&tl,&th,1u,0);"  #"\tt-=(dpint)1u;"
         str+="\tc[{}] = tl;\n".format(N-1)   #"\tc[{}] = (spint)t;\n".format(N-1)
     str+="}\n"
@@ -945,33 +905,34 @@ def modmli(n) :
         str+="void inline modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
     else :
         str+="void modmli{}(const spint *a,spint bw,spint *c) {{\n".format(DECOR)
-    #str+="\tspint bw=_mm_set2_epi64(b);\n"
+    #str+="\tspint bw=MR_SET_ALL_LANES_TO_CONSTANT(b);\n"
     if xcess>0 :
         smask=(1<<(base-xcess))-1
-        str+="\tspint smask=_mm_set2_epi64({});\n".format(smask)
-        str+="\tspint zero=_mm_setzero_si128();\n"
+        str+="\tspint smask=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format(smask)
+        str+="\tspint zero=MR_ZERO();\n"
     if trin>0 :
-        str+="\tspint tl=_mm_set2_epi32(0),th=_mm_set2_epi32(0);\n"
+        str+="\tspint tl=MR_ZERO(0),th=MR_ZERO(0);\n"
 
         str+="\tspint s;\n"
-        str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<{}u)-1);\n".format(base)
+        str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<{}u)-1);\n".format(base)
         #str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
 
         for i in range(0,N) :
-            str+="\taccum(&tl,&th,a[{}],bw); ".format(i)     #"\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
-            str+="c[{}]=_mm_and_si128(tl,mask); shiftr(&tl,&th);\n".format(i)
-            #str+="c[{}]=tl & mask; shiftr(&tl,&th,{}u);\n".format(i,base)    #"c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
+            str+="\ttl=MR_MULADD_LO(tl,a[{}],bw); th=MR_MULADD_HI(th,a[{}],bw); ".format(i,i)
+            #str+="\taccum(&tl,&th,a[{}],bw); ".format(i)     #"\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+            str+="c[{}]=MR_AND(tl,mask); tl=MR_SHR52(tl,th); th=MR_ZERO();\n".format(i)
+            #str+="c[{}]=tl & mask; MR_SHR52(&tl,&th,{}u);\n".format(i,base)    #"c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
 
         str+="// reduction pass\n\n"  
         str+="\ts=tl;\n"  
 
         if xcess>0 :
             smask=(1<<(base-xcess))-1
-            str+= "\ts=_mm_add_epi64(_mm_slli_epi64(s,{}),_mm_srli_epi64(c[{}],{}u)); c[{}]=_mm_and_si128(c[{}],smask);\n".format(xcess,N-1,base-xcess,N-1,N-1)
+            str+= "\ts=MR_ADD64U(MR_SHL64U(s,{}),MR_SHR64U(c[{}],{}u)); c[{}]=MR_AND(c[{}],smask);\n".format(xcess,N-1,base-xcess,N-1,N-1)
             #str+= "\ts=(s<<{})+(c[{}]>>{}u); c[{}]&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
-        str+="\tc[0]=_mm_add_epi64(c[0],s);\n"
+        str+="\tc[0]=MR_ADD64U(c[0],s);\n"
         #str+="\tc[0]+=s;\n"
-        str+="\tc[{}]=_mm_add_epi64(c[{}],s);\n".format(trin)
+        str+="\tc[{}]=MR_ADD64U(c[{}],s);\n".format(trin)
         #str+="\tc[{}]+=s;\n".format(trin)
     else :        
 # Barrett/Dhem method
@@ -981,26 +942,28 @@ def modmli(n) :
             if abs(d)>1 :
                 if d>1 :
                     if i==0 or ispowerof2(d)<0 :
-                        str+="\tspint p{}=_mm_set2_epi64({}u);\n".format(i,hex(d))
+                        str+="\tspint p{}=MR_SET_ALL_LANES_TO_CONSTANT({}u);\n".format(i,hex(d))
                 if d<1 :
                     if i==0 :
-                        str+="\tspint p{}=_mm_set2_epi64({}u);\n".format(i,hex(-d))
-        str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<{}u)-1);\n".format(base)
+                        str+="\tspint p{}=MR_SET_ALL_LANES_TO_CONSTANT({}u);\n".format(i,hex(-d))
+        str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<{}u)-1);\n".format(base)
         #str+="\tspint mask=((spint)1<<{}u)-(spint)1;\n".format(base)
-        str+="\tspint tl=_mm_setzero_si128(),th=_mm_setzero_si128();\n"
+        str+="\tspint tl=MR_ZERO(),th=MR_ZERO();\n"
         str+="\tspint q,h;\n"
-        str+="\tspint r=_mm_set2_epi64(0x{:x});\n".format((2**(n+base-2))//p)
+        str+="\tspint r=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x});\n".format((2**(n+base))//p)
         for i in range(0,N-1) :
-            str+="\taccum(&tl,&th,a[{}],bw); ".format(i) #"\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
-            str+="c[{}]=_mm_and_si128(tl,mask); shiftr(&tl,&th);\n".format(i)
-            #str+="c[{}]=tl & mask; shiftr(&tl,&th,{}u);\n".format(i,base) #"c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
-        str+="\taccum(&tl,&th,a[{}],bw); ".format(N-1)   #"\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
+            str+="\ttl=MR_MULADD_LO(tl,a[{}],bw); th=MR_MULADD_HI(th,a[{}],bw); ".format(i,i)
+            #str+="\taccum(&tl,&th,a[{}],bw); ".format(i) #"\tt+=(udpint)a[{}]*(udpint)b; ".format(i)
+            str+="c[{}]=MR_AND(tl,mask); tl=MR_SHR52(tl,th); th=MR_ZERO(); \n".format(i)
+            #str+="c[{}]=tl & mask; MR_SHR52(&tl,&th,{}u);\n".format(i,base) #"c[{}]=(spint)t & mask; t=t>>{}u;\n".format(i,base)
+        str+="\ttl=MR_MULADD_LO(tl,a[{}],bw); th=MR_MULADD_HI(th,a[{}],bw); ".format(N-1,N-1)
+        #str+="\taccum(&tl,&th,a[{}],bw); ".format(N-1)   #"\tt+=(udpint)a[{}]*(udpint)b; ".format(N-1)
         str+="c[{}]=tl;\n".format(N-1)  #"c[{}]=(spint)t & mask;\n".format(N-1)
         
         str+="\t\n//Barrett-Dhem reduction\n"
-        str+="\th=shiftout(tl,th,{}u);\n".format((n-2)%base)
-        #str+="\tshiftr(&tl,&th,{}u); h=tl;\n".format((n-WL)%base)   #"\th = (spint)(t>>{}u);\n".format((n-WL)%base)
-        str+="\tq=mulhi(h,r);\n"     #"\tq=(spint)(((udpint)h*(udpint)r)>>{}u);\n".format(WL)  
+        str+="\th=MR_SHL(tl,th,{}u);\n".format(n%base)
+        #str+="\tMR_SHR52(&tl,&th,{}u); h=tl;\n".format((n-WL)%base)   #"\th = (spint)(t>>{}u);\n".format((n-WL)%base)
+        str+="\tq=MR_MULADD_HI(MR_MULLO(h,MR_SHR64U(r,52)),h,MR_AND(r,mask));\n"     #"\tq=(spint)(((udpint)h*(udpint)r)>>{}u);\n".format(WL)  
 
 # required to propagate carries?
 
@@ -1009,36 +972,44 @@ def modmli(n) :
             if d==0 :
                 continue
             if d==-1 :
-                str+="\tc[{}]=_mm_add_epi64(c[{}],q);\n".format(i,i)
+                str+="\tc[{}]=MR_ADD64U(c[{}],q);\n".format(i,i)
                 #str+="\tc[{}]+=q;\n".format(i)
                 continue
             if d==1 :
-                str+="\tc[{}]=_mm_sub_epi64(c[{},q);\n".format(i,i)
+                str+="\tc[{}]=MR_SUB64U(c[{},q);\n".format(i,i)
                 #str+="\tc[{}]-=q;\n".format(i)
                 continue
             e=ispowerof2(d)
             if e>0 :
                 if i<N-1 :
-                    str+="\ttl=q; th=zero; shiftl(&tl,&th,{}u); c[{}]=_mm_sub_epi64(c[{}],_mm_and_si128(tl,mask)); shiftr(&tl,&th); c[{}]=_mm_sub_epi64(c[{}],tl);\n".format(e,i,i,i+1,i+1) 
-                    #str+="\ttl=q; shiftl(&tl,&th,{}u); c[{}]-=tl&mask; shiftr(&tl,&th,{}u); c[{}]-=tl;\n".format(e,i,base,i+1)   #"\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
+                    str+="\ttl=q; th=zero; tl=MR_SHL64U(tl,{}u); th=MR_SHL64U(th,{}u); c[{}]=MR_SUB64U(c[{}],MR_AND(tl,mask)); tl=MR_SHR52(tl,th); th=MR_ZERO(); c[{}]=MR_SUB64U(c[{}],tl);\n".format(e,e,i,i,i+1,i+1) 
+                    #str+="\ttl=q; shiftl(&tl,&th,{}u); c[{}]-=tl&mask; MR_SHR52(&tl,&th,{}u); c[{}]-=tl;\n".format(e,i,base,i+1)   #"\tt=(udpint)q<<{}u; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(e,i,i+1,base)
                 else :
-                    str+="\tc[{}]=_mm_sub_epi64(c[{}],_mm_slli_epi64(q,{}u));\n".format(i,i,e)
+                    str+="\tc[{}]=MR_SUB64U(c[{}],MR_AND(MR_SHL64U(q,{}u),mask));\n".format(i,i,e)
                     #str+="\tc[{}]-=q<<{}u;\n".format(i,e)
             else :
                 if d<0 :
-                    str+="\tmul(&tl,&th,q,p{}); c[{}]=_mm_add_epi64(c[{}],_mm_and_si128(tl,mask)); shiftr(&tl,&th); c[{}]=_mm_add_epi64(c[{}],tl);\n".format(i,i,i,i+1,i+1)
-                    #str+="\tmul(&tl,&th,q,p{}); c[{}]+=tl&mask; shiftr(&tl,&th,{}u); c[{}]+=tl;\n".format(i,i,base,i+1)  #"\tt=(udpint)q*p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
+                    str+="\ttl=MR_ZERO();\n"
+                    str+="\tth=MR_ZERO();\n"
+                    str+="\ttl=MR_MULADD_LO(tl,q,p{}); th=MR_MULADD_HI(th,q,p{}); ".format(i,i)
+                    #str+="\tmul(&tl,&th,q,p{}); ".format(i)
+                    str+="\tc[{}]=MR_ADD64U(c[{}],MR_AND(tl,mask)); tl=MR_SHR52(tl,th); th=MR_ZERO(); c[{}]=MR_ADD64U(c[{}],tl);\n".format(i,i,i+1,i+1)
+                    #str+="\tmul(&tl,&th,q,p{}); c[{}]+=tl&mask; MR_SHR52(&tl,&th,{}u); c[{}]+=tl;\n".format(i,i,base,i+1)  #"\tt=(udpint)q*p{}; c[{}]+=(spint)t&mask; c[{}]+=(spint)(t>>{}u);\n".format(i,i,i+1,base)
                 else :
                     if i<N-1 :
-                        str+="\tmul(&tl,&th,q,p{}); c[{}]=_mm_sub_epi64(c[{}],_mm_and_si128(tl,mask)); shiftr(&tl,&th); c[{}]=_mm_sub_epi64(c[{}],tl);\n".format(i,i,i,i+1,i+1)
-                        #str+="\tmul(&tl,&th,q,p{}); c[{}]-=tl&mask; shiftr(&tl,&th,{}u); c[{}]-=tl;\n".format(i,i,base,i+1)   #"\tt=(udpint)q*p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(i,i,i+1,base)
+                        str+="\ttl=MR_ZERO();\n"
+                        str+="\tth=MR_ZERO();\n"
+                        str+="\ttl=MR_MULADD_LO(tl,q,p{}); th=MR_MULADD_HI(th,q,p{}); ".format(i,i)
+                        #str+="\tmul(&tl,&th,q,p{}); ".format(i)
+                        str+="\tc[{}]=MR_SUB64U(c[{}],MR_AND(tl,mask)); tl=MR_SHR52(tl,th); th=MR_ZERO(); c[{}]=MR_SUB64U(c[{}],tl);\n".format(i,i,i+1,i+1)
+                        #str+="\tmul(&tl,&th,q,p{}); c[{}]-=tl&mask; MR_SHR52(&tl,&th,{}u); c[{}]-=tl;\n".format(i,i,base,i+1)   #"\tt=(udpint)q*p{}; c[{}]-=(spint)t&mask; c[{}]-=(spint)(t>>{}u);\n".format(i,i,i+1,base)
                     else :
-                        str+="\ttl=_mm_madd52lo_epu64(zero,q,p{});\n".format(i)
-                        str+="\tc[{}]=_mm_sub_epi64(c[{}],tl);\n".format(i,i)
+                        str+="\ttl=MR_MULLO52(q,p{});\n".format(i)
+                        str+="\tc[{}]=MR_SUB64U(c[{}],tl);\n".format(i,i)
                         #str+="\tc[{}]-=q*p{};\n".format(i,i)
                         #str+="\tc[{}]=(c[{}]-(q*p{}))&mask;\n".format(i,i,i)
         if E:
-            str+="\tc[{}]=_mm_sub_epi64(c[{}],_mm_slli_epi64(q,{}u));\n".format(N-1,N-1,base)
+            str+="\tc[{}]=MR_SUB64U(c[{}],MR_AND(MR_SHL64U(q,{}u),mask));\n".format(N-1,N-1,base)
             #str+="\tc[{}]-=(q<<{}u);\n".format(N-1,base)
 #        str+="*/\n"
 #        str+="\tspint t[{}];\n".format(N)
@@ -1062,49 +1033,54 @@ def modsqr(n) :
         str+="void modsqr{}(const spint *a,spint *c) {{\n".format(DECOR)
 
     str+="\tspint totl,toth;\n"   #"\tudpint tot;\n"
-    str+="\tspint tl=_mm_setzero_si128(),th=_mm_setzero_si128();\n"   #"\tudpint t=0;\n"
+    str+="\tspint tl=MR_ZERO(),th=MR_ZERO();\n"   #"\tudpint t=0;\n"
     for i in range(0,N) :
         if i==0 and PM :
             continue
         n=ppw[i]
         if abs(n)>1 :
             if i==0 or ispowerof2(n)<0 :
-                str+="\tspint p{}=_mm_set2_epi64({}u);\n".format(i,hex(ppw[i]))
-    str+="\tspint q=_mm_set2_epi64((int64_t)1<<{}u);\n".format(base)
+                str+="\tspint p{}=MR_SET_ALL_LANES_TO_CONSTANT({}u);\n".format(i,hex(ppw[i]))
+    str+="\tspint q=MR_SET_ALL_LANES_TO_CONSTANT((int64_t)1<<{}u);\n".format(base)
     #str+="\tspint q=((spint)1<<{}u); // q is unsaturated radix \n".format(base)
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<{}u)-1);\n".format(base)
+    str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<{}u)-1);\n".format(base)
     #str+="\tspint mask=(spint)(q-(spint)1);\n"
-    str+="\tspint zero=_mm_setzero_si128();\n"
-    str+="\tspint one=_mm_set2_epi64(1);\n"
+    str+="\tspint zero=MR_ZERO();\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     if fullmonty :
-        str+="\tspint ndash=_mm_set2_epi64(0x{:x}u);\n".format(ndash)
+        str+="\tspint ndash=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}u);\n".format(ndash)
         #str+="\tspint ndash=0x{:x}u;\n".format(ndash)
     str=getZSU(str,0)
     gone_neg=False
 
     if PM :
-        str+="spint wl,wh;\n"
-        str+="spint sm=_mm_set2_epi64({});\n".format(M)
+        str+="spint wl;\n"
+        str+="spint sm=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format(M)
     
     if fullmonty :
-        str+=" spint v0=_mm_and_si128(_mm_madd52lo_epu64(zero,tl,ndash),mask);"
+        str+=" spint v0=MR_AND(MR_MULLO52(tl,ndash),mask);"
         #str+=" spint v0=((tl*ndash)& mask);"    #" spint v0=(((spint)t*ndash)& mask);"
         if PM :
             gone_neg=True
-            str+=" mul(&wl,&wh,sm,_mm_sub_epi64(q,v0)); "
-            str+=" add(&tl,&th,wl,wh); "
+            str+="\twl=MR_ZERO();\n"
+            #str+="\twh=MR_ZERO();\n"
+            str+=" wl=MR_MULADD_LO_64(wl,sm,MR_SUB64U(q,v0)); "
+            #str+=" mul(&wl,&wh,sm,MR_SUB64U(q,v0)); "
+            str+=" tl=MR_ADD64U(tl,wl); "
+            #str+=" add(&tl,&th,wl,wh); "
             #str+=" add(&tl,&th,(spint){}*(q-v0),0); ".format(M)  #" t+=(udpint)(spint)((spint){}*(q-v0)); ".format(M)
         else :
             if ppw[0]==1 :
-                str+=" tl=_mm_add_epi64(tl,v0);"
+                str+=" tl=MR_ADD64U(tl,v0);"
                 #str+=" add(&tl,&th,v0,0);"  #" t+=(udpint)v0;"
             else :
-                str+=" accum(&tl,&th,v0,p0);"  #" t+=(udpint)v0 * p0;"
+                str+=" tl=MR_MULADD_LO(tl,v0,p0); th=MR_MULADD_HI(th,v0,p0);"
+                #str+=" accum(&tl,&th,v0,p0);"  #" t+=(udpint)v0 * p0;"
 
     else :
-        str+=" spint v0=_mm_and_si128(tl,mask);"
+        str+=" spint v0=MR_AND(tl,mask);"
         #str+=" spint v0=(tl & mask);"   #" spint v0=((spint)t & mask);"
-    str+=" shiftr(&tl,&th);\n"  #" t>>={};\n".format(base)
+    str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"  #" t>>={};\n".format(base)
     
     str=getZSU(str,1)
     mask_set=False
@@ -1112,8 +1088,12 @@ def modsqr(n) :
     for i in range(1,N) :
         if gone_neg :
             if PM :
-                str+=" mul(&wl,&wh,sm,mask); "
-                str+=" add(&tl,&th,wl,wh);"
+                str+="\twl=MR_ZERO();\n"
+                #str+="\twh=MR_ZERO();\n"
+                str+=" wl=MR_MULADD_LO_64(wl,sm,mask);  "
+                #str+=" mul(&wl,&wh,sm,mask); "
+                str+=" tl=MR_ADD64U(tl,wl); "
+                #str+=" add(&tl,&th,wl,wh);"
                 #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)   #" t+=(udpint)(spint)((spint){}*mask);".format(M)
             else :
                 if not s_is_declared :
@@ -1129,35 +1109,44 @@ def modsqr(n) :
             str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" tl=_mm_add_epi64(tl,s);"
+            str+=" tl=MR_ADD64U(tl,s);"
             #str+=" add(&tl,&th,s,0);"   #" t+=(udpint)s;"
             mask_set=False   
 
         if fullmonty :
-            str+=" spint v{}=_mm_and_si128(_mm_madd52lo_epu64(zero,tl,ndash),mask); ".format(i)
+            str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(i)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(i)    #" spint v{}=(((spint)t*ndash) & mask); ".format(i)
             if PM :
-                str+=" mul(&wl,&wh,sm,v{}); ".format(i)
-                str+=" sub(&tl,&th,wl,wh); "
+                str+="\twl=MR_ZERO();\n"
+                #str+="\twh=MR_ZERO();\n"
+                str+=" wl=MR_MULADD_LO_64(wl,sm,v{}); ".format(i,i)
+                #str+=" mul(&wl,&wh,sm,v{}); ".format(i) 
+                str+=" tl=MR_SUB64U(tl,wl); "
+                #str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,i)  #" t-=(udpint)(spint)((spint){}*v{}); ".format(M,i)
             else :
                 if ppw[0]==1 :
-                    str+=" tl=_mm_add_epi64(tl,v{});".format(i)
+                    str+=" tl=MR_ADD64U(tl,v{});".format(i)
                     #str+=" add(&tl,&th,v{},0);".format(i)   #" t+=(udpint)v{};".format(i)
                 else :
-                    str+=" accum(&tl,&th,v{},p0);".format(i)  #" t+=(udpint)v{} * p0;".format(i)
+                    str+=" tl=MR_MULADD_LO(tl,v{},p0); th=MR_MULADD_HI(th,v{},p0);".format(i,i)
+                    #str+=" accum(&tl,&th,v{},p0);".format(i)  #" t+=(udpint)v{} * p0;".format(i)
         else :
-            str+=" spint v{}=_mm_and_si128(tl,mask);".format(i)
+            str+=" spint v{}=MR_AND(tl,mask);".format(i)
             #str+=" spint v{}=(tl & mask);".format(i)  #" spint v{}=((spint)t & mask);".format(i)
-        str+=" shiftr(&tl,&th);\n"    #" t>>={};\n".format(base)
+        str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"    #" t>>={};\n".format(base)
         if i<N-1 :
             str= getZSU(str,i+1)
      
     str=getZSD(str,N)
     if gone_neg :
         if PM :
-            str+=" mul(&wl,&wh,sm,mask); "
-            str+=" add(&tl,&th,wl,wh);"
+            str+="\twl=MR_ZERO();\n"
+            #str+="\twh=MR_ZERO();\n"
+            str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
+            #str+=" mul(&wl,&wh,sm,mask); "
+            str+=" tl=MR_ADD64U(tl,wl); "
+            #str+=" add(&tl,&th,wl,wh);"
             #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(udpint)(spint)((spint){}*mask);".format(M)
         else :
             if not s_is_declared :
@@ -1173,33 +1162,42 @@ def modsqr(n) :
             str,gone_neg=sqr_process(N-k,k,str,gone_neg,mask_set)
             k+=1
         if mask_set :
-            str+=" tl=_mm_add_epi64(tl,s);"
+            str+=" tl=MR_ADD64U(tl,s);"
             #str+=" add(&tl,&th,s,0);"  #" t+=(udpint)s;"
             mask_set=False   
         if fullmonty :
-            str+=" spint v{}=_mm_and_si128(_mm_madd52lo_epu64(zero,tl,ndash),mask); ".format(N)
+            str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(N)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(N)   #" spint v{}=(((spint)t*ndash) & mask); ".format(N)
             if PM :
-                str+=" mul(&wl,&wh,sm,v{}); ".format(N)
-                str+=" sub(&tl,&th,wl,wh); "
+                str+="\twl=MR_ZERO();\n"
+                #str+="\twh=MR_ZERO();\n"
+                str+=" wl=MR_MULADD_LO_64(wl,sm,v{}); ".format(N,N)
+                #str+=" mul(&wl,&wh,sm,v{}); ".format(N)
+                str+=" tl=MR_SUB64U(tl,wl); "
+                #str+=" sub(&tl,&th,wl,wh); "
                 #str+=" sub(&tl,&th,(spint){}*v{},0); ".format(M,N)   #" t-=(udpint)(spint)((spint){}*v{}); ".format(M,N)
             else :
                 if ppw[0]==1 :
-                    str+=" tl=_mm_add_epi64(tl,v{});".format(N)
+                    str+=" tl=MR_ADD64U(tl,v{});".format(N)
                     #str+=" add(&tl,&th,v{},0);".format(N)  #" t+=(udpint)v{};".format(N)
                 else :
-                    str+=" accum(&tl,&th,v{},p0);".format(N)  #" t+=(udpint)v{} * p0;".format(N)
+                    str+=" tl=MR_MULADD_LO(tl,v{},p0); th=MR_MULADD_HI(th,v{},p0);".format(N,N)
+                    #str+=" accum(&tl,&th,v{},p0);".format(N)  #" t+=(udpint)v{} * p0;".format(N)
         else :
-            str+=" spint v{}=_mm_and_si128(tl,mask); ".format(N)
+            str+=" spint v{}=MR_AND(tl,mask); ".format(N)
             #str+=" spint v{}=(tl & mask); ".format(N)   #" spint v{}=((spint)t & mask); ".format(N)
-        str+=" shiftr(&tl,&th);\n"      #" t>>={};\n".format(base)
+        str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"      #" t>>={};\n".format(base)
 
         str=getZSD(str,N+1)
         for i in range(N+1,2*N) :
             if gone_neg :
                 if PM :
-                    str+=" mul(&wl,&wh,sm,mask); "
-                    str+=" add(&tl,&th,wl,wh);"
+                    str+="\twl=MR_ZERO();\n"
+                    #str+="\twh=MR_ZERO();\n"
+                    str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
+                    #str+=" mul(&wl,&wh,sm,mask); "
+                    str+=" tl=MR_ADD64U(tl,wl); "
+                    #str+=" add(&tl,&th,wl,wh);"
                     #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(udpint)(spint)((spint){}*mask);".format(M)
                 else :
                     if not s_is_declared :
@@ -1214,12 +1212,12 @@ def modsqr(n) :
                 str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" tl=_mm_add_epi64(tl,s);"
+                str+=" tl=MR_ADD64U(tl,s);"
                 #str+=" add(&tl,&th,s,0);"  #" t+=(udpint)s;"
                 mask_set=False  
-            str+=" c[{}]=_mm_and_si128(tl,mask); ".format(i-N-1)
+            str+=" c[{}]=MR_AND(tl,mask); ".format(i-N-1)
             #str+=" c[{}]=(tl & mask); ".format(i-N-1)    #" c[{}]=((spint)t & mask); ".format(i-N-1)
-            str+=" shiftr(&tl,&th);\n"   #" t>>={};\n".format(base)
+            str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"   #" t>>={};\n".format(base)
 
             #if i<=2*N-1 :
             if i<2*N-2 :
@@ -1229,13 +1227,13 @@ def modsqr(n) :
 
         if gone_neg :
             if PM :
-                str+=" tl=_mm_add_epi64(tl,_mm_sub_epi64(v{},sm));".format(N)
+                str+=" tl=MR_ADD64U(tl,MR_SUB64U(v{},sm));".format(N)
                 #str+=" add(&tl,&th,v{}-(spint){},0);".format(N,M)  #" t+=(udpint)(spint)(v{}-(spint){});".format(N,M)
             else :
-                str+=" tl=_mm_add_epi64(tl,_mm_sub_epi64(v{},one));".format(N)
+                str+=" tl=MR_ADD64U(tl,MR_SUB64U(v{},one));".format(N)
                 #str+=" add(&tl,&th,v{}-(spint)1,0);".format(N)     #" t+=(udpint)(spint)(v{}-(spint)1);".format(N)
         else :
-            str+=" tl=_mm_add_epi64(tl,v{});".format(N)
+            str+=" tl=MR_ADD64U(tl,v{});".format(N)
             #str+=" add(&tl,&th,v{},0);".format(N)  #" t+=(udpint)v{};".format(N)
         str+=" c[{}] = tl;\n".format(N-1)    #" c[{}] = (spint)t;\n".format(N-1)
     else :
@@ -1245,20 +1243,24 @@ def modsqr(n) :
                 str,gone_neg=sqr_process(i-k,k,str,gone_neg,mask_set)
                 k+=1
             if mask_set :
-                str+=" tl=_mm_add_epi64(tl,s);"
+                str+=" tl=MR_ADD64U(tl,s);"
                 #str+=" add(&tl,&th,s,0);"   #" t+=(udpint)s;"
                 mask_set=False   
             if i==2*N-1 :
                 break
-            str+=" c[{}]=_mm_and_si128(tl,mask); ".format(i-N)  
+            str+=" c[{}]=MR_AND(tl,mask); ".format(i-N)  
             #str+=" c[{}]=(tl & mask); ".format(i-N)   #" c[{}]=((spint)t & mask); ".format(i-N)
-            str+=" shiftr(&tl,&th);\n"  #" t>>={};\n".format(base)
+            str+=" tl=MR_SHR52(tl,th); th=MR_ZERO();\n"  #" t>>={};\n".format(base)
             if i<=2*N-3 :
                 str=getZSD(str,i+1)
                 if gone_neg :
                     if PM :
-                        str+=" mul(&wl,&wh,sm,mask); "
-                        str+=" add(&tl,&th,wl,wh);"
+                        str+="\twl=MR_ZERO();\n"
+                        #str+="\twh=MR_ZERO();\n"
+                        str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
+                        #str+=" mul(&wl,&wh,sm,mask); "
+                        str+=" tl=MR_ADD64U(tl,wl); "
+                        #str+=" add(&tl,&th,wl,wh);"
                         #str+=" add(&tl,&th,(spint){}*mask,0);".format(M)  #" t+=(udpint)(spint)((spint){}*mask);".format(M)
                     else :
                         if not s_is_declared :
@@ -1269,10 +1271,10 @@ def modsqr(n) :
                         mask_set=True
         if gone_neg :
             if PM :
-                str+="\ttl=_mm_sub_epi64(tl,sm);"
+                str+="\ttl=MR_SUB64U(tl,sm);"
                 #str+="\tsub(&tl,&th,{},0);".format(M)   #"\tt-=(udpint){};".format(M)
             else :
-                str+="\ttl=_mm_sub_epi64(tl,one);"
+                str+="\ttl=MR_SUB64U(tl,one);"
                 #str+="\tsub(&tl,&th,1u,0);"   #"\tt-=1u;"
         str+="\tc[{}] = tl;\n".format(N-1)    #"\tc[{}] = (spint)t;\n".format(N-1)
     str+="}\n"
@@ -1420,8 +1422,8 @@ def modsqrt() :
         str+="\t\tmodcpy{}(t,b);\n".format(DECOR)
         str+="\t\tmodnsqr{}(b,k-2);\n".format(DECOR)
 
-        str+="\t\tspint one=_mm_set2_epi64(1);\n";
-        str+="\t\tspint d=_mm_sub_epi64(one,modis1{}(b));\n".format(DECOR)
+        str+="\t\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n";
+        str+="\t\tspint d=MR_SUB64U(one,modis1{}(b));\n".format(DECOR)
 
         #str+="\t\tint d=1-modis1{}(b);\n".format(DECOR)
         str+="\t\tmodmul{}(s,z,v);\n".format(DECOR)
@@ -1443,13 +1445,13 @@ def modis1(n) :
     str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
     str+="\tspint c0;\n"
-    str+="\tspint one=_mm_set2_epi64(1);\n"
-    str+="\tspint d=_mm_setzero_si128();\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
+    str+="\tspint d=MR_ZERO();\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\td=_mm_or_si128(d,c[i]);\n\t}\n"
+    str+="\t\td=MR_OR(d,c[i]);\n\t}\n"
     #str+="\tc0=(spint)c[0];\n"
-    str+="\treturn _mm_and_si128(_mm_and_si128(one,_mm_srli_epi64(_mm_sub_epi64(d,one),{}u)),_mm_srli_epi64(_mm_sub_epi64(_mm_xor_si128(c[0],one),one),{}u));\n}}\n".format(base,base)
+    str+="\treturn MR_AND(MR_AND(one,MR_SHR64U(MR_SUB64U(d,one),{}u)),MR_SHR64U(MR_SUB64U(MR_XOR(c[0],one),one),{}u));\n}}\n".format(base,base)
     #str+="\treturn ((spint)1 & ((d-(spint)1)>>{}u) & (((c0^(spint)1)-(spint)1)>>{}u));\n}}\n".format(base,base)
     return str
 
@@ -1461,12 +1463,12 @@ def modis0(n) :
     str+="spint modis0{}(const spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
-    str+="\tspint one=_mm_set2_epi64(1);\n"
-    str+="\tspint d=_mm_setzero_si128();\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
+    str+="\tspint d=MR_ZERO();\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\td=_mm_or_si128(d,c[i]);\n\t}\n" 
-    str+="\treturn _mm_and_si128(_mm_srli_epi64(_mm_sub_epi64(d,one),{}u),one);\n}}\n".format(base)
+    str+="\t\td=MR_OR(d,c[i]);\n\t}\n" 
+    str+="\treturn MR_AND(MR_SHR64U(MR_SUB64U(d,one),{}u),one);\n}}\n".format(base)
     return str
 
 #set to zero
@@ -1477,7 +1479,7 @@ def modzer() :
     str+="void modzer{}(spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_setzero_si128();\n"
+    str+="\t\ta[i]=MR_ZERO();\n"
     str+="\t}\n"
     str+="}\n"
     return str
@@ -1488,9 +1490,9 @@ def modone() :
         str+="static "
     str+="void modone{}(spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\ta[0]=_mm_set2_epi64(1);\n"
+    str+="\ta[0]=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_setzero_si128();\n"
+    str+="\t\ta[i]=MR_ZERO();\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="}\n"
@@ -1502,9 +1504,9 @@ def modint() :
         str+="static "
     str+="void modint{}(int x,spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\ta[0]=_mm_set2_epi64(x);\n"
+    str+="\ta[0]=MR_SET_ALL_LANES_TO_CONSTANT(x);\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_setzero_si128();\n"
+    str+="\t\ta[i]=MR_ZERO();\n"
     str+="\t}\n"
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="}\n"
@@ -1518,7 +1520,7 @@ def nres(n) :
     str+="void nres{}(const spint *m,spint *n) {{\n".format(DECOR)
     str+="\tspint c[{}];\n".format(N)
     for i in range(0,N) :
-        str+="\t\tc[{}]=_mm_set2_epi64({});\n".format(i,hex(cw[i]))
+        str+="\t\tc[{}]=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format(i,hex(cw[i]))
    
     str+="\tmodmul{}(m,c,n);\n".format(DECOR)
     str+="}\n"
@@ -1532,9 +1534,9 @@ def redc(n) :
     str+="void redc{}(const spint *n,spint *m) {{\n".format(DECOR)
     str+="\tint i;\n"
     str+="\tspint c[{}];\n".format(N)
-    str+="\tc[0]=_mm_set2_epi64(1);\n"
+    str+="\tc[0]=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     str+="\tfor (i=1;i<{};i++) {{\n".format(N)
-    str+="\t\tc[i]=_mm_setzero_si128();\n"
+    str+="\t\tc[i]=MR_ZERO();\n"
     str+="\t}\n"
     str+="\tmodmul{}(n,c,m);\n".format(DECOR)
     str+="\t(void)modfsb{}(m);\n".format(DECOR)
@@ -1581,37 +1583,37 @@ def modcsw() :
     str+="\tint i;\n"
     if PSCR :
         str+="\tspint c0,c1,s,t,w,v,aux;\n"
-        str+="\tstatic uint64_t R0=0,R1=0;\n"
-        str+="\tspint zero=_mm_setzero_si128();\n"
-        str+="\tspint one=_mm_set2_epi64(1);\n"
-        str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
-        str+="\tR0+=0x3cc3c33c5aa5a55au;\n"
-        str+="\tR1+=0x7447e88e1ee1e11eu;\n" 
+        str+="\tstatic uint64_t R[2]={0,0};\n"
+        str+="\tspint zero=MR_ZERO();\n"
+        str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
+        str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<52)-1);\n"
+        str+="\tR[0]+=0x3cc3c33c5aa5a55au;\n"
+        str+="\tR[1]+=0x7447e88e1ee1e11eu;\n" 
 
-        str+="\tw=_mm_setc_epi64(R0,R1);\n"
-        str+="\tc0=_mm_andnot_si128(b,_mm_add_epi64(w,one));\n"
-        str+="\tc1=_mm_add_epi64(b,w);\n" 
+        str+="\tw=MR_SET_EACH_LANE_TO_CONSTANT(R);\n"
+        str+="\tc0=MR_ANDNOT(b,MR_ADD64U(w,one));\n"
+        str+="\tc1=MR_ADD64U(b,w);\n" 
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\ts=g[i]; t=f[i];\n"
-        str+="\t\tv=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,w,t),w,s);\n"
+        str+="\t\tv=MR_MUL_DOUBLE_ADD(w,t,w,s);\n"
         #str+="\t\tv=w*(t+s);\n"
-        str+="\t\tf[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,t),c1,s);\n"
+        str+="\t\tf[i]=aux=MR_MUL_DOUBLE_ADD(c0,t,c1,s);\n"
         #str+="\t\tf[i] = aux = c0*t+c1*s;\n"
-        str+="\t\tf[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
+        str+="\t\tf[i]=MR_AND(MR_SUB64U(aux,v),mask);\n"
         #str+="\t\tf[i] = aux - v;\n"
-        str+="\t\tg[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,s),c1,t);\n"
+        str+="\t\tg[i]=aux=MR_MUL_DOUBLE_ADD(c0,s,c1,t);\n"
         #str+="\t\tg[i] = aux = c0*s+c1*t;\n"
-        str+="\t\tg[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
+        str+="\t\tg[i]=MR_AND(MR_SUB64U(aux,v),mask);\n"
         #str+="\t\tg[i] = aux - v;\n\t}\n"
         str+="\t}\n"
         str+="}\n"
     else :
-        str+="\tspint zero=_mm_setzero_si128();\n"
-        str+="\tspint delta,mask=_mm_sub_epi64(zero,b);\n"
+        str+="\tspint zero=MR_ZERO();\n"
+        str+="\tspint delta,mask=MR_SUB64U(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-        str+="\t\tdelta=_mm_and_si128(_mm_xor_si128(g[i],f[i]),mask);\n"
-        str+="\t\tg[i]=_mm_xor_si128(g[i],delta);\n"
-        str+="\t\tf[i]=_mm_xor_si128(f[i],delta);\n\t}\n"
+        str+="\t\tdelta=MR_AND(MR_XOR(g[i],f[i]),mask);\n"
+        str+="\t\tg[i]=MR_XOR(g[i],delta);\n"
+        str+="\t\tf[i]=MR_XOR(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -1625,30 +1627,30 @@ def modcmv() :
     str+="\tint i;\n"
     if PSCR :
         str+="\tspint c0,c1,s,t,v,w,aux;\n"
-        str+="\tstatic uint64_t R0=0,R1=0;\n"
-        str+="\tspint zero=_mm_setzero_si128();\n"
-        str+="\tspint one=_mm_set2_epi64(1);\n"
-        str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
-        str+="\tR0+=0x3cc3c33c5aa5a55au;\n"
-        str+="\tR1+=0x7447e88e1ee1e11eu;\n" 
+        str+="\tstatic uint64_t R[2]={0,0};\n"
+        str+="\tspint zero=MR_ZERO();\n"
+        str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
+        str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<52)-1);\n"
+        str+="\tR[0]+=0x3cc3c33c5aa5a55au;\n"
+        str+="\tR[1]+=0x7447e88e1ee1e11eu;\n" 
 
-        str+="\tw=_mm_setc_epi64(R0,R1);\n"
-        str+="\tc0=_mm_andnot_si128(b,_mm_add_epi64(w,one));\n"
-        str+="\tc1=_mm_add_epi64(b,w);\n" 
+        str+="\tw=MR_SET_EACH_LANE_TO_CONSTANT(R);\n"
+        str+="\tc0=MR_ANDNOT(b,MR_ADD64U(w,one));\n"
+        str+="\tc1=MR_ADD64U(b,w);\n" 
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
         str+="\t\ts=g[i]; t=f[i];\n"
-        str+="\t\tv=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,w,t),w,s);\n"
+        str+="\t\tv=MR_MUL_DOUBLE_ADD(w,t,w,s);\n"
 
-        str+="\t\tf[i]=aux=_mm_madd52lo_epu64(_mm_madd52lo_epu64(zero,c0,t),c1,s);\n"
-        str+="\t\tf[i]=_mm_and_si128(_mm_sub_epi64(aux,v),mask);\n"
+        str+="\t\tf[i]=aux=MR_MUL_DOUBLE_ADD(c0,t,c1,s);\n"
+        str+="\t\tf[i]=MR_AND(MR_SUB64U(aux,v),mask);\n"
         str+="\t}\n"
         str+="}\n"
     else :
-        str+="\tspint zero=_mm_setzero_si128();\n"
-        str+="\tspint delta,mask=_mm_sub_epi64(zero,b);\n"
+        str+="\tspint zero=MR_ZERO();\n"
+        str+="\tspint delta,mask=MR_SUB64U(zero,b);\n"
         str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-        str+="\t\tdelta=_mm_and_si128(_mm_xor_si128(g[i],f[i]),mask);\n"
-        str+="\t\tf[i]=_mm_xor_si128(f[i],delta);\n\t}\n"
+        str+="\t\tdelta=MR_AND(MR_XOR(g[i],f[i]),mask);\n"
+        str+="\t\tf[i]=MR_XOR(f[i],delta);\n\t}\n"
         str+="}\n"
     return str
 
@@ -1660,13 +1662,13 @@ def modshl(n) :
         str+="static "
     str+="void modshl{}(unsigned int n,spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
-    str+="\ta[{}]=_mm_or_si128(_mm_slli_epi64(a[{}],n),_mm_srli_epi64(a[{}],{}u-n));\n".format(N-1,N-1,N-2,base)
+    str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<52)-1);\n"
+    str+="\ta[{}]=MR_OR(MR_SHL64U(a[{}],n),MR_SHR64U(a[{}],{}u-n));\n".format(N-1,N-1,N-2,base)
     #str+="\ta[{}]=((a[{}]<<n)) | (a[{}]>>({}u-n));\n".format(N-1,N-1,N-2,base)
     str+="\tfor (i={};i>0;i--) {{\n".format(N-2)
-    str+="\t\ta[i]=_mm_or_si128(_mm_and_si128(_mm_slli_epi64(a[i],n),mask),_mm_srli_epi64(a[i-1],{}u-n));\n\t}}\n".format(base)
+    str+="\t\ta[i]=MR_OR(MR_AND(MR_SHL64U(a[i],n),mask),MR_SHR64U(a[i-1],{}u-n));\n\t}}\n".format(base)
     #str+="\t\ta[i]=((a[i]<<n)&(spint)0x{:x}) | (a[i-1]>>({}u-n));\n\t}}\n".format(mask,base)
-    str+="\ta[0]=_mm_and_si128(_mm_slli_epi64(a[0],n),mask);\n"
+    str+="\ta[0]=MR_AND(MR_SHL64U(a[0],n),mask);\n"
     #str+="\ta[0]=(a[0]<<n)&(spint)0x{:x};\n".format(mask)
     str+="}\n"
     return str 
@@ -1679,15 +1681,15 @@ def modshr(n) :
         str+="static "
     str+="spint modshr{}(unsigned int n,spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\tspint mask=_mm_set2_epi64(((int64_t)1<<52)-1);\n"
-    str+="\tspint mskn=_mm_set2_epi64((1<<n)-1);\n"    
-    str+="\tspint r=_mm_and_si128(a[0],mskn);\n"
+    str+="\tspint mask=MR_SET_ALL_LANES_TO_CONSTANT(((int64_t)1<<52)-1);\n"
+    str+="\tspint mskn=MR_SET_ALL_LANES_TO_CONSTANT((1<<n)-1);\n"    
+    str+="\tspint r=MR_AND(a[0],mskn);\n"
 
     #str+="\tspint r=a[0]&(((spint)1<<n)-(spint)1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N-1)
-    str+="\t\ta[i]=_mm_or_si128(_mm_srli_epi64(a[i],n),_mm_and_si128(_mm_slli_epi64(a[i+1],{}u-n),mask));\n\t}}\n".format(base)
+    str+="\t\ta[i]=MR_OR(MR_SHR64U(a[i],n),MR_AND(MR_SHL64U(a[i+1],{}u-n),mask));\n\t}}\n".format(base)
     #str+="\t\ta[i]=(a[i]>>n) | ((a[i+1]<<({}u-n))&(spint)0x{:x});\n\t}}\n".format(base,mask)
-    str+="\ta[{}]=_mm_srli_epi64(a[{}],n);\n".format(N-1,N-1)
+    str+="\ta[{}]=MR_SHR64U(a[{}],n);\n".format(N-1,N-1)
     #str+="\ta[{}]=a[{}]>>n;\n".format(N-1,N-1)
     str+="\treturn r;\n}\n"
     return str
@@ -1700,10 +1702,10 @@ def mod2r() :
     str+="void mod2r{}(unsigned int r,spint *a) {{\n".format(DECOR)
     str+="\tunsigned int n=r/{}u;\n".format(base)
     str+="\tunsigned int m=r%{}u;\n".format(base)
-    str+="\tspint one=_mm_set2_epi64(1);\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     str+="\tmodzer{}(a);\n".format(DECOR)
     str+="\tif (r>={}*8) return;\n".format(Nbytes)
-    str+="\ta[n]=one; a[n]=_mm_slli_epi64(a[n],m);\n"
+    str+="\ta[n]=one; a[n]=MR_SHL64U(a[n],m);\n"
     str+="nres{}(a,a);\n}}\n".format(DECOR)
     return str
 
@@ -1712,15 +1714,16 @@ def modexp() :
     str="//export to byte array\n"
     if makestatic :
         str+="static "
-    str+="void modexp{}(const spint *a,char *b,char *e) {{\n".format(DECOR)
-    str+="\tint i;\n"
+    str+="void modexp{}(const spint *a,char *b[]) {{\n".format(DECOR)
+    str+="\tint i,j;\n"
+    str+="\tchar *ptr;\n"
     str+="\tspint c[{}];\n".format(N)
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tfor (i={};i>=0;i--) {{\n".format(Nbytes-1)
-    str+="\t\tb[i]=_mm_extract_epi16(c[0],0)&0xff;\n"
-    str+="\t\tif (e!=NULL) e[i]=_mm_extract_epi16(c[0],4)&0xff;\n"
-    #str+="\t\telse e[i]=0;\n"
-    #str+="\t\tb[i]=c[0]&(spint)0xff;\n"
+
+    for j in range(0,NLANES) :
+        str+="\t\tptr=b[{}];\n".format(j)
+        str+="\t\tif (ptr!=NULL) ptr[i]=MR_EXTRACT(c[0],{});\n".format(j)
     str+="\t\t(void)modshr{}(8,c);\n\t}}\n".format(DECOR)
     str+="}\n"
     return str 
@@ -1731,19 +1734,23 @@ def modimp() :
     str+="//returns 1 if in range, else 0\n"
     if makestatic :
         str+="static "
-    str+="spint modimp{}(const char *b, const char *e, spint *a) {{\n".format(DECOR)
-    str+="\tint i;\n"
+    str+="spint modimp{}(const char *b[], spint *a) {{\n".format(DECOR)
+    str+="\tint i,j;\n"
     str+="\tspint res;\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\ta[i]=_mm_setzero_si128();\n\t}\n"
+    str+="\t\ta[i]=MR_ZERO();\n\t}\n"
     #str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(Nbytes)
     str+="\t\tmodshl{}(8,a);\n".format(DECOR)
-    str+="\t\tunsigned char bc=0,ec=0;\n"
-    str+="\t\tif (b!=NULL) bc=b[i];\n"
-    str+="\t\tif (e!=NULL) ec=e[i];\n"
-    str+="\t\ta[0]=_mm_add_epi64(a[0],_mm_setc_epi64(bc,ec));\n"
+    str+="\t\tuint32_t bc[8];\n"
+    str+="\t\tfor (j=0;j<{};j++) {{\n".format(NLANES)
+    str+="\t\t\tconst char *ptr=b[j];\n"
+    str+="\t\t\tif (ptr!=NULL) bc[j]=(unsigned char)ptr[i];\n"
+    str+="\t\t\telse bc[j]=0;\n"
+    str+="\t\t}\n"
+    str+="\t\ta[0]=MR_ADD64U(a[0],MR_SET_EACH_LANE_TO_CONSTANT(bc));\n"
     str+="\t}\n"
+    
     str+="\tres=modfsb{}(a);\n".format(DECOR)
     str+="\tnres{}(a,a);\n".format(DECOR)
     str+="\treturn res;\n"
@@ -1757,9 +1764,9 @@ def modsign() :
         str+="static "
     str+="spint modsign{}(const spint *a) {{\n".format(DECOR)
     str+="\tspint c[{}];\n".format(N)
-    str+="\tspint one=_mm_set2_epi64(1);\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
-    str+="\treturn _mm_and_si128(c[0],one);\n"
+    str+="\treturn MR_AND(c[0],one);\n"
     str+="}\n"
     return str
 
@@ -1771,12 +1778,12 @@ def modcmp() :
     str+="spint modcmp{}(const spint *a,const spint *b) {{\n".format(DECOR)
     str+="\tspint c[{}],d[{}];\n".format(N,N)
     str+="\tint i;\n"
-    str+="\tspint one=_mm_set2_epi64(1);\n"
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
     str+="\tspint eq=one;\n"
     str+="\tredc{}(a,c);\n".format(DECOR)
     str+="\tredc{}(b,d);\n".format(DECOR)
     str+="\tfor (i=0;i<{};i++) {{\n".format(N)
-    str+="\t\teq=_mm_and_si128(eq, _mm_and_si128(_mm_srli_epi64(_mm_sub_epi64(_mm_xor_si128(c[i],d[i]),one),{}),one));\n\t}}\n".format(base)
+    str+="\t\teq=MR_AND(eq, MR_AND(MR_SHR64U(MR_SUB64U(MR_XOR(c[i],d[i]),one),{}),one));\n\t}}\n".format(base)
 
     str+="\treturn eq;\n"
     str+="}\n"
@@ -1790,6 +1797,7 @@ def time_modmul(n,ra,rb) :
     smask=(1<<bit)-1
     rap=makebig(ra,base,N)
     rbp=makebig(rb,base,N)
+
     str="void time_modmul{}() {{\n".format(DECOR)
     str+="\tspint x[{}],y[{}],z[{}];\n".format(N,N,N)
     str+="\tint i,j;\n"
@@ -1800,11 +1808,11 @@ def time_modmul(n,ra,rb) :
 
     str+="\t"
     for i in range(0,N) :
-        str+="x[{}]=_mm_setc_epi64({},{}); ".format(i,hex(rap[i]),hex(rbp[i]))
+        str+="x[{}]=MR_SET_ALL_LANES_TO_CONSTANT({}); ".format(i,hex(rap[i]))
         #str+="x[{}]={}; ".format(i,hex(rap[i]))
     str+="\n\t"
     for i in range(0,N) :
-        str+="y[{}]=_mm_setc_epi64({},{}); ".format(i,hex(rbp[i]),hex(rap[i]))
+        str+="y[{}]=MR_SET_ALL_LANES_TO_CONSTANT({}); ".format(i,hex(rbp[i]))
         #str+="y[{}]={}; ".format(i,hex(rbp[i]))
     str+="\n"
 
@@ -1830,11 +1838,10 @@ def time_modmul(n,ra,rb) :
         str+="\tfinish=__rdtsc();\n"
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
- 
     if cyclescounter or use_rdtsc :
-        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
+        str+='\tprintf("modmul check 0x%06x Clock cycles= %d Nanosecs= %d\\n",MR_EXTRACT(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",_mm_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modmul check 0x%06x Nanosecs= %d\\n",MR_EXTRACT(z[0],0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
@@ -1854,14 +1861,16 @@ def time_modsqr(n,r) :
 
     str+="\t"
     for i in range(0,N) :
-        str+="x[{}]=_mm_setc_epi64({},{}); ".format(i,hex(rp[i]),hex(rp[i]))
+        str+="x[{}]=MR_SET_ALL_LANES_TO_CONSTANT({}); ".format(i,hex(rp[i]))
+        #str+="x[{}]={}; ".format(i,hex(rp[i]))
     str+="\n"
 
     str+="\tnres{}(x,x);\n".format(DECOR)
+
     if cyclescounter :
         str+="\tstart=cpucycles();\n"
     if use_rdtsc :
-        str+="\tstart=__rdtsc();\n" 
+        str+="\tstart=__rdtsc();\n"
     str+="\tbegin=clock();\n"
     str+="\tfor (i=0;i<{};i++)\n".format(100000//scale)
     str+="\t\tfor (j=0;j<500;j++) {\n"
@@ -1874,11 +1883,10 @@ def time_modsqr(n,r) :
         str+="\tfinish=__rdtsc();\n"
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
- 
     if cyclescounter or use_rdtsc :
-        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
+        str+='\tprintf("modsqr check 0x%06x Clock cycles= %d Nanosecs= %d\\n",MR_EXTRACT(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000000//scale)
     else :
-        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",_mm_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modsqr check 0x%06x Nanosecs= %d\\n",MR_EXTRACT(z[0],0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
@@ -1891,17 +1899,19 @@ def time_modinv(n,r) :
     str="void time_modinv{}() {{\n".format(DECOR)
     str+="\tspint x[{}],z[{}];\n".format(N,N)
     str+="\tint i,j;\n"
- 
+
     str+="\tuint64_t start,finish;\n"
     str+="\tclock_t begin;\n"
     str+="\tint elapsed;\n"
 
     str+="\t"
     for i in range(0,N) :
-        str+="x[{}]=_mm_setc_epi64({},{}); ".format(i,hex(rp[i]),hex(rp[i]))
+        str+="x[{}]=MR_SET_ALL_LANES_TO_CONSTANT({}); ".format(i,hex(rp[i]))
+        #str+="x[{}]={}; ".format(i,hex(rp[i]))
     str+="\n"
 
     str+="\tnres{}(x,x);\n".format(DECOR)
+
     if cyclescounter :
         str+="\tstart=cpucycles();\n"
     if use_rdtsc :
@@ -1917,11 +1927,10 @@ def time_modinv(n,r) :
         str+="\tfinish=__rdtsc();\n"
     str+="\telapsed = {}*(clock() - begin) / CLOCKS_PER_SEC;\n".format(10000*scale)
     str+="\tredc{}(z,z);\n".format(DECOR)
- 
     if cyclescounter or use_rdtsc:
-        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",_mm_extract_epi16(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
+        str+='\tprintf("modinv check 0x%06x Clock cycles= %d Nanosecs= %d\\n",MR_EXTRACT(z[0],0)&0xFFFFFF,(int)((finish-start)/{}ULL),elapsed);\n'.format(100000//scale)
     else :
-        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",_mm_extract_epi16(z[0],0)&0xFFFFFF,elapsed);\n'
+        str+='\tprintf("modinv check 0x%06x Microsecs= %d\\n",MR_EXTRACT(z[0],0)&0xFFFFFF,elapsed);\n'
     str+="}\n"
     return str
 
@@ -1931,11 +1940,28 @@ def header() :
     print("//Python Script by Mike Scott (Technology Innovation Institute, UAE, 2025)\n")
     print("#include <stdio.h>")
     print("#include <stdint.h>\n")
+    print("#define AVX128_IFMA 0")
+    print("#define AVX256_IFMA 1")
+    print("#define AVX512_IFMA 2")
     print("#include <emmintrin.h>")
     print("#include <smmintrin.h>\n")
     print("#include <immintrin.h>\n")
-    print("#define sspint __m128i")
-    print("#define spint __m128i")
+    if NLANES==2 :
+        print("#define sspint __m128i")
+        print("#define spint __m128i")
+        print("#define SIMD_ENGINE AVX128_IFMA")
+        print("#define SIMD_LANES 2\n")
+    if NLANES==4 :
+        print("#define sspint __m256i")
+        print("#define spint __m256i")
+        print("#define SIMD_ENGINE AVX256_IFMA")
+        print("#define SIMD_LANES 4\n")
+    if NLANES==8 :
+        print("#define sspint __m512i")
+        print("#define spint __m512i")
+        print("#define SIMD_ENGINE AVX512_IFMA")
+        print("#define SIMD_LANES 8\n")
+    print('#include "ifma.h"')
 
     print("#define Wordlength{} {}".format(DECOR,WL))
     print("#define Nlimbs{} {}".format(DECOR,N))
@@ -1950,7 +1976,6 @@ def header() :
 
 
 def functions() :
-    print(intrinsics())
     print(prop(n))
     print(flat(n))
     print(modfsb(n))
@@ -2293,7 +2318,6 @@ with open('time.c', 'w') as f:
         print("#include <time.h>\n")
         if use_rdtsc :
             print("#include <x86intrin.h>\n")
-        print(intrinsics())
         print(prop(n))
         print(flat(n))
         print(modfsb(n))
