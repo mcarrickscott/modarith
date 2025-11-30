@@ -464,9 +464,9 @@ def getZSU(str,i) :
     while k<j :
         hap=True
         if first :
-            str+="\ttotl=MR_ZERO();\n"
-            str+="\ttoth=MR_ZERO();\n"
-            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
+            str+="\ttotl=MR_ZERO(); "
+            str+="toth=MR_ZERO(); "
+            str+="totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
             #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(k,i-k)    #"\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
             first=False
         else :
@@ -479,9 +479,9 @@ def getZSU(str,i) :
         #str+=" add(&totl,&toth,totl,toth);"        #" tot*=2;"
     if i%2==0:
         if first :
-            str+="\ttotl=MR_ZERO();\n"
-            str+="\ttoth=MR_ZERO();\n"
-            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2))
+            str+="\ttotl=MR_ZERO(); "
+            str+="toth=MR_ZERO(); "
+            str+="totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2))
             #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #"\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
         else :
             str+=" totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2)) 
@@ -502,9 +502,9 @@ def getZSD(str,i) :
     while k<i-k :
         hap=True
         if first :
-            str+="\ttotl=MR_ZERO();\n"
-            str+="\ttoth=MR_ZERO();\n"
-            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
+            str+="\ttotl=MR_ZERO(); "
+            str+="toth=MR_ZERO(); "
+            str+="totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(k,i-k,k,i-k)
             #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(k,i-k)     #"\ttot=(udpint)a[{}]*a[{}];".format(k,i-k)
             first=False
         else :
@@ -517,9 +517,9 @@ def getZSD(str,i) :
         #str+=" add(&totl,&toth,totl,toth);"    #" tot*=2;"
     if i%2==0:
         if first :
-            str+="\ttotl=MR_ZERO();\n"
-            str+="\ttoth=MR_ZERO();\n"
-            str+="\ttotl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2)) 
+            str+="\ttotl=MR_ZERO(); "
+            str+="toth=MR_ZERO(); "
+            str+="totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2)) 
             #str+="\tmul(&totl,&toth,a[{}],a[{}]);".format(int(i/2),int(i/2))      #"\ttot=(udpint)a[{}]*a[{}];".format(int(i/2),int(i/2))
         else :
             str+=" totl=MR_MULADD_LO(totl,a[{}],a[{}]); toth=MR_MULADD_HI(toth,a[{}],a[{}]);".format(int(i/2),int(i/2),int(i/2),int(i/2))
@@ -651,15 +651,15 @@ def modmul(n) :
     gone_neg=False 
 
     if PM :
-        str+="spint wl;\n"
-        str+="spint sm=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format(M)
+        str+="spint wl; "
+        str+="spint sm=MR_SET_ALL_LANES_TO_CONSTANT({}); ".format(M)
     
     if fullmonty :
-        str+=" spint v0=MR_AND(MR_MULLO52(tl,ndash),mask);"
+        str+="spint v0=MR_AND(MR_MULLO52(tl,ndash),mask);"
         #str+=" spint v0=((tl*ndash)&mask);"    #" spint v0=(((spint)t*ndash)&mask);"
         if PM :
             gone_neg=True
-            str+="\twl=MR_ZERO();\n"
+            str+="\twl=MR_ZERO(); "
             #str+="\twh=MR_ZERO();\n"
             str+=" wl=MR_MULADD_LO_64(wl,sm,MR_SUB64U(q,v0));  "
             #str+=" mul(&wl,&wh,sm,MR_SUB64U(q,v0)); "
@@ -686,7 +686,7 @@ def modmul(n) :
     for i in range(1,N) :
         if gone_neg :
             if PM :
-                str+="\twl=MR_ZERO();\n"
+                str+="\twl=MR_ZERO(); "
                 #str+="\twh=MR_ZERO();\n"
                 str+=" wl=MR_MULADD_LO_64(wl,sm,mask);  "
                 #str+=" mul(&wl,&wh,sm,mask); "
@@ -717,7 +717,7 @@ def modmul(n) :
             str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(i)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(i)    #" spint v{}=(((spint)t*ndash) & mask); ".format(i)
             if PM :
-                str+="\twl=MR_ZERO();\n"
+                str+="\twl=MR_ZERO(); "
                 #str+="\twh=MR_ZERO();\n"
                 str+=" wl=MR_MULADD_LO_64(wl,sm,v{});  ".format(i,i)
                 #str+=" mul(&wl,&wh,sm,v{}); ".format(i)
@@ -748,7 +748,7 @@ def modmul(n) :
     str=getZMD(str,N)
     if gone_neg :
         if PM :
-            str+="\twl=MR_ZERO();\n"
+            str+="\twl=MR_ZERO(); "
             #str+="\twh=MR_ZERO();\n"
             str+=" wl=MR_MULADD_LO_64(wl,sm,mask);  "
             #str+=" mul(&wl,&wh,sm,mask); "
@@ -778,7 +778,7 @@ def modmul(n) :
             str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(N)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(N)    #" spint v{}=(((spint)t*ndash) & mask); ".format(N)
             if PM :
-                str+="\twl=MR_ZERO();\n"
+                str+="\twl=MR_ZERO(); "
                 #str+="\twh=MR_ZERO();\n"
                 str+=" wl=MR_MULADD_LO_64(wl,sm,v{});  ".format(N,N)
                 #str+=" mul(&wl,&wh,sm,v{}); ".format(N)
@@ -802,7 +802,7 @@ def modmul(n) :
         for i in range(N+1,2*N) :
             if gone_neg :
                 if PM :
-                    str+="\twl=MR_ZERO();\n"
+                    str+="\twl=MR_ZERO(); "
                     #str+="\twh=MR_ZERO();\n"
                     str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
                     #str+=" mul(&wl,&wh,sm,mask); "
@@ -867,7 +867,7 @@ def modmul(n) :
                 str=getZMD(str,i+1)
                 if gone_neg :
                     if PM :
-                        str+="\twl=MR_ZERO();\n"
+                        str+="\twl=MR_ZERO(); "
                         #str+="\twh=MR_ZERO();\n"
                         str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
                         #str+=" mul(&wl,&wh,sm,mask); "
@@ -1054,15 +1054,15 @@ def modsqr(n) :
     gone_neg=False
 
     if PM :
-        str+="spint wl;\n"
-        str+="spint sm=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format(M)
+        str+="spint wl; "
+        str+="spint sm=MR_SET_ALL_LANES_TO_CONSTANT({}); ".format(M)
     
     if fullmonty :
         str+=" spint v0=MR_AND(MR_MULLO52(tl,ndash),mask);"
         #str+=" spint v0=((tl*ndash)& mask);"    #" spint v0=(((spint)t*ndash)& mask);"
         if PM :
             gone_neg=True
-            str+="\twl=MR_ZERO();\n"
+            str+="\twl=MR_ZERO(); "
             #str+="\twh=MR_ZERO();\n"
             str+=" wl=MR_MULADD_LO_64(wl,sm,MR_SUB64U(q,v0)); "
             #str+=" mul(&wl,&wh,sm,MR_SUB64U(q,v0)); "
@@ -1088,7 +1088,7 @@ def modsqr(n) :
     for i in range(1,N) :
         if gone_neg :
             if PM :
-                str+="\twl=MR_ZERO();\n"
+                str+="\twl=MR_ZERO(); "
                 #str+="\twh=MR_ZERO();\n"
                 str+=" wl=MR_MULADD_LO_64(wl,sm,mask);  "
                 #str+=" mul(&wl,&wh,sm,mask); "
@@ -1117,7 +1117,7 @@ def modsqr(n) :
             str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(i)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(i)    #" spint v{}=(((spint)t*ndash) & mask); ".format(i)
             if PM :
-                str+="\twl=MR_ZERO();\n"
+                str+="\twl=MR_ZERO(); "
                 #str+="\twh=MR_ZERO();\n"
                 str+=" wl=MR_MULADD_LO_64(wl,sm,v{}); ".format(i,i)
                 #str+=" mul(&wl,&wh,sm,v{}); ".format(i) 
@@ -1141,7 +1141,7 @@ def modsqr(n) :
     str=getZSD(str,N)
     if gone_neg :
         if PM :
-            str+="\twl=MR_ZERO();\n"
+            str+="\twl=MR_ZERO(); "
             #str+="\twh=MR_ZERO();\n"
             str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
             #str+=" mul(&wl,&wh,sm,mask); "
@@ -1169,7 +1169,7 @@ def modsqr(n) :
             str+=" spint v{}=MR_AND(MR_MULLO52(tl,ndash),mask); ".format(N)
             #str+=" spint v{}=((tl*ndash) & mask); ".format(N)   #" spint v{}=(((spint)t*ndash) & mask); ".format(N)
             if PM :
-                str+="\twl=MR_ZERO();\n"
+                str+="\twl=MR_ZERO(); "
                 #str+="\twh=MR_ZERO();\n"
                 str+=" wl=MR_MULADD_LO_64(wl,sm,v{}); ".format(N,N)
                 #str+=" mul(&wl,&wh,sm,v{}); ".format(N)
@@ -1192,7 +1192,7 @@ def modsqr(n) :
         for i in range(N+1,2*N) :
             if gone_neg :
                 if PM :
-                    str+="\twl=MR_ZERO();\n"
+                    str+="\twl=MR_ZERO(); "
                     #str+="\twh=MR_ZERO();\n"
                     str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
                     #str+=" mul(&wl,&wh,sm,mask); "
@@ -1255,7 +1255,7 @@ def modsqr(n) :
                 str=getZSD(str,i+1)
                 if gone_neg :
                     if PM :
-                        str+="\twl=MR_ZERO();\n"
+                        str+="\twl=MR_ZERO(); "
                         #str+="\twh=MR_ZERO();\n"
                         str+=" wl=MR_MULADD_LO_64(wl,sm,mask); "
                         #str+=" mul(&wl,&wh,sm,mask); "

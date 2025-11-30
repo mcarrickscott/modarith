@@ -328,9 +328,9 @@ def getZS(str,row,n,m) :
 
     while k<L :
         if first :
-            str+="\tttl=MR_ZERO();\n"
-            str+="\ttth=MR_ZERO();\n"
-            str+="\tttl=MR_MULADD_LO(ttl,a[{}],a[{}]); tth=MR_MULADD_HI(tth,a[{}],a[{}]);".format(k,L,k,L)
+            str+="\tttl=MR_ZERO(); "
+            str+="tth=MR_ZERO(); "
+            str+="ttl=MR_MULADD_LO(ttl,a[{}],a[{}]); tth=MR_MULADD_HI(tth,a[{}],a[{}]);".format(k,L,k,L)
             first=False
         else :
             str+=" ttl=MR_MULADD_LO(ttl,a[{}],a[{}]); tth=MR_MULADD_HI(tth,a[{}],a[{}]);".format(k,L,k,L)
@@ -342,9 +342,9 @@ def getZS(str,row,n,m) :
         str+=" ttl=MR_ADD64U(ttl,ttl); tth=MR_ADD64U(tth,tth);"
     if k==L :
         if first :
-            str+="\tttl=MR_ZERO();\n"
-            str+="\ttth=MR_ZERO();\n"
-            str+="\tttl=MR_MULADD_LO(ttl,a[{}],a[{}]); tth=MR_MULADD_HI(tth,a[{}],a[{}]);".format(k,k,k,k)
+            str+="\tttl=MR_ZERO(); "
+            str+="tth=MR_ZERO(); "
+            str+="ttl=MR_MULADD_LO(ttl,a[{}],a[{}]); tth=MR_MULADD_HI(tth,a[{}],a[{}]);".format(k,k,k,k)
             #str+="\tmul(&ttl,&tth,a[{}],a[{}]);".format(k,k)     #"\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
             first=False
         else :
@@ -367,8 +367,8 @@ def getZS(str,row,n,m) :
 
     while k<L :
         if first :
-            str+="\tt2l=MR_ZERO();\n"
-            str+="\tt2h=MR_ZERO();\n"
+            str+="\tt2l=MR_ZERO(); "
+            str+="t2h=MR_ZERO(); "
             str+=" t2l=MR_MULADD_LO(t2l,a[{}],a[{}]); t2h=MR_MULADD_HI(t2h,a[{}],a[{}]);".format(k,L,k,L)
             #str+="mul(&t2l,&t2h,a[{}],a[{}]);".format(k,L)    #"t2=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
             first=False
@@ -382,8 +382,8 @@ def getZS(str,row,n,m) :
         str+=" t2l=MR_ADD64U(t2l,t2l); t2h=MR_ADD64U(t2h,t2h);"
     if k==L :
         if first :
-            str+="\tt2l=MR_ZERO();\n"
-            str+="\tt2h=MR_ZERO();\n"
+            str+="\tt2l=MR_ZERO(); "
+            str+="t2h=MR_ZERO(); "
             str+=" t2l=MR_MULADD_LO(t2l,a[{}],a[{}]); t2h=MR_MULADD_HI(t2h,a[{}],a[{}]);".format(k,k,k,k)
             #str+="mul(&t2l,&t2h,a[{}],a[{}]);".format(k,k)   #"t2=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
             first=False
