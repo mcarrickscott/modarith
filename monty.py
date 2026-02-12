@@ -1459,9 +1459,9 @@ def modshl(n) :
         str+="static "
     str+="void modshl{}(unsigned int n,spint *a) {{\n".format(DECOR)
     str+="\tint i;\n"
-    str+="\ta[{}]=((a[{}]<<n)) | (a[{}]>>({}u-n));\n".format(N-1,N-1,N-2,base)
+    str+="\ta[{}]=((a[{}]<<n)) + (a[{}]>>({}u-n));\n".format(N-1,N-1,N-2,base)
     str+="\tfor (i={};i>0;i--) {{\n".format(N-2)
-    str+="\t\ta[i]=((a[i]<<n)&(spint)0x{:x}) | (a[i-1]>>({}u-n));\n\t}}\n".format(mask,base)
+    str+="\t\ta[i]=((a[i]<<n)&(spint)0x{:x}) + (a[i-1]>>({}u-n));\n\t}}\n".format(mask,base)
     str+="\ta[0]=(a[0]<<n)&(spint)0x{:x};\n".format(mask)
     str+="}\n"
     return str 
@@ -1477,9 +1477,30 @@ def modshr(n) :
     str+="\tint i;\n"
     str+="\tspint r=a[0]&(((spint)1<<n)-(spint)1);\n"
     str+="\tfor (i=0;i<{};i++) {{\n".format(N-1)
-    str+="\t\ta[i]=(a[i]>>n) | ((a[i+1]<<({}u-n))&(spint)0x{:x});\n\t}}\n".format(base,mask)
+    str+="\t\ta[i]=(a[i]>>n) + ((a[i+1]<<({}u-n))&(spint)0x{:x});\n\t}}\n".format(base,mask)
     str+="\ta[{}]=a[{}]>>n;\n".format(N-1,N-1)
     str+="\treturn r;\n}\n"
+    return str
+
+#divide by 2
+def modhaf(n) :
+    N=getN(n)
+    str="//divide by 2. Shift right 1 bit (or add p and shift right one bit)\n"
+    if makestatic :
+        str+="static "
+    str+="void modhaf{}(spint *n) {{\n".format(DECOR)
+    str+="\tint lsb;\n"    
+    if E :
+        str+="\tspint q=((spint)1<<{}u);\n".format(base)
+    str+="\tspint t[{}];\n".format(N)
+    str+="\t(void)prop(n);\n"
+    str+="\tmodcpy{}(n,t);\n".format(DECOR)
+    str+="\tlsb=modshr{}(1,t);\n".format(DECOR)
+    str+=addp(1);
+    str+="\t(void)prop(n);\n" 
+    str+="\tmodshr{}(1,n);\n".format(DECOR)
+    str+="\tmodcmv{}(1-lsb,t,n);\n".format(DECOR)
+    str+="}\n"
     return str
 
 def mod2r() :
@@ -1821,6 +1842,7 @@ def functions() :
     print(modsqrt())
     print(modshl(n))
     print(modshr(n))
+    print(modhaf(n))
     print(mod2r())
     print(modexp())
     print(modimp())
@@ -2003,10 +2025,10 @@ if prime=="MFP1973" :
 if prime=="SQISIGN_1" :
     p=5*2**248-1
 
-if prime=="SQISIGN_2" :
+if prime=="SQISIGN_3" :
     p=65*2**376-1
 
-if prime=="SQISIGN_3" :
+if prime=="SQISIGN_5" :
     p=27*2**500-1
 
 if prime=="CSIDH512" :
@@ -2191,6 +2213,9 @@ if WL==16 :
     lib.modinv.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
     lib.modsqrt.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
     lib.modcpy.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modhaf.argtypes = [POINTER(c_uint16)]
+    lib.modshl.argtypes = [c_int,POINTER(c_uint16)]
+    lib.modshr.argtypes = [c_int,POINTER(c_uint16)]
     lib.nres.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
     lib.redc.argtypes =  [POINTER(c_uint16),POINTER(c_uint16)]
 if WL==32 :
@@ -2202,6 +2227,9 @@ if WL==32 :
     lib.modinv.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
     lib.modsqrt.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
     lib.modcpy.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
+    lib.modhaf.argtypes = [POINTER(c_uint32)]
+    lib.modshl.argtypes = [c_int,POINTER(c_uint32)]
+    lib.modshr.argtypes = [c_int,POINTER(c_uint32)]
     lib.nres.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
     lib.redc.argtypes =  [POINTER(c_uint32),POINTER(c_uint32)]
 if WL==64 :
@@ -2213,6 +2241,9 @@ if WL==64 :
     lib.modinv.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
     lib.modsqrt.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
     lib.modcpy.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
+    lib.modhaf.argtypes = [POINTER(c_uint64)]
+    lib.modshl.argtypes = [c_int,POINTER(c_uint64)]
+    lib.modshr.argtypes = [c_int,POINTER(c_uint64)]
     lib.nres.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
     lib.redc.argtypes =  [POINTER(c_uint64),POINTER(c_uint64)]
 
@@ -2256,6 +2287,10 @@ for i in range(0,1000) :
         lib.modinv(arr_z,None,arr_z)
         lib.modsqrt(arr_z,None,arr_z)   # get square root, and square it again
         lib.modsqr(arr_z,arr_z)
+        lib.modhaf(arr_z)               # half it
+        lib.modadd(arr_z,arr_z,arr_z)   # double it
+        lib.modshl(1,arr_z);            # shift left
+        lib.modshr(1,arr_z);            # shift right
         lib.redc(arr_z,arr_z)
         z=0
         for j in range(N-1,-1,-1) :
@@ -2275,6 +2310,10 @@ for i in range(0,1000) :
         lib.modinv(arr_z,None,arr_z)
         lib.modsqrt(arr_z,None,arr_z)   # get square root, and square it again
         lib.modsqr(arr_z,arr_z)
+        lib.modhaf(arr_z)               # half it
+        lib.modadd(arr_z,arr_z,arr_z)   # double it
+        lib.modshl(1,arr_z);            # shift left
+        lib.modshr(1,arr_z);            # shift right
         lib.redc(arr_z,arr_z)
         z=0
         for j in range(N-1,-1,-1) :
@@ -2294,6 +2333,10 @@ for i in range(0,1000) :
         lib.modinv(arr_z,None,arr_z)
         lib.modsqrt(arr_z,None,arr_z)   # get square root, and square it again
         lib.modsqr(arr_z,arr_z)
+        lib.modhaf(arr_z)               # half it
+        lib.modadd(arr_z,arr_z,arr_z)   # double it
+        lib.modshl(1,arr_z);            # shift left
+        lib.modshr(1,arr_z);            # shift right
         lib.redc(arr_z,arr_z)
         z=0
         for j in range(N-1,-1,-1) :

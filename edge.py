@@ -11,6 +11,8 @@
 # 2. uses scripts to generate C code for field arithmetic, automatically inserted into edge.c
 # 3. Compiles and runs program edge.c, which reads from edge.txt and compares outputs against testvectors
 #
+# NOTE : Ensure generic=True in pseudo.py or monty.py (otherwise some test failures may occur)
+#
 # See main program below for corner case generation. Add your own!
 #
 import random

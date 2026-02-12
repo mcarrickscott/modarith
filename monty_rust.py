@@ -1362,9 +1362,9 @@ def modshl(n,base) :
     if makepublic :
         str+="pub "
     str+="fn modshl(n: isize,a: &mut [SPINT]) {\n"
-    str+="\ta[{}-1]=((a[{}-1]<<n)) | (a[{}-2]>>({}-n));\n".format(N,N,N,base)
+    str+="\ta[{}-1]=((a[{}-1]<<n)) + (a[{}-2]>>({}-n));\n".format(N,N,N,base)
     str+="\tfor i in (1..{}-1).rev() {{\n".format(N)
-    str+="\t\ta[i]=((a[i]<<n)&0x{:x}) | (a[i-1]>>({}-n));\n\t}}\n".format(mask,base)
+    str+="\t\ta[i]=((a[i]<<n)&0x{:x}) + (a[i-1]>>({}-n));\n\t}}\n".format(mask,base)
     str+="\ta[0]=(a[0]<<n)&0x{:x};\n".format(mask)
     str+="\treturn;\n}\n"
     return str 
@@ -1379,9 +1379,30 @@ def modshr(n,base) :
     str+="fn modshr(n: isize,a: &mut [SPINT]) -> isize {\n"
     str+="\tlet r=a[0]&((1<<n)-1);\n"
     str+="\tfor i in 0..{}-1 {{\n".format(N)
-    str+="\t\ta[i]=(a[i]>>n) | ((a[i+1]<<({}-n))&0x{:x});\n\t}}\n".format(base,mask)
+    str+="\t\ta[i]=(a[i]>>n) + ((a[i+1]<<({}-n))&0x{:x});\n\t}}\n".format(base,mask)
     str+="\ta[{}-1]=a[{}-1]>>n;\n".format(N,N)
     str+="\treturn r as isize;\n}\n"
+    return str
+
+
+#divide by 2
+def modhaf(n,base) :
+    N=getN(n,base)
+    str="//divide by 2. Shift right 1 bit (or add p and shift right one bit)\n"
+    if makepublic :
+        str+="pub "
+    str+="fn modhaf(n: &mut [SPINT]) {\n" 
+    str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
+    if E:
+        str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
+    str+="\tprop(n);\n"
+    str+="\tmodcpy(n,&mut t);\n"
+    str+="\tlet lsb=modshr(1,&mut t) as usize;\n"
+    str+=addp(1);
+    str+="\tprop(n);\n" 
+    str+="\tmodshr(1,n);\n"
+    str+="\tmodcmv(1-lsb,&t,n);\n"
+    str+="}\n"
     return str
 
 #set a=2^r
@@ -1782,10 +1803,10 @@ if prime=="MFP1973" :
 if prime=="SQISIGN_1" :
     p=5*2**248-1
 
-if prime=="SQISIGN_2" :
+if prime=="SQISIGN_3" :
     p=65*2**376-1
 
-if prime=="SQISIGN_3" :
+if prime=="SQISIGN_5" :
     p=27*2**500-1
 
 if prime=="CSIDH512" :
@@ -2021,6 +2042,7 @@ with open(fname, 'w') as f:
         print(modsqrt())
         print(modshl(n,base))
         print(modshr(n,base))
+        print(modhaf(n,base))
         print(mod2r())
         print(modexp())
         print(modimp())

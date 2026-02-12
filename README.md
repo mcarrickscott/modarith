@@ -78,6 +78,7 @@ Assume the modulus is $p$. The provided functions are
 *modqr()*  -- Test for quadratic residue  \
 *modcmv()* -- Conditional constant time move  \
 *modcsw()* -- Conditional constant time swap  \
+*modhaf()* -- Modular division by 2
 *modshl()* -- shift left by bits  \
 *modshr()* -- shift right by bits  \
 *mod2r()*  -- set to 2^r \
