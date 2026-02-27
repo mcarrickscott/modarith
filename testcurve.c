@@ -82,8 +82,27 @@
     const char n1[]=   "120347457078878f77b707c070707077a07707b7b07070707223252357134272";
     const char n2[]=   "235279279432f249b298a876788d86294e02842092769136c086038b1812383a";   
 #endif
-
-#define BYTES (sizeof(order)/2)
+#ifdef SQISIGN_1
+    const char order[]="13FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF098677E8D0D856DA332BA970DCFDEA1";
+    const char r1[]=   "10876CB6C86C76660666789A376F6790956A0D6A507657196D75D610E0C9D7B";  
+    const char r2[]=   "378934937938999f9998765c890986e741c6a7e8061ffc0c5b5d35ffc34126";    
+    const char n1[]=   "7347457078878f77b707c070707077a07707b7b07070707223252357134272";    
+    const char n2[]=   "3279279432f249b298a876788d86294e02842092769136c086038b1812383a";   
+#endif
+#ifdef SQISIGN_3
+    const char order[]="104000000000000000000000000000000000000000000000303A69B3514879CD109A98F29F0D04F09F855D4F3C6A7037";
+    const char r1[]=   "6076CB6C86C76660666789A376F6790956A0D6A507657196D75D610E0C9D7B87508750F98765C890986DAE5E19F451E";  
+    const char r2[]=   "a38934937938999f9998765c890986f6a95f295af89a8e6c2c493a2707ea2149b9223e30696a86795fe82695acb2b19";    
+    const char n1[]=   "93347457078878f77b707c070707077a07707b7b070707072232523571342720986DAE5E19F451EF6EE89D3C2C0986D";    
+    const char n2[]=   "235279279432f249b298a876788d86294e02842092769136c086038b1812383a13427294582948924358f98985956A0";
+#endif
+#ifdef SQISIGN_5
+    const char order[]="6C00000000000000000000000000000000000000000000000000000000000002C8858DA0CB07C5ABCADABC1BEE86F8C9101174D8A115AD57E5F0228C2D0871";
+    const char r1[]=   "47235279279432f249b298a876788d86294e02842092769136c086038b1812383a8765C890985B1583C100A413ACA28FB0654735836726356262066876CB6C";  
+    const char r2[]=   "24dcad86d86bcd0db64d675789877279d6b1fd7bdf6d896ec93f79fc74e7edca8dfe27d83a6f6a964719bb77dada56395fac2da31dae8722838e1c23b63d05";    
+    const char n1[]=   "32120347457078878f77b707c070707077a07707b7b0707070722325235713427270707077a07707b7b07070707223252307707b7b070707072232523688A3";    
+    const char n2[]=   "19235279279432f249b298a876788d86294e02842092769136c086038b1812383a13427294582948924358f98985956A077b707c070707077a07707b7b0707";
+#endif
 
 static int char2int(char input)
 {
@@ -114,26 +133,26 @@ static void byte2hex(char *ptr,unsigned char ch)
 static void toHex(const char *src, char *dst)
 {
     int i;
-    for (i = 0; i < BYTES; i++)
+    for (i = 0; i < FBYTES; i++)
     {
         unsigned char ch = src[i];
         byte2hex(&dst[i * 2],ch);
     }
-    dst[2*BYTES]='\0';
+    dst[2*FBYTES]='\0';
 }
 
 // Convert from a hex string to byte array 
 static void fromHex(const char *src, char *dst)
 {
     int i,lz,len=0;
-    char pad[2*BYTES];
+    char pad[2*FBYTES];
     while (src[len]!=0) len++;
-    lz=2*BYTES-len;
+    lz=2*FBYTES-len;
     if (lz<0) lz=0;
     for (i=0;i<lz;i++) pad[i]='0';  // pad with leading zeros
-    for (i=lz;i<2*BYTES;i++) pad[i]=src[i-lz];
+    for (i=lz;i<2*FBYTES;i++) pad[i]=src[i-lz];
 
-    for (i=0;i<BYTES;i++)
+    for (i=0;i<FBYTES;i++)
     {
         dst[i] = (char2int(pad[2*i]) * 16) + char2int(pad[2*i + 1]);
     }
@@ -145,8 +164,8 @@ void outputxy(point *P)
     if (ecnXXXisinf(P)) {
         printf("P= O\n");
     } else {
-        char x[BYTES],y[BYTES];
-        char buff[(2*BYTES)+1];
+        char x[FBYTES],y[FBYTES];
+        char buff[(2*FBYTES)+1];
         ecnXXXget(P,x,y);
         toHex(x,buff);
         printf("Px= "); puts(buff);
@@ -159,7 +178,7 @@ int main() {
     uint64_t start,fin;
     clock_t begin;
     int i,elapsed;
-    char r[BYTES],a[BYTES],b[BYTES];
+    char r[FBYTES],a[FBYTES],b[FBYTES];
     point P,Q;
 
 #ifdef NIST256

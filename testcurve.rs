@@ -38,19 +38,19 @@ fn char2int(inp: u8) -> u8 {
 
 // string s better have even number of characters!
 fn from_hex(s: &str,x: &mut[u8]) {
-    let mut pad:[u8;2*NBYTES]=[0;2*NBYTES];
+    let mut pad:[u8;2*FBYTES]=[0;2*FBYTES];
     let c=s.as_bytes();
     let len=c.len();
-    let mut lz=2*NBYTES-len;
-    if 2*NBYTES<len {lz=0;}
+    let mut lz=2*FBYTES-len;
+    if 2*FBYTES<len {lz=0;}
     for i in 0..lz {
         pad[i]='0' as u8;
     }
-    for i in lz..2*NBYTES {
+    for i in lz..2*FBYTES {
         pad[i]=c[i-lz];
     }
 
-    for i in 0..NBYTES {
+    for i in 0..FBYTES {
         x[i]=char2int(pad[2*i])*16+char2int(pad[2*i+1]);
     }
 }
@@ -67,8 +67,8 @@ fn outputxy(P: &mut ECP) {
     if ecnisinf(P) {
         println!("P= O");
     } else {
-        let mut x: [u8; NBYTES] = [0; NBYTES]; 
-        let mut y: [u8; NBYTES] = [0; NBYTES]; 
+        let mut x: [u8; FBYTES] = [0; FBYTES]; 
+        let mut y: [u8; FBYTES] = [0; FBYTES]; 
 #[cfg(feature="WEIERSTRASS")]
         ecnget(P,&mut x, Some(&mut y));
 #[cfg(feature="EDWARDS")]
@@ -166,14 +166,44 @@ const n1:&str=   "120347457078878f77b707c070707077a07707b7b070707072232523571342
 #[cfg(feature="SECP256K1")]
 const n2:&str=  "235279279432f249b298a876788d86294e02842092769136c086038b1812383a";   
 
+#[cfg(feature="SQISIGN_1")]
+const ORDER:&str="13FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF098677E8D0D856DA332BA970DCFDEA1";
+#[cfg(feature="SQISIGN_1")]
+const r1:&str=  "10876CB6C86C76660666789A376F6790956A0D6A507657196D75D610E0C9D7B";  
+#[cfg(feature="SQISIGN_1")]
+const r2:&str=   "378934937938999f9998765c890986e741c6a7e8061ffc0c5b5d35ffc34126"; 
+#[cfg(feature="SQISIGN_1")]
+const n1:&str=   "7347457078878f77b707c070707077a07707b7b07070707223252357134272"; 
+#[cfg(feature="SQISIGN_1")]
+const n2:&str=  "3279279432f249b298a876788d86294e02842092769136c086038b1812383a";   
 
-const NBYTES: usize=ORDER.len()/2;
+#[cfg(feature="SQISIGN_3")]
+const ORDER:&str="104000000000000000000000000000000000000000000000303A69B3514879CD109A98F29F0D04F09F855D4F3C6A7037";
+#[cfg(feature="SQISIGN_3")]
+const r1:&str=  "6076CB6C86C76660666789A376F6790956A0D6A507657196D75D610E0C9D7B87508750F98765C890986DAE5E19F451E";  
+#[cfg(feature="SQISIGN_3")]
+const r2:&str=   "a38934937938999f9998765c890986f6a95f295af89a8e6c2c493a2707ea2149b9223e30696a86795fe82695acb2b19";    
+#[cfg(feature="SQISIGN_3")]
+const n1:&str=   "93347457078878f77b707c070707077a07707b7b070707072232523571342720986DAE5E19F451EF6EE89D3C2C0986D";    
+#[cfg(feature="SQISIGN_3")]
+const n2:&str=  "235279279432f249b298a876788d86294e02842092769136c086038b1812383a13427294582948924358f98985956A0";
+
+#[cfg(feature="SQISIGN_5")]
+const ORDER:&str="6C00000000000000000000000000000000000000000000000000000000000002C8858DA0CB07C5ABCADABC1BEE86F8C9101174D8A115AD57E5F0228C2D0871";
+#[cfg(feature="SQISIGN_5")]
+const r1:&str=  "47235279279432f249b298a876788d86294e02842092769136c086038b1812383a8765C890985B1583C100A413ACA28FB0654735836726356262066876CB6C";  
+#[cfg(feature="SQISIGN_5")]
+const r2:&str=   "24dcad86d86bcd0db64d675789877279d6b1fd7bdf6d896ec93f79fc74e7edca8dfe27d83a6f6a964719bb77dada56395fac2da31dae8722838e1c23b63d05";    
+#[cfg(feature="SQISIGN_5")]
+const n1:&str=   "32120347457078878f77b707c070707077a07707b7b0707070722325235713427270707077a07707b7b07070707223252307707b7b070707072232523688A3";   
+#[cfg(feature="SQISIGN_5")] 
+const n2:&str=  "19235279279432f249b298a876788d86294e02842092769136c086038b1812383a13427294582948924358f98985956A077b707c070707077a07707b7b0707";
 
 fn main() {
  
-    let mut r:[u8;NBYTES]=[0;NBYTES];
-    let mut a:[u8;NBYTES]=[0;NBYTES];    
-    let mut b:[u8;NBYTES]=[0;NBYTES];       
+    let mut r:[u8;FBYTES]=[0;FBYTES];
+    let mut a:[u8;FBYTES]=[0;FBYTES];    
+    let mut b:[u8;FBYTES]=[0;FBYTES];       
     let mut P=ECP::new();
     let mut Q=ECP::new();
 // convert to byte array

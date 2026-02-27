@@ -96,6 +96,36 @@ if curve=="ED448" :
     X=0x4f1970c66bed0ded221d15a622bf36da9e146570470f1767ea6de324a3d3a46412ae1af72ab66511433b80e18b00938e2626a82bc70cc05e
     Y=0x693f46716eb6bc248876203756c9c7624bea73736ca3984087789c1e05a0c2d73ad3ff1ce67c39c4fdbd132c4ed7c8ad9808795bf230fa14
 
+if curve=="SQISIGN_1" :
+    p=5*2**248-1
+    q=0x13FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF098677E8D0D856DA332BA970DCFDEA1
+    cof=2
+    A=1
+    prime_type=MONTY
+    curve_type=EDWARDS
+    B=-107431
+    X=42   # not done yet - bug in addchain
+
+if curve=="SQISIGN_3" :
+    p=65*2**376-1
+    q=0x104000000000000000000000000000000000000000000000303A69B3514879CD109A98F29F0D04F09F855D4F3C6A7037
+    cof=2
+    A=1
+    prime_type=MONTY
+    curve_type=EDWARDS
+    B=-66524
+    X=2
+
+if curve=="SQISIGN_5" :
+    p=27*2**500-1
+    q=0x6C00000000000000000000000000000000000000000000000000000000000002C8858DA0CB07C5ABCADABC1BEE86F8C9101174D8A115AD57E5F0228C2D0871
+    cof=2
+    A=1
+    prime_type=MONTY
+    curve_type=EDWARDS
+    B=-105355
+    X=6
+
 if curve=="NUMS256E" :
     p=2**256-189
     q=0x4000000000000000000000000000000041955AA52F59439B1A47B190EEDD4AF5
@@ -178,11 +208,10 @@ if radix<3 :
 
 base=2**radix
 
-mulbyint=True
-if prime_type==MONTY and not trinomial(p,radix) :
-    mulbyint=False
-
 bts=p.bit_length()
+Nbytes=bts//8
+if (bts%8)!=0 :
+    Nbytes+=1
 
 limbs=int(bts/radix)
 if bts%radix != 0 :
@@ -217,7 +246,7 @@ strng="\n"
 strng+="const COF:usize = {};\n".format(cof)
 strng+="const CONSTANT_A: isize = {};\n".format(A)
 
-if not small_b or not mulbyint:
+if not small_b :
     B3=B3%p
     strng+="const CONSTANT_B: isize = 0;\n"
     strng+="const constant_b: [SPINT;{}]=[".format(limbs)
@@ -249,7 +278,7 @@ else :
         strng+="{}".format(0)
         strng+=("];\n")
 
-if not small_x or not mulbyint:
+if not small_x :
     strng+="const CONSTANT_X: usize = 0;\n"
     strng+="const constant_x: [SPINT;{}]=[".format(limbs)
     for i in range(0,limbs-1) :
@@ -266,7 +295,7 @@ else :
     strng+="{}".format(0)
     strng+="];\n"
 
-if not small_x or not mulbyint :
+if not small_x :
     strng+="const constant_y: [SPINT;{}]=[".format(limbs)
     for i in range(0,limbs-1) :
         strng+="{},".format(hex(Y%base))
@@ -292,6 +321,7 @@ with open('point.rs', 'w') as f:
     with redirect_stdout(f):
         print("// elliptic curve point in projective coordinates")
         print("const WORDLENGTH: usize = {};".format(WL))
+        print("const FBYTES: usize = {};".format(Nbytes))
         print("#[derive(Clone)]")
         print("pub struct ECP {")
         print("\tx: [u{};{}],".format(WL,limbs))
