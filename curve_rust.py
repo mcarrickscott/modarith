@@ -321,7 +321,7 @@ with open('point.rs', 'w') as f:
     with redirect_stdout(f):
         print("// elliptic curve point in projective coordinates")
         print("const WORDLENGTH: usize = {};".format(WL))
-        print("const FBYTES: usize = {};".format(Nbytes))
+        print("pub const FBYTES: usize = {};".format(Nbytes))
         print("#[derive(Clone)]")
         print("pub struct ECP {")
         print("\tx: [u{};{}],".format(WL,limbs))
