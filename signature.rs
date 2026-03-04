@@ -24,7 +24,7 @@ use hash::*;
 /*** Insert code automatically generated in group.rs here ***/
 /* Note that much of this code is not needed and can be deleted */
 
-
+@group@
 
 /*** End of automatically generated code ***/
 
@@ -78,7 +78,7 @@ fn printhex(len:usize,array: &[u8]) {
 // Input private key
 // Output public key
 
-pub fn XXX_KEY_GEN(prv: &[u8],public: &mut [u8]) {
+pub fn KEY_PAIR(prv: &[u8],public: &mut [u8]) {
     let mut P=ECP::new();
     ecngen(&mut P);   // get curve generator point
 // Scheme specific code
@@ -95,7 +95,7 @@ pub fn XXX_KEY_GEN(prv: &[u8],public: &mut [u8]) {
 
 // input private key, per-message random number (or public key), message to be signed
 // Output signature.
-pub fn XXX_SIGN(prv: &[u8],rp: &[u8],m:&[u8],sig: &mut [u8]) {
+pub fn SIGN(prv: &[u8],rp: &[u8],m:&[u8],sig: &mut [u8]) {
     let mut P=ECP::new();
     ecngen(&mut P);   // get curve generator point
     let mut r:GEL = [0;LIMBS]; // some group elements..
@@ -105,7 +105,7 @@ pub fn XXX_SIGN(prv: &[u8],rp: &[u8],m:&[u8],sig: &mut [u8]) {
 
 // input public key, message and signature. 
 // Return true for success, false for failure
-pub fn XXX_VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
+pub fn VERIFY(public: &[u8],m:&[u8],sig:&[u8]) -> bool {
     let mut P=ECP::new();
     ecngen(&mut P);   // get curve generator point
     let mut r:GEL = [0;LIMBS]; // some group elements..

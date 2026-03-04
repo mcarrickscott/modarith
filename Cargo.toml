@@ -19,6 +19,10 @@ path="src/nist256.rs"
 name="ed448"
 path="src/ed448.rs"
 
+[[bin]]
+name="ed383"
+path="src/ed383.rs"
+
 [features]
 
 EDWARDS = []
@@ -31,6 +35,6 @@ ED448 = ["EDWARDS"]
 NUMS256W = ["WEIERSTRASS"]
 NUMS256E = ["EDWARDS"]
 SECP256K1 = ["WEIERSTRASS"]
-SQISIGN_1 = ["EDWARDS"]
-SQISIGN_3 = ["EDWARDS"]
-SQISIGN_5 = ["EDWARDS"]
+ED251 = ["EDWARDS"]
+ED383 = ["EDWARDS"]
+ED505 = ["EDWARDS"]

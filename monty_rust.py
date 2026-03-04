@@ -1800,13 +1800,13 @@ if prime=="MFP1973" :
     if WL==64:
         base=52
 
-if prime=="SQISIGN_1" :
+if prime=="ED251" :
     p=5*2**248-1
 
-if prime=="SQISIGN_3" :
+if prime=="ED383" :
     p=65*2**376-1
 
-if prime=="SQISIGN_5" :
+if prime=="ED505" :
     p=27*2**500-1
 
 if prime=="CSIDH512" :

@@ -1849,13 +1849,13 @@ if prime=="MFP7" :
 if prime=="MFP1973" :
     p=0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff
  
-if prime=="SQISIGN_1" :
+if prime=="ED251" :
     p=5*2**248-1
 
-if prime=="SQISIGN_3" :
+if prime=="ED383" :
     p=65*2**376-1
 
-if prime=="SQISIGN_5" :
+if prime=="ED505" :
     p=27*2**500-1
 
 if prime=="CSIDH512" :

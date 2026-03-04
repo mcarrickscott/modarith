@@ -88,7 +88,7 @@ static void toHex(int len, const char *src, char *dst)
 
 // Input private key
 // Output public key
-void XXX_KEY_GEN(char *prv,char *pub)
+void XXX_KEY_PAIR(char *prv,char *pub)
 {
     point G;
     ecngen(&G);  // get curve generator point
