@@ -186,7 +186,7 @@ void ED448_KEY_PAIR(char *prv,char *pub)
     pub[56]=(char)(sign<<7);
 }
 
-const char dom4[10]={'S','i','g','E','d','4','4','8',0,0};
+static const char dom4[10]={'S','i','g','E','d','4','4','8',0,0};
 
 // input private key, public key, message to be signed. Output signature
 void ED448_SIGN(char *prv,char *pub,int mlen,char *m,char *sig)
