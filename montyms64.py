@@ -2026,13 +2026,15 @@ if prime=="MFP1973" :
     p=0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff
     base=52
 
-if prime=="ED251" :
+if prime=="ED248" :
     p=5*2**248-1
 
-if prime=="ED383" :
+# SQISIGN primes
+
+if prime=="ED376" :
     p=65*2**376-1
 
-if prime=="ED505" :
+if prime=="ED500" :
     p=27*2**500-1
 
 if prime=="CSIDH512" :
