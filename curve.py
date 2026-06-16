@@ -112,7 +112,7 @@ if curve=="ED248" :
     prime_type=MONTY
     curve_type=EDWARDS
     B=-107431
-    X=42   # not done yet - bug in addchain
+    X=4  
 
 if curve=="ED376" :
     p=65*2**376-1
