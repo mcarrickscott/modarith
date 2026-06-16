@@ -20,6 +20,8 @@ Also in the path must be the very useful utility addchain
 	
 	https://github.com/mmcloughlin/addchain
 
+Note that our latest version works around a bug in addchain that sometimes caused it to fail.
+
 For accurate timings across a range of architectures for the C code, install Dan Bernstein's libcpucycles utility from https://cpucycles.cr.yp.to/ . It may be necessary to run *ldconfig*.
 
 # Quick start
