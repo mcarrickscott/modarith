@@ -41,7 +41,6 @@ use_rdtsc=False # use rdtsc directly, x86 only, for better comparison with other
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
-rmdel="rm"  # rm or del depending on shell
 generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
 allow_asr=True # Allow Arithmetic Shift Right. Maybe set to False to silence MISRA warnings
 check=False # run cppcheck on the output
@@ -51,6 +50,80 @@ PSCR=True # Power Side Channel Resistant conditional moves and swaps
 
 import sys
 import subprocess
+import os
+
+# workaround for addchain bug
+def remove_unused() :
+    # get all tokens
+    fin = open("inv.acc")
+    words = fin.read().split()
+    fin.close()
+    #print(words)
+    found=False
+
+    #strip out some stuff
+    for i in range(0,len(words)) :
+        words[i]=words[i].replace('2*','')
+        for char in words[i] :
+            if char in "()":
+                words[i]=words[i].replace(char,'')
+    #print(words)
+
+    #remove operators
+    while ("=" in words) :
+        words.remove("=")
+    while ("+" in words) :
+        words.remove("+")
+    while ("<<" in words) :
+        words.remove("<<")
+    while ("return" in words) :
+        words.remove("return")
+    #print(words)
+
+    #remove numbers
+    i=0
+    while (True) :
+        if words[i].isdigit() :
+            words.remove(words[i])
+        else :
+            i+=1
+        if i>=len(words) : 
+            break
+
+    #print(words)
+
+    #only variables left?
+    #find those that occur only once
+    unused=[]
+    for i in range(0,len(words)) :
+        var=words[i]
+        times=words.count(var)
+        if words.count(var) == 1 :
+            found=True
+            unused.append(var)
+
+    #print(unused)
+
+    #remove them
+    fin = open("inv.acc","rt")
+    fout = open("myinv.acc","wt")
+    for line in fin :
+        index=line.index(' ')
+        subs=line[0:index]
+        dont=False
+        for i in range(0,len(unused)) :
+            if subs==unused[i] :
+                dont=True;
+        if dont :
+            continue
+        fout.write(line)
+    fin.close()
+    fout.close()
+
+    os.remove("inv.acc")
+    os.rename("myinv.acc","inv.acc")
+
+    return found
 
 def ispowerof2(n) :
     if (n & (n-1) == 0) and n>0 :
@@ -1255,11 +1328,6 @@ def modnsqr() :
 
 # uses https://github.com/mmcloughlin/addchain to create addition chain
 def modpro() :
-    cline="addchain search {} > inv.acc".format(PE)
-    subprocess.call(cline, shell=True)
-    subprocess.call("addchain gen inv.acc > ac.txt", shell=True)
-    subprocess.call(rmdel+" inv.acc",shell=True)
-
     f=open('ac.txt')
     lines=f.readlines()
     info=lines[0].split()
@@ -1287,7 +1355,6 @@ def modpro() :
             #str+="\t}\n"
     str+="}\n"
     f.close()
-    subprocess.call(rmdel+" ac.txt",shell=True)    
     return str
 
 def modinv() :
@@ -2098,6 +2165,12 @@ while (p1%2)==0 :
     p1>>=1
 e=(1<<PM1D2)
 PE=(p-1-e)//(2*e)  # exponent for use in inversion, QR check, and for square roots
+cline="addchain search {} > inv.acc".format(PE)
+subprocess.call(cline, shell=True)
+if remove_unused() :
+    print("Problem in addchain - unused variables need to be removed")
+subprocess.call("addchain gen inv.acc > ac.txt", shell=True)
+os.remove("inv.acc")
 
 # get number of bytes for export
 Nbytes=n//8
@@ -2199,8 +2272,6 @@ rb=random.randint(0,modulus-1)
 rs=random.randint(0,modulus-1)
 ri=random.randint(0,modulus-1)
 
-subprocess.call(rmdel+" time.c", shell=True)
-
 with open('time.c', 'w') as f:
     with redirect_stdout(f):
         header()
@@ -2263,6 +2334,7 @@ if formatted :
 if check: 
     subprocess.call("cppcheck --enable=all --addon=misc  --suppress=unusedFunction --suppress=missingIncludeSystem --suppress=checkersReport "+fnamec, shell=True)  # tidy up the format
 
+os.remove("ac.txt")
 
 if field :
     print("field code is in field.c")
