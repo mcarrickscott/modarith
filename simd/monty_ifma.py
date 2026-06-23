@@ -1771,7 +1771,7 @@ def modhaf(n) :
     str+="void modhaf{}(spint *n) {{\n".format(DECOR)
     str+="\tspint lsb,one,d,mpy;\n"  
     if E :
-        str+="\tspint q=((spint)1<<{}u);\n".format(base)    
+        str+="\tint64_t q=((int64_t)1<<{}u);\n".format(base)    
     str+="\tspint t[{}];\n".format(N)
     str+="\t(void)prop(n);\n"
     str+="\tmodcpy{}(n,t);\n".format(DECOR)
