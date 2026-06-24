@@ -20,8 +20,8 @@ name="ed448"
 path="src/ed448.rs"
 
 [[bin]]
-name="ed383"
-path="src/ed383.rs"
+name="ed376"
+path="src/ed376.rs"
 
 [features]
 
@@ -35,6 +35,6 @@ ED448 = ["EDWARDS"]
 NUMS256W = ["WEIERSTRASS"]
 NUMS256E = ["EDWARDS"]
 SECP256K1 = ["WEIERSTRASS"]
-ED251 = ["EDWARDS"]
-ED383 = ["EDWARDS"]
-ED505 = ["EDWARDS"]
+ED248 = ["EDWARDS"]
+ED376 = ["EDWARDS"]
+ED500 = ["EDWARDS"]
