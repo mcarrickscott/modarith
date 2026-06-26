@@ -1,3 +1,37 @@
+
+# Exploiting SIMDs for faster finite field arithmetic
+
+Consider an SIMD environment where SIMD registers are divided into *n* 64-bit lanes, For the Intel AVX512 architecture there would be 8 such lanes. 
+Consider each lane as being the 64-bit data registers available to an independent virtual machine. Now recall that the script generated 
+finite field code is fully constant time. Therefore an identical stream of data-independent instructions can be executed by each lane, 
+each processing different data.
+
+Clearly all of these virtual machines can share the same program counter, stack register, and memory.
+
+In this way more than one simultaneous but independent calculation can be performed, one in each lane. The speed up achievable in terms 
+of throughput will be very close to the number of lanes.
+
+Modern processors contain multiple cores, which are independent processors each equipped with their own SIMD capabilities, and their own 
+independent memory resource. So multiple threads each capable of processing *n* virtual finite field calculators could be executing 
+simultaneously.
+
+Sounds good, but there are some limitations to this approach.
+
+First while it can massively increase throughput, it does nothing for latency. Using SIMDs to improve latency is possible in settings where 
+parallelism is plentiful and inherent to the algorithm being executed. And in our experience algorithms using finite field arithmetic 
+like RFC7748 do have a limited amount of such parallelism, but not enough to come close to achieving a times *n* improvement in latency.
+
+Second, a modern 64-bit architecture supports an integer multiplication instruction that generates a 128-bit product. SIMDs typically 
+do not, and must be content to perform 32-bit multiplications that produce a 64-bit product that will fit inside of a lane. So basically 
+our virtual machines are 32-bit processors and not 64-bit processors. This is a limitation that is not inherent to SIMDs, a better SIMD 
+might in future remove this restriction (and the Intel AVX-IFMA architecture is already a step in that direction).
+
+Third, the proposed method depends on the algorithm being constant time. In cryptography this is often regarded as being an essential 
+requirement anyway, to avoid timing based side channel attackers. But in some contexts, like signature verification with a public key, 
+it is not and non-constant time implementations are commonly used, and are faster. One simple response would be to implement in constant 
+time anyway, even if not necessary from a security viewpoint.
+
+
 # Experimental SIMD implementation
 
 Here we provide versions of the scripts which implement finite field arithmetic using C language intrinsics which exploit the 
@@ -58,7 +92,8 @@ into *rfc7748_simt.cu*. Compile as
 
 	nvcc -O2 rfc7748_simt.cu -lcpucycles -o rfc7748_simt
 
-When the program is run, a pair of test vectors from RFC7748 are calculated simultaneously, timings are taken, and a double key exchange is performed. Next generate the finite field arithmetic for the larger X448 curve 
+When the program is run, a pair of test vectors from RFC7748 are calculated simultaneously, timings are taken, and a double key exchange is 
+performed. Next generate the finite field arithmetic for the larger X448 curve 
 
 	python3 monty_cuda.py X448
 
@@ -66,5 +101,6 @@ Replace the *field.cu* code in *rfc7748_simt.cu* and compile and run the program
 
 # Application
 
-Two, four or eight or more protocol executions can be carried out simultaneously, which can be somewhat faster that executing them serially, one after another. For example a TLS server can calculate both its own public key and a shared secret at the same time.
+Two, four or eight or more protocol executions can be carried out simultaneously, which can be somewhat faster that executing them serially, 
+one after another. For example a TLS server can calculate both its own public key and a shared secret at the same time.
 
