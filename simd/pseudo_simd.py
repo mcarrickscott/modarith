@@ -528,21 +528,32 @@ def getZS(str,row,n,m) :
         dble=True
     while k<L :
         if EPM :
-            if dble :   
-                if first :
-                    str+="\t"
+            if mm!=2 :
+                if dble :   
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "   
+                    str+="t=MR_MULADDU(t,ma{},ta{});".format(k,L)
                 else :
-                    str+=" "   
-                str+="t=MR_MULADDU(t,ma{},ta{});".format(k,L)
-                #str+="t+=(dpint)ma{}*(dpint)ta{};".format(k,L)
+                    if first :
+                        str+="\tt=MR_MULADDU(t,ma{},a[{}]);".format(k,L)
+                        first=False
+                    else :
+                        str+=" t=MR_MULADDU(t,ma{},a[{}]);".format(k,L)
             else :
-                if first :
-                    str+="\tt=MR_MULADDU(t,ma{},a[{}]);".format(k,L)
-                    #str+="\tt+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
-                    first=False
+                if dble :   
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "   
+                    str+="t=MR_MULADDU(t,ta{},ta{});".format(k,L)
                 else :
-                    str+=" t=MR_MULADDU(t,ma{},a[{}]);".format(k,L)
-                    #str+=" t+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
+                    if first :
+                        str+="\tt=MR_MULADDU(t,ta{},a[{}]);".format(k,L)
+                        first=False
+                    else :
+                        str+=" t=MR_MULADDU(t,ta{},a[{}]);".format(k,L)          
         else :
             if first :
                 str+="\ttt=MR_MUL32U(a[{}],a[{}]);".format(k,L)
@@ -564,8 +575,10 @@ def getZS(str,row,n,m) :
                 str+="\t"
             else :
                 str+=" " 
-            str+="t=MR_MULADDU(t,ma{},a[{}]);".format(k,k)    
-            #str+="t+=(dpint)ma{}*(dpint)a[{}];".format(k,k)
+            if mm!=2 :   
+                str+="t=MR_MULADDU(t,ma{},a[{}]);".format(k,k) 
+            else :
+                str+="t=MR_MULADDU(t,ta{},a[{}]);".format(k,k) 
         else :
             if first :
                 str+="\ttt=MR_MUL32U(a[{}],a[{}]);".format(k,k)
@@ -748,7 +761,7 @@ def modmul(n,m) :
     else:
         if  EPM  :
             for i in range(1,N) :
-                str+="\tspint ma{}=MR_MUL32_CONSTANT(a[{}],0x{:x});".format(i,i,m)
+                str+="\tspint ma{}=MR_MUL32_CONSTANT(a[{}],0x{:x});".format(i,i,mm)
                 #str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
         else :
             str+="\tdpint tt;\n"
@@ -779,6 +792,7 @@ def modsqr(n,m) :
     N=getN(n)
     mask=(1<<base)-1
     xcess=N*base-n
+    mm=m*2**xcess
     str="// Modular squaring, c=a*a mod 2p\n"
     if makestatic :
         str+="static "
@@ -793,10 +807,9 @@ def modsqr(n,m) :
     if  EPM  :
         for i in range(1,N) :
             str+="\tspint ta{}=MR_MUL32_CONSTANT(a[{}],2);\n".format(i,i)
-            #str+="\tspint ta{}=a[{}]*(spint)2;\n".format(i,i)
-        for i in range(1,N) :
-            str+="\tspint ma{}=MR_MUL32_CONSTANT(a[{}],0x{:x});\n".format(i,i,mm)
-            #str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
+        if mm!=2 :
+            for i in range(1,N) :
+                str+="\tspint ma{}=MR_MUL32_CONSTANT(a[{}],0x{:x});\n".format(i,i,mm)
     else :
         str+="\tdpint tt;\n"
         str+="\tdpint t2;\n"

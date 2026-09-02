@@ -568,18 +568,32 @@ def getZS(str,row,n,m) :
         dble=True
     while k<L :
         if EPM :
-            if dble :   
-                if first :
-                    str+="\t"
+            if mm!=2 :
+                if dble :   
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "                
+                    str+="accum(&tl,&th,ma{},ta{});".format(k,L)    #"t+=(udpint)ma{}*(udpint)ta{};".format(k,L)
                 else :
-                    str+=" "                
-                str+="accum(&tl,&th,ma{},ta{});".format(k,L)    #"t+=(udpint)ma{}*(udpint)ta{};".format(k,L)
+                    if first :
+                        str+="\taccum(&tl,&th,ma{},a[{}]);".format(k,L)   #"\tt+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                        first=False
+                    else :
+                        str+=" accum(&tl,&th,ma{},a[{}]);".format(k,L)   #" t+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
             else :
-                if first :
-                    str+="\taccum(&tl,&th,ma{},a[{}]);".format(k,L)   #"\tt+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
-                    first=False
+                if dble :   
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "                
+                    str+="accum(&tl,&th,ta{},ta{});".format(k,L)    #"t+=(udpint)ma{}*(udpint)ta{};".format(k,L)
                 else :
-                    str+=" accum(&tl,&th,ma{},a[{}]);".format(k,L)   #" t+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                    if first :
+                        str+="\taccum(&tl,&th,ta{},a[{}]);".format(k,L)   #"\tt+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
+                        first=False
+                    else :
+                        str+=" accum(&tl,&th,ta{},a[{}]);".format(k,L)   #" t+=(udpint)ma{}*(udpint)a[{}];".format(k,L)
         else :
             if first :
                 str+="\tmul(&ttl,&tth,a[{}],a[{}]);".format(k,L)    #"\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,L)
@@ -598,7 +612,10 @@ def getZS(str,row,n,m) :
                 str+="\t"
             else :
                 str+=" "  
-            str+="accum(&tl,&th,ma{},a[{}]);".format(k,k)    #"t+=(udpint)ma{}*(udpint)a[{}];".format(k,k)
+            if mm!=2 :
+                str+="accum(&tl,&th,ma{},a[{}]);".format(k,k)    #"t+=(udpint)ma{}*(udpint)a[{}];".format(k,k)
+            else :
+                str+="accum(&tl,&th,ta{},a[{}]);".format(k,k)    #"t+=(udpint)ma{}*(udpint)a[{}];".format(k,k)
         else :
             if first :
                 str+="\tmul(&ttl,&tth,a[{}],a[{}]);".format(k,k)     #"\ttt=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
@@ -774,6 +791,7 @@ def modsqr(n,m) :
     N=getN(n)
     mask=(1<<base)-1
     xcess=N*base-n
+    mm=m*2**xcess
     str="// Modular squaring, c=a*a mod 2p\n"
     if makestatic :
         str+="static "
@@ -787,8 +805,9 @@ def modsqr(n,m) :
     if  EPM  :
         for i in range(1,N) :
             str+="\tspint ta{}=a[{}]*(spint)2;\n".format(i,i)
-        for i in range(1,N) :
-            str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
+        if mm!=2 :
+            for i in range(1,N) :
+                str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
     else :
         str+="\tspint ttl,tth;\n"
         str+="\tspint t2l,t2h;\n"

@@ -380,18 +380,32 @@ def getZS(str,row,n,m,base) :
         dble=True
     while k<L :
         if EPM :
-            if dble :
-                if first :
-                    str+="\t"
+            if mm!=2 :
+                if dble :
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "
+                    str+="t+=(mc{} as DPINT)*(tc{} as DPINT);".format(k,L)
                 else :
-                    str+=" "
-                str+="t+=(mc{} as DPINT)*(tc{} as DPINT);".format(k,L)
+                    if first :
+                        str+="\tt+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
+                        first=False
+                    else :
+                        str+=" t+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
             else :
-                if first :
-                    str+="\tt+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
-                    first=False
+                if dble :
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "
+                    str+="t+=(tc{} as DPINT)*(tc{} as DPINT);".format(k,L)
                 else :
-                    str+=" t+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
+                    if first :
+                        str+="\tt+=(tc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
+                        first=False
+                    else :
+                        str+=" t+=(tc{} as DPINT)*(c[{}] as DPINT);".format(k,L)
         else :
             if first :
                 str+="\ttt=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,L)
@@ -409,7 +423,10 @@ def getZS(str,row,n,m,base) :
                 str+="\t"
             else :
                 str+=" "  
-            str+="t+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,k)
+            if mm!=2 :
+                str+="t+=(mc{} as DPINT)*(c[{}] as DPINT);".format(k,k)
+            else :
+                str+="t+=(tc{} as DPINT)*(c[{}] as DPINT);".format(k,k)
         else :
             if first :
                 str+="\ttt=(c[{}] as DPINT)*(c[{}] as DPINT);".format(k,k)
@@ -536,6 +553,7 @@ def modmul(n,m,base) :
     N=getN(n,base)
     mask=(1<<base)-1
     xcess=N*base-n
+    mm=m*2**xcess
     str="// Modular multiplication, c=c*b mod 2p\n"
     str+="#[allow(unused_variables)]\n"
     if inline :
@@ -578,6 +596,7 @@ def modsqr(n,m,base) :
     N=getN(n,base)
     mask=(1<<base)-1
     xcess=N*base-n
+    mm=m*2**xcess
     str="// Modular squaring, c=c*c mod 2p\n"
     str+="#[allow(unused_variables)]\n"
     if inline :
@@ -589,8 +608,9 @@ def modsqr(n,m,base) :
     if EPM :
        for i in range(1,N) :
            str+="\tlet tc{}=c[{}]*2;\n".format(i,i)
-       for i in range(1,N) :
-           str+="\tlet mc{}=c[{}]*0x{:x};\n".format(i,i,mm)     
+       if mm!=2 :
+           for i in range(1,N) :
+               str+="\tlet mc{}=c[{}]*0x{:x};\n".format(i,i,mm)     
     else :
         str+="\tlet mut tt:DPINT;\n"
         str+="\tlet mut t2:DPINT;\n"

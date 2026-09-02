@@ -420,18 +420,32 @@ def getZS(str,row,n,m) :
         dble=True
     while k<L :
         if EPM :
-            if dble :   
-                if first :
-                    str+="\t"
+            if mm!=2 :
+                if dble :   
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "                
+                    str+="t+=(dpint)ma{}*(dpint)ta{};".format(k,L)
                 else :
-                    str+=" "                
-                str+="t+=(dpint)ma{}*(dpint)ta{};".format(k,L)
+                    if first :
+                        str+="\tt+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
+                        first=False
+                    else :
+                        str+=" t+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
             else :
-                if first :
-                    str+="\tt+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
-                    first=False
+                if dble :   
+                    if first :
+                        str+="\t"
+                    else :
+                        str+=" "                
+                    str+="t+=(dpint)ta{}*(dpint)ta{};".format(k,L)
                 else :
-                    str+=" t+=(dpint)ma{}*(dpint)a[{}];".format(k,L)
+                    if first :
+                        str+="\tt+=(dpint)ta{}*(dpint)a[{}];".format(k,L)
+                        first=False
+                    else :
+                        str+=" t+=(dpint)ta{}*(dpint)a[{}];".format(k,L)
         else :
             if first :
                 str+="\ttt=(dpint)a[{}]*(dpint)a[{}];".format(k,L)
@@ -450,7 +464,10 @@ def getZS(str,row,n,m) :
                 str+="\t"
             else :
                 str+=" "  
-            str+="t+=(dpint)ma{}*(dpint)a[{}];".format(k,k)
+            if mm!=2 :
+                str+="t+=(dpint)ma{}*(dpint)a[{}];".format(k,k)
+            else :
+                str+="t+=(dpint)ta{}*(dpint)a[{}];".format(k,k)
         else :
             if first :
                 str+="\ttt=(dpint)a[{}]*(dpint)a[{}];".format(k,k)
@@ -633,6 +650,7 @@ def modsqr(n,m) :
     N=getN(n)
     mask=(1<<base)-1
     xcess=N*base-n
+    mm=m*2**xcess
     str="// Modular squaring, c=a*a mod 2p\n"
     str+="__device__ __noinline__ "
     if makestatic :
@@ -645,8 +663,9 @@ def modsqr(n,m) :
     if  EPM  :
         for i in range(1,N) :
             str+="\tspint ta{}=a[{}]*(spint)2;\n".format(i,i)
-        for i in range(1,N) :
-            str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
+        if mm!=2 :
+            for i in range(1,N) :
+                str+="\tspint ma{}=a[{}]*(spint)0x{:x};\n".format(i,i,mm)
     else :
         str+="\tdpint tt;\n"
         str+="\tdpint t2;\n"
