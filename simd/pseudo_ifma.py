@@ -365,9 +365,12 @@ def getZM(str,row,n,m) :
         str+=" lo=MR_AND(ttl,mask);"
         #str+=" lo=ttl & mask;"    #" lo=(spint)tt & mask;"
         if row==0 :
-            str+=" tl=MR_MULADD_LO_64(tl,lo,spm);"     #" t+=(dpint)lo*(dpint)0x{:x};".format(mm)
+            #str+=" tl=MR_MULADD_LO_64(tl,lo,spm);"     #" t+=(dpint)lo*(dpint)0x{:x};".format(mm)
+            str+=" tl = MR_MULADD_LO(tl,lo,spm); th = MR_MULADD_HI(th,lo,spm);"
+
         else :
-            str+=" tl=MR_MULADD_LO_64(tl,MR_ADD64U(lo,hi),spm);"
+            #str+=" tl=MR_MULADD_LO_64(tl,MR_ADD64U(lo,hi),spm);"
+            str+=" hi=MR_ADD64U(lo,hi); tl=MR_MULADD_LO(tl,MR_AND(hi,mask),spm); th=MR_MULADD_HI(th,MR_AND(hi,mask),spm); th=MR_MULADD_LO(th,MR_SHR64U(hi,52),spm);"
 
         str+=" hi=MR_SHR52(ttl,tth);"  #" hi=(spint)(tt>>{}u);".format(base)
     else :
@@ -384,7 +387,8 @@ def getZM(str,row,n,m) :
             #str+=" accum(&tl,&th,a[{}],b[{}]);".format(k,row-k)   #" t+=(dpint)a[{}]*(dpint)b[{}];".format(k,row-k)
         k+=1
     if row==N-1 :
-        str+=" tl=MR_MULADD_LO_64(tl,hi,spm);"   #" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
+        #str+=" tl=MR_MULADD_LO_64(tl,hi,spm);"   #" t+=(dpint)hi*(dpint)0x{:x};".format(mm)
+        str+=" tl=MR_MULADD_LO(tl,MR_AND(hi,mask),spm); th=MR_MULADD_HI(th,MR_AND(hi,mask),spm); th=MR_MULADD_LO(th,MR_SHR64U(hi,52),spm);"
     str+=" spint v{}=MR_AND(tl,mask); tl=MR_SHR52(tl,th); th=MR_ZERO();\n".format(row)    #" spint v{}=(spint)t & mask; t=t>>{}u;\n".format(row,base)
     return str
 
@@ -466,12 +470,15 @@ def getZS(str,row,n,m) :
             #str+=" accum(&t2l,&t2h,a[{}],a[{}]);".format(k,k)  #" t2+=(udpint)a[{}]*(udpint)a[{}];".format(k,k)
  
     if row==N-1 : 
-        str+=" tl=MR_MULADD_LO_64(tl,hi,spm);"   #" t+=(udpint)hi*(udpint)0x{:x};".format(mm)
+        #str+=" tl=MR_MULADD_LO_64(tl,hi,spm);"   #" t+=(udpint)hi*(udpint)0x{:x};".format(mm)
+        str+=" tl=MR_MULADD_LO(tl,MR_AND(hi,mask),spm); th=MR_MULADD_HI(th,MR_AND(hi,mask),spm); th=MR_MULADD_LO(th,MR_SHR64U(hi,52),spm);"
     else :
         if row==0 :
-            str+=" t2l=MR_MULADD_LO_64(t2l,lo,spm);"     #" t2+=(udpint)lo*(udpint)0x{:x};".format(mm)
+            #str+=" t2l=MR_MULADD_LO_64(t2l,lo,spm);"     #" t2+=(udpint)lo*(udpint)0x{:x};".format(mm)
+            str+=" t2l=MR_MULADD_LO(t2l,lo,spm); t2h=MR_MULADD_HI(t2h,lo,spm);"
         else :
-            str+=" t2l=MR_MULADD_LO_64(t2l,MR_ADD64U(lo,hi),spm);"
+            #str+=" t2l=MR_MULADD_LO_64(t2l,MR_ADD64U(lo,hi),spm);"
+            str+=" hi = MR_ADD64U(lo,hi); t2l = MR_MULADD_LO(t2l,MR_AND(hi,mask),spm); t2h = MR_MULADD_HI(t2h,MR_AND(hi,mask),spm); t2h = MR_MULADD_LO(t2h,MR_SHR64U(hi,52),spm);"
 
         str+=" hi=MR_SHR52(ttl,tth);"  #" hi=(spint)(tt>>{}u);".format(base)
     str+=" tl=MR_ADD64U(tl,t2l); th=MR_ADD64U(th,t2h); "
@@ -486,30 +493,18 @@ def second_pass(str,n,m) :
 # second reduction pass
     str+="// second reduction pass\n\n"  
     k=0
-    if fred :
-        str+="\tspint ut=tl;\n"  
-        if xcess>0 :
-            str+="\tspint smask=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format((1<<(base-xcess))-1)
-            str+= "\tut=MR_ADD64U(MR_SHL64U(ut,{}),MR_SHR64U(v{},{}); v{}=MR_AND(v{},smask);\n".format(xcess,N-1,base-xcess,N-1,N-1)
-            #str+= "\tut=(ut<<{})+(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
-        if m>1 :
-            str+="\tut=MR_MULLO(ut,MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}));\n".format(m)
-            #str+="\tut*=0x{:x};\n".format(m)
-        str+="\ts=MR_ADD64U(v0,MR_AND(ut,mask));\n"
-        str+="\tc[0]=MR_AND(s,mask);\n"
-        str+= "\tcarry=MR_ADD64U(MR_SHR64U(s,{}),MR_SHR64U(ut,{}));\n".format(base,base)
-    else : 
-        if xcess>0 :
-            str+="\tspint smask=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format((1<<(base-xcess))-1)
-            str+="\ttl=MR_SHL64U(tl,{}); th=MR_SHL64U(th,{}); tl=MR_ADD64U(tl,MR_SHR64U(v{},{}u)); v{}=MR_AND(v{},smask);\n".format(xcess,xcess,N-1,base-xcess,N-1,N-1)   #"\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
-        if m>1 :
-            str+= "\ttl=MR_MULLO(tl,MR_SET_ALL_LANES_TO_CONSTANT(0x{:x})); th=MR_MULLO(th,MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}));\n".format(m,m)
-            #str+= "\tmuli(&tl,&th,0x{:x});\n".format(m)  #"\tut*=0x{:x};\n".format(m)
-        str+= "\ts=MR_ADD64U(v0,MR_AND(tl,mask));\n"
-        str+= "\tc[0]=MR_AND(s,mask);\n"
-        str+= "\tcarry=MR_ADD64U(MR_SHR64U(s,{}),MR_SHR52(tl,th));\n".format(base)    #"\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)
+    if xcess>0 :
+        str+="\tspint smask=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x});\n".format((1<<(base-xcess))-1)
+        str+="\tth=MR_ADD64U(MR_SHR64U(MR_AND(tl,mask),{}),MR_SHL64U(MR_SHR64U(tl,{}),{}));\n".format(base-xcess,base,xcess)
+        str+="\ttl=MR_SHL64U(MR_AND(tl,smask),{});\n".format(xcess)
+        str+="\ttl=MR_ADD64U(tl,MR_SHR64U(v{},{}u)); v{}=MR_AND(v{},smask);\n".format(N-1,base-xcess,N-1,N-1)   #"\tut=(ut<<{})+(spint)(v{}>>{}u); v{}&=0x{:x};\n".format(xcess,N-1,base-xcess,N-1,smask)
+    if m>1 :
+        str+= "\ttl=MR_MULLO(tl,MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}));\n".format(m)
+        str+= "\tth=MR_MULLO(th,MR_SET_ALL_LANES_TO_CONSTANT(0x{:x}));\n".format(m)
+    str+= "\ts=MR_ADD64U(v0,MR_AND(tl,mask));\n"
+    str+= "\tc[0]=MR_AND(s,mask);\n"
+    str+= "\tcarry=MR_ADD64U(MR_SHR64U(s,{}),MR_SHR52(tl,th));\n".format(base)    #"\tcarry=(s>>{})+(spint)(ut>>{});\n".format(base,base)    
     k=k+1
-
     str+= "\tc[{}]=MR_ADD64U(v{},carry);\n".format(k,k)
 
     for i in range(k+1,N) :
@@ -537,11 +532,10 @@ def modmul(n,m) :
 
     str+="\tspint tl=MR_ZERO();\n"
     str+="\tspint th=MR_ZERO();\n"
-    str+="\tspint spm=MR_SET_ALL_LANES_TO_CONSTANT({});\n".format(mm)
+    str+="\tspint spm=MR_SET_ALL_LANES_TO_CONSTANT(0x{:x});\n".format(mm)
 
     str+="\tspint ttl,tth;\n"
     str+="\tspint lo,hi;\n"
-    #str+="\tuspint carry,s,mask=((uspint)1<<{}u)-(uspint)1;\n".format(base)
     
     str+="\tspint carry;\n"
     str+="\tspint s;\n"
@@ -1487,16 +1481,9 @@ ROI=makebig(roi,base,N)
 
 mod8=p%8
 print("Prime is of length",n,"bits and =",mod8,"mod 8. Chosen radix is",base,"bits, using",N,"limbs with excess of",xcess,"bits")
-
+print("Compiler is "+compiler)
 print("Using standard Comba for modmul")
 print("Using alternate method")
-
-# faster reduction
-fred=False
-if bits(N+1)+base+bits(mm)<WL :
-    fred=True
-    print("Tighter reduction")
-
 
 # generate WL bit modular multiplication and squaring code for Mersenne prime 2^n-m
 # where the unsaturated radix is 2^base and base<WL 
