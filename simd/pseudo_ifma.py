@@ -963,7 +963,7 @@ def modshl(n) :
     str+="}\n"
     return str 
 
-#shift right
+#shift  right
 def modshr(n) :
     N=getN(n)
     str="//shift right by less than a word. Return shifted out part\n"
