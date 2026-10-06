@@ -2306,7 +2306,7 @@ if prime=="MIKE_FAST_3" :
 if prime=="MIKE_FAST_5" :
     p=317*2**628-1
 
-if prime=="MIKE_CONSERVATIVE_1 :
+if prime=="MIKE_CONSERVATIVE_1" :
     p=117*2**374-1
 
 if prime=="MIKE_CONSERVATIVE_3" :
