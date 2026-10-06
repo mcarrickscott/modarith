@@ -2312,7 +2312,7 @@ if prime=="MIKE_CONSERVATIVE_1" :
 if prime=="MIKE_CONSERVATIVE_3" :
     p=77*2**566-1
 
-if prime=="MIKE_CONSERVATIVE_5 :
+if prime=="MIKE_CONSERVATIVE_5" :
     p=41*2**758-1
 
 ### End of user editable area
