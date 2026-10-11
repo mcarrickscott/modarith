@@ -191,11 +191,11 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
         modcsw(swap,z2,z3);
         swap=kt;
             
-        modadd(x2,z2,A);        // A = x_2 + z_2
-        modadd(x3,z3,C);        // C = x_3 + z_3  
+        modaddf(x2,z2,A);        // A = x_2 + z_2
+        modaddf(x3,z3,C);        // C = x_3 + z_3  
               
-        modsub(x2,z2,B);        // B = x_2 - z_2
-        modsub(x3,z3,D);        // D = x_3 - z_3        
+        modsubf(x2,z2,B);        // B = x_2 - z_2
+        modsubf(x3,z3,D);        // D = x_3 - z_3        
                 
         modsqr(A,AA);           // AA = A^2
         modsqr(B,BB);           // BB = B^2
@@ -203,13 +203,13 @@ void rfc7748(const char *bk, const char *bu,char *bv) {
         modmul(D,A,D);          // DA = D * A
         modmul(C,B,C);          // CB = C * B
         
-        modsub(D,C,z3);
-	    modsub(AA,BB,E);        // E = AA - BB          
+        modsubf(D,C,z3);
+	    modsubf(AA,BB,E);        // E = AA - BB          
         
         modmli(E,A24,z2);  
 
-        modadd(D,C,x3); 
-        modadd(z2,AA,z2); 
+        modaddf(D,C,x3); 
+        modaddf(z2,AA,z2); 
         
         modmul(z2,E,z2);   // z_2 = E * (AA + a24 * E)
 

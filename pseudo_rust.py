@@ -23,7 +23,6 @@ cyclesorsecs=True # use a cpu cycle counter, otherwise just provide timings
 karatsuba=False  # default setting
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
-generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
 makepublic=False # Make functions public
 fully_propagate=False # recommended set to True for Production code
@@ -109,9 +108,7 @@ def remove_unused() :
 # Determine optimal radix
 def getbase(n) :
     limbs=int(n/WL)
-    limit=2*WL
-    if karatsuba :
-        limit=2*WL-1
+
     while (True) :
         limbs=limbs+1
         if limbs==1 :   # must be at least 2 limbs
@@ -220,7 +217,7 @@ def modfsb(n,base) :
 
 #modular addition
 def modadd(n,m,base) :
-    str="//Modular addition - reduce less than 2p\n"
+    str="//Modular addition - can be used in all cases - reduce less than 2p\n"
     str+="#[allow(unused_variables)]\n"
     if inline :
         str+="#[inline]\n"
@@ -229,17 +226,33 @@ def modadd(n,m,base) :
     str+="fn modadd(b: &[SPINT],n: &mut [SPINT]) {\n"
     for i in range(0,N) :
         str+="\tn[{}]=n[{}]+b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+=subp(2)
-        str+="\tlet carry=prop(n);\n"
-        str+=caddp(2)
+    
+    str+=subp(2)
+    str+="\tlet carry=prop(n);\n"
+    str+=caddp(2)
+    str+="\tprop(n);\n"    
+    str+="\treturn;\n}\n"
+    return str
+
+#fast modular addition
+def modaddf(n,m,base) :
+    str="//Fast modular addition - can be used if output is consumed ONLY by multiplication or squaring\n"
+    str+="#[allow(unused_variables)]\n"
+    if inline :
+        str+="#[inline]\n"
+    if makepublic :
+        str+="pub "
+    str+="fn modaddf(b: &[SPINT],n: &mut [SPINT]) {\n"
+    for i in range(0,N) :
+        str+="\tn[{}]=n[{}]+b[{}];\n".format(i,i,i)
+    
     str+="\tprop(n);\n"    
     str+="\treturn;\n}\n"
     return str
 
 #modular subtraction
 def modsub(n,m,base) :
-    str="//Modular subtraction - reduce less than 2p\n"
+    str="//Modular subtraction - can be used in all cases - reduce less than 2p\n"
     str+="#[allow(unused_variables)]\n"
     if inline :
         str+="#[inline]\n"
@@ -248,11 +261,27 @@ def modsub(n,m,base) :
     str+="fn modsub(b: &[SPINT],n: &mut [SPINT]) {\n"
     for i in range(0,N) :
         str+="\tn[{}]=n[{}]-b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+="\tlet carry=prop(n);\n"
-        str+=caddp(2)
-    else :
-        str+=addp(mp)
+    
+    str+="\tlet carry=prop(n);\n"
+    str+=caddp(2)
+    
+    str+="\tprop(n);\n"    
+    str+="\treturn;\n}\n"
+    return str
+
+#modular subtraction
+def modsubf(n,m,base) :
+    str="//Fast modular subtraction - can be used if output is ONLY consumed by multiplication or squaring\n"
+    str+="#[allow(unused_variables)]\n"
+    if inline :
+        str+="#[inline]\n"
+    if makepublic :
+        str+="pub "
+    str+="fn modsubf(b: &[SPINT],n: &mut [SPINT]) {\n"
+    for i in range(0,N) :
+        str+="\tn[{}]=n[{}]-b[{}];\n".format(i,i,i)
+    
+    str+=addp(2)
     str+="\tprop(n);\n"    
     str+="\treturn;\n}\n"
     return str
@@ -268,11 +297,10 @@ def modneg(n,m,base) :
     str+="fn modneg(n: &mut [SPINT]) {\n"
     for i in range(0,N) :
         str+="\tn[{}]=(0 as SPINT)-n[{}];\n".format(i,i)
-    if not algorithm :
-        str+="\tlet carry=prop(n);\n"
-        str+=caddp(2)
-    else :
-        str+=addp(mp)
+    
+    str+="\tlet carry=prop(n);\n"
+    str+=caddp(2)
+    
     str+="\tprop(n);\n"    
     str+="\treturn;\n}\n"
     return str
@@ -1257,9 +1285,10 @@ prime=sys.argv[2]
 n=0
 base=0
 m=0
+limit=2*WL
+if karatsuba :
+    limit=2*WL-1
 
-algorithm=False
-mp=0
 # Note that number base MUST be less than wordlength WL (unsaturated).
 # The radix for an n-bit prime is 2^base where base is usually in the range 51-60 for a 64-bit processor, 26-30 for 
 # 32-bit and 12-13 for 16-bit.
@@ -1296,15 +1325,9 @@ if prime=="NIST521" :
 
 if prime=="X25519" :
     p=2**255-19
-    if not generic :
-        algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
-        mp=2            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm. Now no reduction required after modular additions/subtractions.
 
 if prime=="ED25519" :
     p=2**255-19
-    if not generic :
-        algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
-        mp=4            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm. Now no reduction required after modular additions/subtractions.
 
 if prime=="C2065" :
     p=2**206-5
@@ -1438,7 +1461,8 @@ if bad_overflow_mul :
 
 # faster reduction
 fred=False
-if bits(N+1)+base+bits(mm)<WL :
+if (N+1)*(b-1)*mm < 2**WL :
+#if bits(N+1)+base+bits(mm)<WL :
     fred=True
     print("Tighter reduction")
 
@@ -1525,7 +1549,9 @@ with open('field.rs', 'w') as f:
         print(modfsb(n,base))
         print(modmli(n,m,base))
         print(modadd(n,m,base))
+        print(modaddf(n,m,base))
         print(modsub(n,m,base))
+        print(modsubf(n,m,base))
         print(modneg(n,m,base))
         print(modmul(n,m,base))
         print(modsqr(n,m,base))

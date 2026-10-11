@@ -209,24 +209,24 @@ void rfc7748(const char *bk1, const char *bu1,char *bv1,const char *bk2, const c
         
         swp[0]=sb[0]; swp[1]=sb[1];
             
-        modadd(x2,z2,A);        // A = x_2 + z_2
+        modaddf(x2,z2,A);        // A = x_2 + z_2
         modsqr(A,AA);           // AA = A^2
-        modsub(x2,z2,B);        // B = x_2 - z_2
+        modsubf(x2,z2,B);        // B = x_2 - z_2
         modsqr(B,BB);           // BB = B^2
 
-        modsub(AA,BB,E);        // E = AA - BB
-        modadd(x3,z3,C);        // C = x_3 + z_3
+        modsubf(AA,BB,E);        // E = AA - BB
+        modaddf(x3,z3,C);        // C = x_3 + z_3
         
-        modsub(x3,z3,D);        // D = x_3 - z_3
+        modsubf(x3,z3,D);        // D = x_3 - z_3
         modmul(D,A,D);          // DA = D * A
         modmul(C,B,C);          // CB = C * B
  
-        modadd(D,C,x3); modsqr(x3,x3);    // x_3 = (DA + CB)^2
+        modaddf(D,C,x3); modsqr(x3,x3);    // x_3 = (DA + CB)^2
         
-        modsub(D,C,z3); modsqr(z3,z3); modmul(z3,x1,z3);  // z_3 = x_1 * (DA - CB)^2
+        modsubf(D,C,z3); modsqr(z3,z3); modmul(z3,x1,z3);  // z_3 = x_1 * (DA - CB)^2
         modmul(AA,BB,x2);       // x_2 = AA * BB
         modmli(E,a24,z2);        
-        modadd(z2,AA,z2); modmul(z2,E,z2);   // z_2 = E * (AA + a24 * E)
+        modaddf(z2,AA,z2); modmul(z2,E,z2);   // z_2 = E * (AA + a24 * E)
     }
     modcsw(swap,x2,x3);
     modcsw(swap,z2,z3);

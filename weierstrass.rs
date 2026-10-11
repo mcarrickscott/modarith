@@ -69,21 +69,21 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
     modcpy(&P.y,&mut t1); modmul(&Q.y,&mut t1);
     modcpy(&P.z,&mut t2); modmul(&Q.z,&mut t2);
     
-    modcpy(&P.x,&mut t3); modadd(&P.y,&mut t3);
-    modcpy(&Q.x,&mut t4); modadd(&Q.y,&mut t4);
+    modcpy(&P.x,&mut t3); modaddf(&P.y,&mut t3);
+    modcpy(&Q.x,&mut t4); modaddf(&Q.y,&mut t4);
     modmul(&t4,&mut t3);
 
     modcpy(&t0,&mut t4); modadd(&t1,&mut t4);
-    modsub(&mut t4,&mut t3);
-    modcpy(&P.y,&mut t4); modadd(&P.z,&mut t4);
+    modsubf(&mut t4,&mut t3);
+    modcpy(&P.y,&mut t4); modaddf(&P.z,&mut t4);
 
-    modcpy(&Q.y,&mut b); modadd(&Q.z,&mut b);
+    modcpy(&Q.y,&mut b); modaddf(&Q.z,&mut b);
     modmul(&b,&mut t4);
     modcpy(&t1,&mut b); modadd(&t2,&mut b);
     
-    modsub(&b, &mut t4);
-    modadd(&P.z,&mut P.x);
-    modcpy(&Q.z,&mut P.y); modadd(&Q.x,&mut P.y);
+    modsubf(&b, &mut t4);
+    modaddf(&P.z,&mut P.x);
+    modcpy(&Q.z,&mut P.y); modaddf(&Q.x,&mut P.y);
 
     modmul(&P.y,&mut P.x);
     modcpy(&t0,&mut P.y); modadd(&t2,&mut P.y);
@@ -91,7 +91,7 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
 
     if CONSTANT_A==0 {
         modcpy(&t0,&mut P.x); modadd(&t0,&mut P.x);
-        modadd(&P.x,&mut t0);
+        modaddf(&P.x,&mut t0);
         if CONSTANT_B>0 {
             modmli(3*CONSTANT_B as usize,&mut t2);
             modmli(3*CONSTANT_B as usize,&mut P.y);
@@ -105,8 +105,8 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
             modmul(&b, &mut t2);
             modmul(&b,&mut P.y); 
         }
-        modcpy(&t1,&mut P.z); modadd(&t2,&mut P.z);
-        modsub(&t2,&mut t1);
+        modcpy(&t1,&mut P.z); modaddf(&t2,&mut P.z);
+        modsubf(&t2,&mut t1);
 
         modcpy(&P.y,&mut P.x); modmul(&t4,&mut P.x);
         modcpy(&t3,&mut t2); modmul(&t1,&mut t2);
@@ -137,8 +137,8 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
         modcpy(&P.x,&mut P.z); modadd(&P.x,&mut P.z);
 
         modadd(&P.z,&mut P.x);
-        modcpy(&t1,&mut P.z); modsub(&P.x,&mut P.z);
-        modadd(&t1,&mut P.x);
+        modcpy(&t1,&mut P.z); modsubf(&P.x,&mut P.z);
+        modaddf(&t1,&mut P.x);
 
         modcpy(&t2,&mut t1);  modadd(&t2,&mut t1);
         modadd(&t1,&mut t2);
@@ -147,11 +147,11 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
         modsub(&t0,&mut P.y);
         modcpy(&P.y,&mut t1); modadd(&P.y,&mut t1); 
 
-        modadd(&t1,&mut P.y);
+        modaddf(&t1,&mut P.y);
         modcpy(&t0,&mut t1); modadd(&t0,&mut t1);
         modadd(&t1,&mut t0);
 
-        modsub(&t2,&mut t0);
+        modsubf(&t2,&mut t0);
         modcpy(&t4,&mut t1); modmul(&P.y,&mut t1);
         modcpy(&t0,&mut t2); modmul(&P.y,&mut t2);
 

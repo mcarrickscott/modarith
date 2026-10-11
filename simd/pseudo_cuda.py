@@ -27,7 +27,6 @@
 karatsuba=False  # default setting
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
-generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
 fully_propagate=False # recommended set to True for Production code
 PSCR=True # Power Side Channel Resistant conditional moves and swaps
 
@@ -111,9 +110,7 @@ def remove_unused() :
 # Determine optimal radix
 def getbase(n) :
     limbs=int(n/WL)
-    limit=2*WL
-    if karatsuba :
-        limit=2*WL-1
+
     while (True) :
         limbs=limbs+1
         if limbs==1 :   # must be at least 2 limbs
@@ -259,40 +256,72 @@ def modfsb(n) :
 
 #modular addition
 def modadd(n,m) :
-    str="//Modular addition - reduce less than 2p\n"
+    str="//Modular addition - can be used in all cases - reduce less than 2p\n"
     str+="__device__ "
     if makestatic :
         str+="static "
 
     str+="void modadd{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        str+="\tspint carry;\n"
+
+    str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=a[{}]+b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+=subp(2)
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
+ 
+    str+=subp(2)
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
+    str+="\t(void)prop(n);\n"    
+    str+="}\n"
+    return str
+
+#fast modular addition
+def modaddf(n,m) :
+    str="//Fast modular addition - can be used if output is consumed ONLY by multiplication or squaring\n"
+    str+="__device__ "
+    if makestatic :
+        str+="static "
+
+    str+="void modaddf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+
+    for i in range(0,N) :
+        str+="\tn[{}]=a[{}]+b[{}];\n".format(i,i,i)
+ 
     str+="\t(void)prop(n);\n"    
     str+="}\n"
     return str
 
 #modular subtraction
 def modsub(n,m) :
-    str="//Modular subtraction - reduce less than 2p\n"
+    str="//Modular subtraction - can be used in all cases - reduce less than 2p\n"
     str+="__device__ "
     if makestatic :
         str+="static "
     str+="void modsub{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        str+="\tspint carry;\n"
+
+    str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
-    else :
-        str+=addp(mp)
+ 
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
+
+    str+="\t(void)prop(n);\n" 
+    str+="}\n"
+    return str
+
+#fast modular subtraction
+def modsubf(n,m) :
+    str="//Fast modular subtraction - can be used if output is ONLY consumed by multiplication or squaring\n"
+    str+="__device__ "
+    if makestatic :
+        str+="static "
+    str+="void modsubf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+
+    for i in range(0,N) :
+        str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
+ 
+    str+=addp(2)
+
     str+="\t(void)prop(n);\n" 
     str+="}\n"
     return str
@@ -304,15 +333,14 @@ def modneg(n,m) :
     if makestatic :
         str+="static "
     str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        str+="\tspint carry;\n"
+
+    str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=(spint)0-b[{}];\n".format(i,i)
-    if not algorithm :
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
-    else :
-        str+=addp(mp)
+
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
+
     str+="\t(void)prop(n);\n" 
     str+="}\n"
     return str
@@ -1078,6 +1106,7 @@ def modshr(n) :
 def modhaf(n) :
     N=getN(n)
     str="//divide by 2. Shift right 1 bit (or add p and shift right one bit)\n"
+    str+="__device__ "
     if makestatic :
         str+="static "
     str+="void modhaf{}(spint *n) {{\n".format(DECOR)
@@ -1091,6 +1120,7 @@ def modhaf(n) :
     str+="\tmodshr{}(1,n);\n".format(DECOR)
     str+="\tmodcmv{}(1-lsb,t,n);\n".format(DECOR)
     str+="}\n"
+    return str
 
 def mod2r() :
     str="//set a= 2^r\n"
@@ -1295,7 +1325,9 @@ def functions() :
     print(flat(n))
     print(modfsb(n))
     print(modadd(n,m))
+    print(modaddf(n,m))
     print(modsub(n,m))
+    print(modsubf(n,m))
     print(modneg(n,m))
     print(modmli(n,m))
     print(modmul(n,m))
@@ -1351,6 +1383,9 @@ prime=sys.argv[1]
 n=0
 base=0
 m=0
+limit=2*WL
+if karatsuba :
+    limit=2*WL-1
 
 # Note that number base MUST be less than wordlength WL (unsaturated).
 # The radix for an n-bit prime is 2^base where base is usually in the range 51-60 for a 64-bit processor, 26-30 for 
@@ -1365,8 +1400,6 @@ m=0
 
 # More named primes can be added here
 p=0
-algorithm=False
-mp=0
 
 if prime=="PM266" :
     p=2**266-3
@@ -1386,16 +1419,9 @@ if prime=="ED521" :
 
 if prime=="ED25519" :
     p=2**255-19
-    if not generic :
-        algorithm=True
-        mp=4            # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="X25519" :
     p=2**255-19
-    if not generic :
-        algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
-        mp=2            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm  RFC7748. 
-                        # Now no reduction required after modular additions/subtractions.
     
 if prime=="C2065" :
     p=2**206-5
@@ -1516,7 +1542,8 @@ if bad_overflow_mul :
 
 # faster reduction
 fred=False
-if bits(N+1)+base+bits(mm)<WL :
+if (N+1)*(b-1)*mm < 2**WL :
+#if bits(N+1)+base+bits(mm)<WL :
     fred=True
     print("Tighter reduction")
 

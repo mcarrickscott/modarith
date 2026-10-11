@@ -14,7 +14,7 @@
 //
 // python curve.py 32/64 ED448
 
-// make sure decoration and generic are both set to False in monty.py or pseudo.py
+// make sure decoration is set to False in monty.py or pseudo.py
 
 /*** Insert automatically generated code for modulus field.c here ***/
 
@@ -81,29 +81,29 @@ void ecnXXXadd(point *Q,point *P)
 #ifdef CONSTANT_B
 #if CONSTANT_B>0
     modmli(E,CONSTANT_B,E);
-    modsub(B,E,F);
-    modadd(B,E,G);
+    modsubf(B,E,F);
+    modaddf(B,E,G);
 #else
     modmli(E,-CONSTANT_B,E);
-    modadd(B,E,F);
-    modsub(B,E,G);
+    modaddf(B,E,F);
+    modsubf(B,E,G);
 #endif
 #else
     modmul(E,constant_b,E);
-    modsub(B,E,F);
-    modadd(B,E,G);
+    modsubf(B,E,F);
+    modaddf(B,E,G);
 #endif
-    modadd(P->x,P->y,B);
-    modadd(Q->x,Q->y,E);
+    modaddf(P->x,P->y,B);
+    modaddf(Q->x,Q->y,E);
     modmul(B,E,P->x);
     modsub(P->x,C,P->x);
-    modsub(P->x,D,P->x);
+    modsubf(P->x,D,P->x);
     modmul(P->x,F,P->x);
     modmul(P->x,A,P->x);
 #if CONSTANT_A==-1
-    modadd(D,C,P->y);
+    modaddf(D,C,P->y);
 #else
-    modsub(D,C,P->y);
+    modsubf(D,C,P->y);
 #endif
     modmul(P->y,A,P->y);
     modmul(P->y,G,P->y);
@@ -123,7 +123,7 @@ void ecnXXXsub(point *Q,point *P)
 void ecnXXXdbl(point *P)
 {
     spint B[Nlimbs],C[Nlimbs],D[Nlimbs],E[Nlimbs],F[Nlimbs],H[Nlimbs],J[Nlimbs];
-    modadd(P->x,P->y,B);
+    modaddf(P->x,P->y,B);
     modsqr(B,B);
     modsqr(P->x,C);
     modsqr(P->y,D);
@@ -135,11 +135,11 @@ void ecnXXXdbl(point *P)
     modcpy(C,E);
 #endif
     modadd(E,D,F);
-    modsub(F,H,J);
+    modsubf(F,H,J);
     modsub(B,C,P->x);
-    modsub(P->x,D,P->x);
+    modsubf(P->x,D,P->x);
     modmul(P->x,J,P->x);
-    modsub(E,D,P->y);
+    modsubf(E,D,P->y);
     modmul(P->y,F,P->y);
     modmul(F,J,P->z);
 }

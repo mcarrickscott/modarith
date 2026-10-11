@@ -169,27 +169,27 @@ fn rfc7748(bk: &[u8],bu: &[u8],bv: &mut [u8]) {
         modcsw(swap,&mut z2,&mut z3);
         swap=kt;
             
-        modcpy(&x2,&mut a); modadd(&z2,&mut a);   // A = x_2 + z_2
+        modcpy(&x2,&mut a); modaddf(&z2,&mut a);   // A = x_2 + z_2
         modcpy(&a,&mut aa); modsqr(&mut aa);      // AA = A^2
-        modcpy(&x2,&mut b); modsub(&z2,&mut b);   // B = x_2 - z_2
+        modcpy(&x2,&mut b); modsubf(&z2,&mut b);   // B = x_2 - z_2
         modcpy(&b,&mut bb); modsqr(&mut bb);      // BB = B^2
 
-        modcpy(&aa,&mut e); modsub(&bb,&mut e);   // E = AA - BB
-        modcpy(&x3,&mut c); modadd(&z3,&mut c);   // C = x_3 + z_3
+        modcpy(&aa,&mut e); modsubf(&bb,&mut e);   // E = AA - BB
+        modcpy(&x3,&mut c); modaddf(&z3,&mut c);   // C = x_3 + z_3
 
-        modcpy(&x3,&mut d); modsub(&z3,&mut d);   // D = x_3 - z_3
+        modcpy(&x3,&mut d); modsubf(&z3,&mut d);   // D = x_3 - z_3
         modmul(&a,&mut d);  // DA = D * A
         modmul(&b,&mut c);  // CB = C * B
  
-        modcpy(&d,&mut x3); modadd(&c,&mut x3); modsqr(&mut x3); // x_3 = (DA + CB)^2
+        modcpy(&d,&mut x3); modaddf(&c,&mut x3); modsqr(&mut x3); // x_3 = (DA + CB)^2
 
-        modcpy(&d,&mut z3); modsub(&c,&mut z3); modsqr(&mut z3); modmul(&x1,&mut z3); // z_3 = x_1 * (DA - CB)^2
+        modcpy(&d,&mut z3); modsubf(&c,&mut z3); modsqr(&mut z3); modmul(&x1,&mut z3); // z_3 = x_1 * (DA - CB)^2
         modcpy(&aa,&mut x2); modmul(&bb,&mut x2); // x_2 = AA * BB
        
         modcpy(&e,&mut z2);
         modmli(A24,&mut z2); 
               
-        modadd(&aa,&mut z2); modmul(&e,&mut z2);   // z_2 = E * (AA + a24 * E)
+        modaddf(&aa,&mut z2); modmul(&e,&mut z2);   // z_2 = E * (AA + a24 * E)
     }
     modcsw(swap,&mut x2,&mut x3);
     modcsw(swap,&mut z2,&mut z3);

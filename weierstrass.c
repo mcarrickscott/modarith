@@ -11,7 +11,7 @@
 // python curve.py 32/64 NIST256
 //
 
-// make sure decoration and generic are both set to False in monty.py or pseudo.py
+// make sure decoration is set to False in monty.py or pseudo.py
 
 /*** Insert automatically generated code for modulus field.c here ***/
 
@@ -74,21 +74,21 @@ void ecnXXXadd(point *Q,point *P)
     modmul(P->y,Q->y,T1);   // 2
     modmul(P->z,Q->z,T2);   // 3
 
-    modadd(P->x,P->y,T3);   // 4
-    modadd(Q->x,Q->y,T4);   // 5
+    modaddf(P->x,P->y,T3);   // 4
+    modaddf(Q->x,Q->y,T4);   // 5
     modmul(T3,T4,T3);       // 6
 
     modadd(T0,T1,T4);       // 7
-    modsub(T3,T4,T3);       // 8
-    modadd(P->y,P->z,T4);   // 9
+    modsubf(T3,T4,T3);       // 8
+    modaddf(P->y,P->z,T4);   // 9
 
-    modadd(Q->y,Q->z,B); // 10
+    modaddf(Q->y,Q->z,B); // 10
     modmul(T4,B,T4);     // 11
     modadd(T1,T2,B);        // 12  use B
 
-    modsub(T4,B,T4);        // 13
-    modadd(P->x,P->z,P->x); // 14
-    modadd(Q->z,Q->x,P->y); // 15
+    modsubf(T4,B,T4);        // 13
+    modaddf(P->x,P->z,P->x); // 14
+    modaddf(Q->z,Q->x,P->y); // 15
 
     modmul(P->x,P->y,P->x); // 16
     modadd(T0,T2,P->y);     // 17
@@ -96,7 +96,7 @@ void ecnXXXadd(point *Q,point *P)
 
 #if CONSTANT_A==0
     modadd(T0,T0,P->x);   // 19
-    modadd(T0,P->x,T0);   // 20
+    modaddf(T0,P->x,T0);   // 20
 
 #ifdef CONSTANT_B
 #if CONSTANT_B>0
@@ -111,8 +111,8 @@ void ecnXXXadd(point *Q,point *P)
     modmul(T2,B,T2);      // 21
     modmul(P->y,B,P->y);  // 24
 #endif
-    modadd(T1,T2,P->z);   // 22
-    modsub(T1,T2,T1);     // 23
+    modaddf(T1,T2,P->z);   // 22
+    modsubf(T1,T2,T1);     // 23
 
     modmul(P->y,T4,P->x); // 25
     modmul(T3,T1,T2);     // 26
@@ -144,8 +144,8 @@ void ecnXXXadd(point *Q,point *P)
     modadd(P->x,P->x,P->z); // 21
 
     modadd(P->x,P->z,P->x); // 22
-    modsub(T1,P->x,P->z);   // 23
-    modadd(P->x,T1,P->x);   // 24
+    modsubf(T1,P->x,P->z);   // 23
+    modaddf(P->x,T1,P->x);   // 24
 
     modadd(T2,T2,T1);       // 26
     modadd(T2,T1,T2);       // 27
@@ -154,11 +154,11 @@ void ecnXXXadd(point *Q,point *P)
     modsub(P->y,T0,P->y);   // 29
     modadd(P->y,P->y,T1);   // 30
 
-    modadd(P->y,T1,P->y);   // 31
+    modaddf(P->y,T1,P->y);   // 31
     modadd(T0,T0,T1);       // 32
     modadd(T0,T1,T0);       // 33
 
-    modsub(T0,T2,T0);       // 34
+    modsubf(T0,T2,T0);       // 34
     modmul(T4,P->y,T1);     // 35
     modmul(T0,P->y,T2);     // 36
 
@@ -183,7 +183,7 @@ void ecnXXXsub(point *Q,point *P)
 }
 
 // double P
-// complete formuale from https://eprint.iacr.org/2015/1060
+// complete formulae from https://eprint.iacr.org/2015/1060
 void ecnXXXdbl(point *P)
 {
     spint B[Nlimbs],T0[Nlimbs],T1[Nlimbs],T2[Nlimbs],T3[Nlimbs],T4[Nlimbs];
@@ -192,26 +192,26 @@ void ecnXXXdbl(point *P)
     modsqr(P->y,T0); // 1
     modadd(T0,T0,T3);  // 2 T3=Z3
     modadd(T3,T3,T3);  // 3
-    modadd(T3,T3,T3);  // 4
+    modaddf(T3,T3,T3);  // 4
     modmul(P->x,P->y,T4); // 16 T4=X*Y
     modmul(P->y,P->z,T1); // 5
     modsqr(P->z,T2);      // 6
-#ifdef CONSTANT_B
-#if CONSTANT_B>0
+ #ifdef CONSTANT_B
+  #if CONSTANT_B>0
     modmli(T2,3*CONSTANT_B,T2);      // 7
-#else
+  #else
     modmli(T2,-3*CONSTANT_B,T2); modneg(T2,T2);
-#endif
-#else
+  #endif
+ #else
     modcpy(constant_b3,B);
     modmul(T2,B,T2);      // 7
-#endif
+ #endif
     modmul(T2,T3,P->x);   // 8
-    modadd(T0,T2,P->y);   // 9
+    modaddf(T0,T2,P->y);   // 9
     modmul(T3,T1,P->z); // 10
     modadd(T2,T2,T1);     // 11
     modadd(T2,T1,T2);     // 12
-    modsub(T0,T2,T0);     // 13
+    modsubf(T0,T2,T0);     // 13
     modmul(P->y,T0,P->y); // 14
     modadd(P->y,P->x,P->y); // 15
     modmul(T0,T4,P->x);    // 17
@@ -223,7 +223,7 @@ void ecnXXXdbl(point *P)
 
     modmul(P->x,P->y,T3); // 4
     modmul(P->y,P->z,T4); // 28
-    modadd(T3,T3,T3);     // 5
+    modaddf(T3,T3,T3);     // 5
     modmul(P->z,P->x,P->z); // 6
 
     modadd(P->z,P->z,P->z); // 7
@@ -247,9 +247,9 @@ void ecnXXXdbl(point *P)
 
     modadd(P->y,P->y,P->x); // 10
     modadd(P->y,P->x,P->y); // 11
-    modsub(T1,P->y,P->x); // 12
+    modsubf(T1,P->y,P->x); // 12
 
-    modadd(P->y,T1,P->y); // 13
+    modaddf(P->y,T1,P->y); // 13
     modmul(P->y,P->x,P->y); // 14
     modmul(P->x,T3,P->x); // 15
 
@@ -260,15 +260,15 @@ void ecnXXXdbl(point *P)
     modsub(P->z,T0,P->z); // 20
     modadd(P->z,P->z,T3); // 21
 
-    modadd(P->z,T3,P->z); // 22
+    modaddf(P->z,T3,P->z); // 22
     modadd(T0,T0,T3); // 23
     modadd(T0,T3,T0); // 24
 
-    modsub(T0,T2,T0); // 25
+    modsubf(T0,T2,T0); // 25
     modmul(T0,P->z,T0); // 26
     modadd(P->y,T0,P->y); // 27
 
-    modadd(T4,T4,T4); // 29
+    modaddf(T4,T4,T4); // 29
     modmul(P->z,T4,P->z); // 30
 
     modsub(P->x,P->z,P->x); // 31

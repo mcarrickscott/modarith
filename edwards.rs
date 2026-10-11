@@ -76,30 +76,30 @@ pub fn ecnadd(Q: &ECP,P: &mut ECP) {
     modcpy(&c,&mut e); modmul(&d,&mut e);
     if CONSTANT_B>0 {
         modmli(CONSTANT_B as usize,&mut e);
-        modcpy(&b, &mut f); modsub(&e,&mut f);
-        modcpy(&b, &mut g); modadd(&e,&mut g);
+        modcpy(&b, &mut f); modsubf(&e,&mut f);
+        modcpy(&b, &mut g); modaddf(&e,&mut g);
     }
     if CONSTANT_B<0 {
         modmli(-CONSTANT_B as usize,&mut e);
-        modcpy(&b, &mut f); modadd(&e,&mut f);
-        modcpy(&b, &mut g); modsub(&e,&mut g);
+        modcpy(&b, &mut f); modaddf(&e,&mut f);
+        modcpy(&b, &mut g); modsubf(&e,&mut g);
     }
     if CONSTANT_B==0 {
         modmul(&constant_b,&mut e);
-        modcpy(&b, &mut f); modsub(&e,&mut f);
-        modcpy(&b, &mut g); modadd(&e,&mut g);
+        modcpy(&b, &mut f); modsubf(&e,&mut f);
+        modcpy(&b, &mut g); modaddf(&e,&mut g);
     }
-    modcpy(&P.x,&mut b); modadd(&P.y,&mut b);
-    modcpy(&Q.x,&mut e); modadd(&Q.y,&mut e);
+    modcpy(&P.x,&mut b); modaddf(&P.y,&mut b);
+    modcpy(&Q.x,&mut e); modaddf(&Q.y,&mut e);
     modcpy(&b,&mut P.x); modmul(&e,&mut P.x);
     modsub(&c,&mut P.x);
-    modsub(&d,&mut P.x);
+    modsubf(&d,&mut P.x);
     modmul(&f,&mut P.x);
     modmul(&a,&mut P.x);
     if CONSTANT_A == -1 {
-        modcpy(&d,&mut P.y); modadd(&c,&mut P.y);
+        modcpy(&d,&mut P.y); modaddf(&c,&mut P.y);
     } else {
-        modcpy(&d,&mut P.y); modsub(&c,&mut P.y);
+        modcpy(&d,&mut P.y); modsubf(&c,&mut P.y);
     }
     modmul(&a,&mut P.y);
     modmul(&g,&mut P.y);
@@ -123,7 +123,7 @@ pub fn ecndbl(P: &mut ECP) {
     let mut h:[SPINT;NLIMBS]=[0;NLIMBS];  
     let mut j:[SPINT;NLIMBS]=[0;NLIMBS];    
 
-    modcpy(&P.x,&mut b); modadd(&P.y,&mut b);
+    modcpy(&P.x,&mut b); modaddf(&P.y,&mut b);
     modsqr(&mut b);
     modcpy(&P.x,&mut c); modsqr(&mut c);
     modcpy(&P.y,&mut d); modsqr(&mut d);
@@ -135,11 +135,11 @@ pub fn ecndbl(P: &mut ECP) {
         modneg(&mut e);
     } 
     modcpy(&e,&mut f); modadd(&d,&mut f);
-    modcpy(&f,&mut j); modsub(&h,&mut j);
+    modcpy(&f,&mut j); modsubf(&h,&mut j);
     modcpy(&b,&mut P.x); modsub(&c,&mut P.x);
-    modsub(&d,&mut P.x);
+    modsubf(&d,&mut P.x);
     modmul(&j,&mut P.x);
-    modcpy(&e,&mut P.y); modsub(&d,&mut P.y);
+    modcpy(&e,&mut P.y); modsubf(&d,&mut P.y);
     modmul(&f,&mut P.y);
     modcpy(&f,&mut P.z); modmul(&j,&mut P.z);
 }

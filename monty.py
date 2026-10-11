@@ -53,7 +53,6 @@ karatsuba=False # default setting
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
-generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
 allow_asr=True # Allow Arithmetic Shift Right. Maybe set to False to silence MISRA warnings
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
@@ -150,25 +149,25 @@ def ispowerof2(n) :
 # Determine default optimal radix
 def getbase(n) :
     limbs=int(n/WL)
-    limit=2*WL
-    if karatsuba :
-        limit=2*WL-1
+    min_excess=4  # for fast modadd/modsub inputs to modmul could be 4px4p < pR, so 16p<R, so 4 extra bits needed
     while (True) :
         limbs=limbs+1
         if limbs==1 :   # must be at least 2 limbs
             limbs=2
         base=int(WL/2)
-        while limbs*base<n or base-(n%base)<2 :  # insist on excess of 2 or more
+        while limbs*base<n or base-(n%base)<min_excess :  # insist on excess of at least 4 bits
             base=base+1
         if n%base==0 :
-            _,E=process_prime(p,base,limbs)      # if excess=0, and if no extra limb required, bump base
+            _,E,_=process_prime(p,base,limbs)      # if excess=0, and if no extra limb required, bump base
             if not E :
                 base=base+1
-        while limbs*base<n or base-(n%base)<2 :  # insist on excess of 2 or more
+        while limbs*base<n or base-(n%base)<min_excess :  # insist on excess of at least 4 bits
             base=base+1
         if base>WL-3 :    # OK, base too large (moddadd/sub needs 3 bits), another limb required
             continue
-        if limbs*(2**base-1)**2 < 2**limit :   # worst case scenario for non-shaped primes
+        _,_,npp=process_prime(p,base,limbs) # npp=max number of extra partial products in longest diagonal
+        npp+=limbs+1            
+        if npp*(2**base-1)**2 < 2**limit :   # Sufficient condition to avoid overflow in multiplication
             break
     return base
 
@@ -295,7 +294,15 @@ def process_prime(p,base,N) :
     if carry==1 :
         E=True
         ppw.append(carry)
-    return ppw,E
+
+# count number of extra large partial products required
+    npp=0
+    for i in range(0,len(ppw)) :
+        if ppw[i]==1 or ppw[i]==-1 or ppw[i]==0 :
+            continue
+        npp+=1
+
+    return ppw,E,npp
 
 #conditional add of x*p
 def caddp(x) :
@@ -415,7 +422,7 @@ def modfsb(n) :
 
 #modular addition
 def modadd(n) :
-    str="//Modular addition - reduce less than 2p\n"
+    str="//Modular addition - can be used in all cases - reduce less than 2p\n"
     if makestatic :
         str+="static "
     if inline and makestatic :
@@ -423,42 +430,77 @@ def modadd(n) :
     else :
         str+="void modadd{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
     
-    if not algorithm :
-        if E: 
-            str+="\tspint q=((spint)1<<{}u);\n".format(base)
-        str+="\tspint carry;\n"
+    if E: 
+        str+="\tspint q=((spint)1<<{}u);\n".format(base)
+    str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=a[{}]+b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+=subp(2)
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
+
+    str+=subp(2)
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
     str+="\t(void)prop(n);\n"  
+    str+="}\n"    
+    return str
+
+#fast modular addition
+def modaddf(n) :
+    str="//Fast modular addition - can be used if output is consumed ONLY by multiplication or squaring\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic :
+        str+="void inline modaddf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+    else :
+        str+="void modaddf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+    
+    for i in range(0,N) :
+        str+="\tn[{}]=a[{}]+b[{}];\n".format(i,i,i)
+
+    if not veryfastadd :
+        str+="\t(void)prop(n);\n"  
     str+="}\n"    
     return str
 
 #modular subtraction
 def modsub(n) :
-    str="//Modular subtraction - reduce less than 2p\n"
+    str="//Modular subtraction - can be used in all cases - reduce less than 2p\n"
     if makestatic :
         str+="static "
     if inline and makestatic:
         str+="void inline modsub{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
     else :
         str+="void modsub{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        if E: 
-            str+="\tspint q=((spint)1<<{}u);\n".format(base)
-        str+="\tspint carry;\n"
-    else :
+    if E: 
         str+="\tspint q=((spint)1<<{}u);\n".format(base)
+    str+="\tspint carry;\n"
+
     for i in range(0,N) :
         str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
+
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
+
+    str+="\t(void)prop(n);\n" 
+    str+="}\n"
+    return str
+
+#fast modular subtraction
+def modsubf(n) :
+    str="//Fast modular subtraction - can be used if output is ONLY consumed by multiplication or squaring\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic:
+        str+="void inline modsubf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
     else :
-        str+=addp(mp)
+        str+="void modsubf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+    if E: 
+        str+="\tspint q=((spint)1<<{}u);\n".format(base)
+
+    for i in range(0,N) :
+        str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
+
+    str+=addp(2)
+
     str+="\t(void)prop(n);\n" 
     str+="}\n"
     return str
@@ -472,19 +514,17 @@ def modneg(n) :
         str+="void inline modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
     else :
         str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        if E: 
-            str+="\tspint q=((spint)1<<{}u);\n".format(base)
-        str+="\tspint carry;\n"
-    else :
+
+    if E: 
         str+="\tspint q=((spint)1<<{}u);\n".format(base)
+    str+="\tspint carry;\n"
+
     for i in range(0,N) :
         str+="\tn[{}]=(spint)0-b[{}];\n".format(i,i)
-    if not algorithm :
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
-    else :
-        str+=addp(mp)
+
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
+ 
     str+="\t(void)prop(n);\n" 
     str+="}\n"
     return str
@@ -492,17 +532,14 @@ def modneg(n) :
 # add column of partial products from multiplication on way up
 def getZMU(str,i) :
     first=True
-    global maxnum
 
     if karatsuba :
         if i==0 :
             str+="\tu=d0; t = u;"
-            maxnum+=maxdigit*maxdigit
         else :
             str+="\tu+=d{}; t+=u;".format(i)
             for m in range(i,int(i/2),-1) :
                 str+=" t+=(dpint)((sdpint)(sspint)(a[{}]-a[{}])*(sdpint)(sspint)(b[{}]-b[{}])); ".format(m,i - m, i - m, m)
-                maxnum+=maxdigit*maxdigit
         return str
 
     k=0
@@ -513,7 +550,6 @@ def getZMU(str,i) :
         else :
             str+=" t+=(dpint)a[{}]*b[{}];".format(k,i-k)
         k+=1
-        maxnum+=maxdigit*maxdigit
     return str
 
 # add column of partial products from multiplication on way down
@@ -595,22 +631,18 @@ def getZSD(str,i) :
 # try to accumulate contributions in single-precision if possible
 
 def mul_process(i,j,str,gone_neg,mask_set) :
-    global maxnum
     n=ppw[i]   # do nothing if n=0
     if abs(n)>1 :
         e=ispowerof2(n)
         if e > 0  :
             str+=" t+=(dpint)(dpint)((dpint)v{}<<{}u); ".format(j,e)
-            maxnum+=maxdigit*2**e
         else :
             str+=" t+=(dpint)v{}*(dpint)p{}; ".format(j,i)
-            maxnum+=maxdigit*ppw[i]
     if n == 1 :
         if mask_set :
             str+=" s+=v{}; ".format(j)
         else :
             str+=" t+=(dpint)v{}; ".format(j)
-            maxnum+=maxdigit
     if n == -1 :
         if mask_set :
             if not gone_neg :
@@ -620,29 +652,24 @@ def mul_process(i,j,str,gone_neg,mask_set) :
         else: 
             if not gone_neg :
                 str+=" t+=(dpint)(spint)(q-v{});".format(j)
-                maxnum+=maxdigit
             else :
                 str+=" t-=(dpint)v{}; ".format(j)
         gone_neg=True
     return str,gone_neg
 
 def sqr_process(i,j,str,gone_neg,mask_set) :
-    global maxnum
     n=ppw[i]   # do nothing if n=0
     if abs(n)>1 :
         e=ispowerof2(n)
         if e > 0  :
             str+=" t+=(dpint)v{}<<{}u; ".format(j,e)
-            maxnum+=maxdigit*2**e
         else :
             str+=" t+=(dpint)v{}*p{}; ".format(j,i)
-            maxnum+=maxdigit*ppw[i]
     if n == 1 :
         if mask_set :
             str+=" s+=v{}; ".format(j)
         else :
             str+=" t+=(dpint)v{}; ".format(j)
-            maxnum+=maxdigit
     if n == -1 :
         if mask_set :
             if not gone_neg :
@@ -652,7 +679,6 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
         else: 
             if not gone_neg :
                 str+=" t+=(dpint)(spint)(q-v{});".format(j)
-                maxnum+=maxdigit
             else :
                 str+=" t-=(dpint)v{}; ".format(j)
         gone_neg=True
@@ -661,7 +687,6 @@ def sqr_process(i,j,str,gone_neg,mask_set) :
 # modular multiplication, modulo p. Exploits 0 digits in p.
 # Note that allowing inlining gives significant speed-up
 def modmul(n) :
-    global maxnum
     mask=(1<<base)-1
     s_is_declared=False
     str="// Modular multiplication, c=a*b mod 2p\n"
@@ -691,7 +716,6 @@ def modmul(n) :
     str+="\tspint mask=(spint)(q-(spint)1);\n"
     if fullmonty :
         str+="\tspint ndash=0x{:x}u;\n".format(ndash)
-    maxnum=0
     str=getZMU(str,0)
     gone_neg=False 
     
@@ -700,17 +724,14 @@ def modmul(n) :
         if PM :
             gone_neg=True
             str+=" t+=(dpint)(spint)((spint){}*(q-v0)); ".format(M)
-            maxnum+=M*maxdigit
         else :
             if ppw[0]==1 :
                 str+=" t+=(dpint)v0;"
             else :
                 str+=" t+=(dpint)v0 * (dpint)p0;"
-            maxnum+=ppw[0]*maxdigit
     else :
         str+=" spint v0=((spint)t & mask);"
     str+=" t>>={};\n".format(base)
-    maxnum=2**(2*WL-base)
     str=getZMU(str,1)
     mask_set=False
 
@@ -718,7 +739,6 @@ def modmul(n) :
         if gone_neg :
             if PM :
                 str+=" t+=(dpint)(spint)((spint){}*mask);".format(M)
-                maxnum+=M*maxdigit
             else :
                 if not s_is_declared :
                     str+=" spint s=(spint)mask;"
@@ -734,7 +754,6 @@ def modmul(n) :
             k+=1
         if mask_set :
             str+=" t+=(dpint)s;"
-            maxnum+=maxdigit
             mask_set=False
 
         if fullmonty :
@@ -746,19 +765,10 @@ def modmul(n) :
                     str+=" t+=(dpint)v{};".format(i)
                 else :
                     str+=" t+=(dpint)v{} * (dpint)p0;".format(i)
-                maxnum+=ppw[0]*maxdigit
         else :
             str+=" spint v{}=((spint)t & mask); ".format(i)
-        if i==N-1 :
-            if karatsuba :
-                print("// Run using Comba in modmul for tighter overflow check ")
-            else :
-                print("// Overflow limit   =",2**(2*WL))
-                print("// maximum possible =",maxnum)
-                if maxnum >= 2**(2*WL) :
-                    print("//Warning: Overflow possibility detected - change radix ")
+        
         str+=" t>>={};\n".format(base)
-        maxnum=2**(2*WL-base)
         if i<N-1 :
             str= getZMU(str,i+1)
      
@@ -1887,7 +1897,9 @@ def functions() :
     print(flat(n))
     print(modfsb(n))
     print(modadd(n))
+    print(modaddf(n))
     print(modsub(n))
+    print(modsubf(n))
     print(modneg(n))
     print(modmul(n))
     print(modsqr(n))
@@ -1946,9 +1958,6 @@ prime=sys.argv[2]
 p=0
 base=0
 
-algorithm=False
-mp=0
-
 # Note that number base MUST be less than wordlength WL (unsaturated).
 # The radix for an n-bit prime is 2^base where base is usually in the range 51-60 for a 64-bit processor, 26-30 for 
 # 32-bit and 12-13 for 16-bit.
@@ -1957,6 +1966,10 @@ mp=0
 # at the same time radix should be high enough to minimize L. An underused top digit allows for lazy reduction.
 
 # More named primes can be added here
+
+limit=2*WL
+if karatsuba :
+    limit=2*WL-1
 
 ### Start of user editable area
 
@@ -1980,16 +1993,10 @@ if prime=="X25519" :
 
 if prime=="ED448" :
     p=2**448-2**224-1
-    if not generic :
-        algorithm=True
-        mp=4            # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
+          # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="X448" :
     p=2**448-2**224-1
-    if not generic :
-        algorithm=True  # if algorithm is known, fix multiple of prime (for modular subtractions) as described in https://eprint.iacr.org/2017/437
-        mp=2            # Make sure there is sufficient excess - otherwise change default base. Here assuming Montgomery ladder algorithm RFC7748. 
-                        # Now no reduction required after modular additions/subtractions.
 
 if prime=="NIST521" :
     p=2**521-1
@@ -2090,19 +2097,19 @@ if prime=="MFP1973" :
     if WL==64:
         base=52
 
+if prime=="CSIDH512" :
+    p=5326738796327623094747867617954605554069371494832722337612446642054009560026576537626892113026381253624626941643949444792662881241621373288942880288065659
+
 # SQISIGN primes
 
-if prime=="ED248" :
-    p=5*2**248-1
-
-if prime=="ED376" :
-    p=65*2**376-1
+if prime=="ED324" :
+    p=3*2**324-1
 
 if prime=="ED500" :
     p=27*2**500-1
 
-if prime=="CSIDH512" :
-    p=5326738796327623094747867617954605554069371494832722337612446642054009560026576537626892113026381253624626941643949444792662881241621373288942880288065659
+if prime=="ED664" :
+    p=17*2**664-1
 
 
 # MIKE primes
@@ -2162,7 +2169,6 @@ trin=trinomial(p,base)
 if trin>0 :
     print("Prime is a lucky trinomial")
 
-
 b=2**base
 N=getN(n)  # Number of digits in modulus (to given radix)
 xcess=N*base-n  # excess bits in representation - should be 2 or greater, or 0 in which case extra "virtual" limb will be added
@@ -2220,8 +2226,16 @@ if karatsuba :
 else : 
     print("Using standard Comba for modmul")
 
-# process prime, check if "virtual" extra limb required
-ppw,E=process_prime(p,base,N)
+# process prime, check if "virtual" extra limb required, return max number of partial products accumulated in multiplication
+ppw,E,npp=process_prime(p,base,N)
+
+veryfastadd=False
+
+npp+=4*N+1  # can we afford some more extreme lazy reduction? 2x2=4, plus one for carry-in
+
+if npp*(2**base-1)**2 < 2**limit :
+    veryfastadd=True
+    print("Very fast modular addition possible")
 
 # get M for pseudo-Mersenne 2^n-M
 M=0
@@ -2268,10 +2282,6 @@ if ndash==1 :
 c=(R*R)%p              # Montgomery constant
 cw=makebig(c,base,N)
 
-#pm1=makebig(p-1,base,N)
-
-maxdigit=2**base-1
-maxnum=0
 
 # generate fused WL-bit modular multiplication and squaring code for shaped prime
 # where the unsaturated radix is 2^base and base<WL
@@ -2304,6 +2314,8 @@ lib = ctypes.CDLL('./test.so')
 if WL==16 :
     lib.modadd.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
     lib.modsub.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modaddf.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
+    lib.modsubf.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
     lib.modmul.argtypes = [POINTER(c_uint16),POINTER(c_uint16),POINTER(c_uint16)]
     lib.modsqr.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
     lib.modpro.argtypes = [POINTER(c_uint16),POINTER(c_uint16)]
@@ -2318,6 +2330,8 @@ if WL==16 :
 if WL==32 :
     lib.modadd.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
     lib.modsub.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
+    lib.modaddf.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
+    lib.modsubf.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
     lib.modmul.argtypes = [POINTER(c_uint32),POINTER(c_uint32),POINTER(c_uint32)]
     lib.modsqr.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
     lib.modpro.argtypes = [POINTER(c_uint32),POINTER(c_uint32)]
@@ -2332,6 +2346,8 @@ if WL==32 :
 if WL==64 :
     lib.modadd.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
     lib.modsub.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
+    lib.modaddf.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
+    lib.modsubf.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
     lib.modmul.argtypes = [POINTER(c_uint64),POINTER(c_uint64),POINTER(c_uint64)]
     lib.modsqr.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
     lib.modpro.argtypes = [POINTER(c_uint64),POINTER(c_uint64)]
@@ -2377,8 +2393,8 @@ for i in range(0,1000) :
         arr_z = (c_uint16 * N)(*za)
         lib.nres(arr_x,arr_x)
         lib.nres(arr_y,arr_y)
-        lib.modadd(arr_x,arr_y,arr_t)
-        lib.modsub(arr_x,arr_y,arr_z)
+        lib.modaddf(arr_x,arr_y,arr_t)
+        lib.modsubf(arr_x,arr_y,arr_z)
         lib.modmul(arr_t,arr_z,arr_x)
         lib.modsqr(arr_x,arr_z)
         lib.modinv(arr_z,None,arr_z)

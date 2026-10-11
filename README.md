@@ -59,35 +59,40 @@ The Rust generated code uses wrapping arithmetic, so will panic due to integer o
 
 Assume the modulus is $p$. The provided functions are
 
-*nres()*   -- Convert a big number to internal format  \
-*redc()*   -- Convert back from internal format, result $\lt p$  \
-*modfsb()* -- Perform final subtraction to reduce from $\lt 2p$ to $\lt p$  \
-*modadd()* -- Modular addition, result $\lt 2p$  \
-*modsub()* -- Modular subtraction, result $\lt 2p$  \
-*modneg()* -- Modular negation, result $\lt 2p$  \
-*modmul()* -- Modular multiplication, result $\lt 2p$  \
-*modsqr()* -- Modular squaring, result $\lt 2p$  \
-*modmli()* -- Modular multiplication by a small integer, result $\lt 2p$ \
-*modcpy()* -- Copy a big number \
-*modpro()* -- Calculate progenitor, for subsequent use for modular inverses and square roots  \
-*modinv()* -- Modular inversion  \
+*nres()*   --  Convert a big number to internal format  \
+*redc()*   --  Convert back from internal format, result $\lt p$  \
+*modfsb()* --  Perform final subtraction to reduce from $\lt 2p$ to $\lt p$  \
+*modadd()* --  Modular addition, result $\lt 2p$  \
+*modaddf()* -- Fast Modular addition, result $\lt 4p$  \
+*modsub()* --  Modular subtraction, result $\lt 2p$  \
+*modsubf()* -- Fast Modular subtraction, result $\lt 4p$  \
+*modneg()* --  Modular negation, result $\lt 2p$  \
+*modmul()* --  Modular multiplication, result $\lt 2p$  \
+*modsqr()* --  Modular squaring, result $\lt 2p$  \
+*modmli()* --  Modular multiplication by a small integer, result $\lt 2p$ \
+*modcpy()* --  Copy a big number \
+*modpro()* --  Calculate progenitor, for subsequent use for modular inverses and square roots  \
+*modinv()* --  Modular inversion  \
 *modsqrt()* -- Modular square root \
-*modis1()* -- Test for equal to unity  \
-*modis0()* -- Test for equal to zero  \
-*modone()* -- Set equal to unity  \
-*modzer()* -- Set equal to zero  \
-*modint()* -- Convert an integer to internal format  \
-*modqr()*  -- Test for quadratic residue  \
-*modcmv()* -- Conditional constant time move  \
-*modcsw()* -- Conditional constant time swap  \
-*modhaf()* -- Modular division by 2
-*modshl()* -- shift left by bits  \
-*modshr()* -- shift right by bits  \
-*mod2r()*  -- set to 2^r \
-*modexp()* -- export from internal format to byte array \
-*modimp()* -- import to internal format from byte array  \
+*modis1()* --  Test for equal to unity  \
+*modis0()* --  Test for equal to zero  \
+*modone()* --  Set equal to unity  \
+*modzer()* --  Set equal to zero  \
+*modint()* --  Convert an integer to internal format  \
+*modqr()*  --  Test for quadratic residue  \
+*modcmv()* --  Conditional constant time move  \
+*modcsw()* --  Conditional constant time swap  \
+*modhaf()* --  Modular division by 2
+*modshl()* --  shift left by bits  \
+*modshr()* --  shift right by bits  \
+*mod2r()*  --  set to 2^r \
+*modexp()* --  export from internal format to byte array \
+*modimp()* --  import to internal format from byte array  \
 *modsign()* -- Extract sign (parity bit) \
-*modcmp()* -- Test for equality \
+*modcmp()* --  Test for equality \
+
+The fast modular addition and subtraction functions use lazy reduction, and can be used safely if the programmer knows that their outputs ONLY feed into modular multiplications or squarings.
+Use with care! See the rfc7748 code for an example.
 
 ## Using the scripts
 
@@ -170,7 +175,8 @@ Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source 
 Copy *nist256.rs* and *weierstrass.rs* to the rust src subdirectory
 	
 	cd ecc
-	cargo run --release --bin nist256
+	cargo run --release --features NIST256 --bin testcurve
+	cargo run --release --features NIST256 --bin nist256
 
 Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source to the working directory after each test.
 
@@ -179,13 +185,14 @@ Make sure to copy fresh copies of *edwards.rs* and *weierstrass.rs* from source 
 Copy *ed448.rs* and *edwards.rs* to the rust src subdirectory
 	
 	cd ecc
-	cargo run --release --bin ed448
+	cargo run --release --features ED448 --bin testcurve
+	cargo run --release --features ED448 --bin ed448
 
 # A lazy reduction optimization
 
-For the *ed448.c* example, modular additions and subtractions can be speeded up by first editing *monty.py* and *monty_rust.py* and setting *generic=False*.
+Observe in *edwards.c* for example, that many modular additions and subtractions have been speeded up by using the faster modular addition and subtraction functions *modaddf* and *modsubf*.
 
-This activates a curve-specific optimization described in https://eprint.iacr.org/2017/437
+These faster functions can be used if their outputs are ONLY ever used as inputs to modular multiplications or squarings.
 
 # Create your own ECC scheme
 

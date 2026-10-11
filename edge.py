@@ -11,8 +11,6 @@
 # 2. uses scripts to generate C code for field arithmetic, automatically inserted into edge.c
 # 3. Compiles and runs program edge.c, which reads from edge.txt and compares outputs against testvectors
 #
-# NOTE : Ensure generic=True in pseudo.py or monty.py (otherwise some test failures may occur)
-#
 # See main program below for corner case generation. Add your own!
 #
 import random
@@ -281,17 +279,40 @@ if prime=="MFP7" :
 if prime=="MFP1973" :
     p=0x34e29e286b95d98c33a6a86587407437252c9e49355147ffffffffffffffffff
 
-if prime=="SQISIGN_1" :
-    p=5*2**248-1
-
-if prime=="SQISIGN_2" :
-    p=65*2**376-1
-
-if prime=="SQISIGN_3" :
-    p=27*2**500-1
-
 if prime=="CSIDH512" :
     p=5326738796327623094747867617954605554069371494832722337612446642054009560026576537626892113026381253624626941643949444792662881241621373288942880288065659
+
+
+# SQISIGN primes
+
+if prime=="ED324" :
+    p=3*2**324-1
+
+if prime=="ED500" :
+    p=27*2**500-1
+
+if prime=="ED664" :
+    p=17*2**664-1
+
+# MIKE primes
+
+if prime=="MIKE_FAST_1" :
+    p=633*2**308-1
+
+if prime=="MIKE_FAST_3" :
+    p=593*2**474-1
+
+if prime=="MIKE_FAST_5" :
+    p=317*2**628-1
+
+if prime=="MIKE_CONSERVATIVE_1" :
+    p=117*2**374-1
+
+if prime=="MIKE_CONSERVATIVE_3" :
+    p=77*2**566-1
+
+if prime=="MIKE_CONSERVATIVE_5" :
+    p=41*2**758-1
 
 if p==0 :
     if prime[0].isdigit() :

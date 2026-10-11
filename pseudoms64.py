@@ -24,7 +24,6 @@ use_rdtsc=False # use rdtsc directly, x86 only, for better comparison with other
 decoration=False # decorate function names to avoid name clashes
 formatted=True # pretty up the final output
 inline=True # consider encouraging inlining
-generic=True # set to False if algorithm is known in advance, in which case modadd and modsub can be faster - see https://eprint.iacr.org/2017/437. Set False for RFC7748 implementation.
 allow_asr=True # Allow Arithmetic Shift Right. Maybe set to False to silence MISRA warnings
 check=False # run cppcheck on the output
 scale=1 # set to 10 or 100 for faster timing loops. Default to 1
@@ -111,7 +110,6 @@ def remove_unused() :
 # Determine optimal radix
 def getbase(n) :
     limbs=int(n/WL)
-    limit=2*WL
     while (True) :
         limbs=limbs+1
         if limbs==1 :   # must be at least 2 limbs
@@ -121,7 +119,7 @@ def getbase(n) :
             base=base+1
         if base>WL-3 :  # OK, base too large (moddadd/sub needs 3 bits), another limb required
             continue
-        if limbs*(2**base-1)**2 < 2**limit :
+        if (limbs+1)*(2**base-1)**2 < 2**limit :
             break
     return base
 
@@ -434,43 +432,76 @@ def modfsb(n) :
 
 #modular addition
 def modadd(n,m) :
-    str="//Modular addition - reduce less than 2p\n"
+    str="//Modular addition - can be used in all cases - reduce less than 2p\n"
     if makestatic :
         str+="static "
     if inline and makestatic :
         str+="void inline modadd{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
     else :
         str+="void modadd{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        str+="\tspint carry;\n"
+    
+    str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=a[{}]+b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+=subp(2)
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
+    
+    str+=subp(2)
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
     str+="\t(void)prop(n);\n"    
+    str+="}\n"
+    return str
+
+#fast modular addition
+def modaddf(n,m) :
+    str="//Fast modular addition - can be used if output is consumed ONLY by multiplication or squaring\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic :
+        str+="void inline modaddf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+    else :
+        str+="void modaddf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+
+    for i in range(0,N) :
+        str+="\tn[{}]=a[{}]+b[{}];\n".format(i,i,i)
+    
+    str+="\t(void)prop(n);\n"    # maybe..
     str+="}\n"
     return str
 
 #modular subtraction
 def modsub(n,m) :
-    str="//Modular subtraction - reduce less than 2p\n"
+    str="//Modular subtraction - can be used in all cases - reduce less than 2p\n"
     if makestatic :
         str+="static "
     if inline and makestatic:
         str+="void inline modsub{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
     else :
         str+="void modsub{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        str+="\tspint carry;\n"
+    
+    str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
-    if not algorithm :
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
+    
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
+    str+="\t(void)prop(n);\n" 
+    str+="}\n"
+    return str
+
+#fast modular subtraction
+def modsubf(n,m) :
+    str="//Fast modular subtraction - can be used if output is ONLY consumed by multiplication or squaring\n"
+    if makestatic :
+        str+="static "
+    if inline and makestatic:
+        str+="void inline modsubf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
     else :
-        str+=addp(mp)
+        str+="void modsubf{}(const spint *a,const spint *b,spint *n) {{\n".format(DECOR)
+    
+    for i in range(0,N) :
+        str+="\tn[{}]=a[{}]-b[{}];\n".format(i,i,i)
+    
+    str+=addp(2)
     str+="\t(void)prop(n);\n" 
     str+="}\n"
     return str
@@ -484,15 +515,13 @@ def modneg(n,m) :
         str+="void inline modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
     else :
         str+="void modneg{}(const spint *b,spint *n) {{\n".format(DECOR)
-    if not algorithm :
-        str+="\tspint carry;\n"
+   
+    str+="\tspint carry;\n"
     for i in range(0,N) :
         str+="\tn[{}]=(spint)0-b[{}];\n".format(i,i)
-    if not algorithm :
-        str+="\tcarry=prop(n);\n"
-        str+=caddp(2)
-    else :
-        str+=addp(mp)
+    
+    str+="\tcarry=prop(n);\n"
+    str+=caddp(2)
     str+="\t(void)prop(n);\n" 
     str+="}\n"
     return str
@@ -1445,7 +1474,9 @@ def functions() :
     print(flat(n))
     print(modfsb(n))
     print(modadd(n,m))
+    print(modaddf(n,m))
     print(modsub(n,m))
+    print(modsubf(n,m))
     print(modneg(n,m))
     print(modmli(n,m))
     print(modmul(n,m))
@@ -1496,6 +1527,7 @@ if len(sys.argv)!=2 :
 WL=64
 prime=sys.argv[1]
 
+limit=2*WL
 n=0
 base=0
 m=0
@@ -1512,8 +1544,6 @@ m=0
 
 # More named primes can be added here
 p=0
-algorithm=False
-mp=0
 
 if prime=="PM266" :
     p=2**266-3
@@ -1533,16 +1563,9 @@ if prime=="ED521" :
 
 if prime=="ED25519" :
     p=2**255-19
-    if not generic :
-        algorithm=True
-        mp=4            # Assuming Edwards curve - see https://eprint.iacr.org/2017/437
 
 if prime=="X25519" :
     p=2**255-19
-    if not generic :
-        algorithm=True  # if algorithm is known, fix multiple of prime mp (for modular subtractions) as described in https://eprint.iacr.org/2017/437
-        mp=2            # Make sure there is sufficient excess - otherwise change default radix. Here assuming Montgomery ladder algorithm  RFC7748. 
-                        # Now no reduction required after modular additions/subtractions.
     
 if prime=="C2065" :
     p=2**206-5
@@ -1660,7 +1683,8 @@ if bad_overflow :
 
 # faster reduction
 fred=False
-if bits(N+1)+base+bits(mm)<WL :
+if (N+1)*(b-1)*mm < 2**WL :
+#if bits(N+1)+base+bits(mm)<WL :
     fred=True
     print("Tighter reduction")
 
