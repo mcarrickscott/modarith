@@ -187,7 +187,7 @@ pub fn ecndbl(P: &mut ECP) {
         modcpy(&P.y,&mut t0); modsqr(&mut t0);
         modcpy(&t0,&mut t3); modadd(&t0,&mut t3);
         modcpy(&t3,&mut t1); modadd(&t3,&mut t1);
-        modcpy(&t1,&mut t3); modadd(&t1,&mut t3);
+        modcpy(&t1,&mut t3); modaddf(&t1,&mut t3);
         modcpy(&P.x,&mut t4); modmul(&P.y,&mut t4);
         modcpy(&P.y,&mut t1); modmul(&P.z,&mut t1);
         modcpy(&P.z,&mut t2); modsqr(&mut t2);
@@ -202,12 +202,12 @@ pub fn ecndbl(P: &mut ECP) {
             modmul(&b,&mut t2);
         }
         modcpy(&t2,&mut P.x); modmul(&t3,&mut P.x);
-        modcpy(&t0,&mut P.y); modadd(&t2,&mut P.y);
+        modcpy(&t0,&mut P.y); modaddf(&t2,&mut P.y);
         modcpy(&t3,&mut P.z); modmul(&t1,&mut P.z);
 
         modcpy(&t2,&mut t1); modadd(&t2,&mut t1);
         modadd(&t1,&mut t2);
-        modsub(&t2,&mut t0);
+        modsubf(&t2,&mut t0);
         modmul(&t0,&mut P.y);
         modadd(&P.x,&mut P.y);
         modcpy(&t0,&mut P.x); modmul(&t4,&mut P.x);
@@ -219,7 +219,7 @@ pub fn ecndbl(P: &mut ECP) {
 
         modcpy(&P.x,&mut t3); modmul(&P.y,&mut t3);
         modcpy(&P.y,&mut t4); modmul(&P.z,&mut t4);
-        modcpy(&t3,&mut b); modadd(&b,&mut t3);
+        modcpy(&t3,&mut b); modaddf(&b,&mut t3);
         modmul(&P.x,&mut P.z);
         modcpy(&P.z,&mut b); modadd(&b,&mut P.z);
         if CONSTANT_B>0 {
@@ -240,9 +240,9 @@ pub fn ecndbl(P: &mut ECP) {
         }
         modcpy(&P.y,&mut P.x); modadd(&P.y,&mut P.x);
         modadd(&P.x,&mut P.y);
-        modcpy(&t1,&mut P.x); modsub(&P.y,&mut P.x);
+        modcpy(&t1,&mut P.x); modsubf(&P.y,&mut P.x);
 
-        modadd(&t1,&mut P.y);
+        modaddf(&t1,&mut P.y);
         modmul(&P.x,&mut P.y);
         modmul(&t3,&mut P.x);
 
@@ -253,15 +253,15 @@ pub fn ecndbl(P: &mut ECP) {
         modsub(&t0,&mut P.z);
         modcpy(&P.z,&mut t3); modadd(&P.z,&mut t3);
 
-        modadd(&t3,&mut P.z);
+        modaddf(&t3,&mut P.z);
         modcpy(&t0,&mut t3); modadd(&t0,&mut t3);
         modadd(&t3,&mut t0);
 
-        modsub(&t2,&mut t0);
+        modsubf(&t2,&mut t0);
         modmul(&P.z,&mut t0);
         modadd(&t0,&mut P.y);
 
-        modcpy(&t4,&mut b); modadd(&b,&mut t4);
+        modcpy(&t4,&mut b); modaddf(&b,&mut t4);
         modmul(&t4,&mut P.z);
 
         modsub(&P.z,&mut P.x);
