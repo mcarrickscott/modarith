@@ -13,7 +13,6 @@
 //
 // python monty_cuda.py X448
 //
-// where XXX can be neon, sse or ifma
 //
 // make sure decoration and generic are both set to False
 // 

@@ -104,6 +104,16 @@ if curve=="ED448" :
     X=0x4f1970c66bed0ded221d15a622bf36da9e146570470f1767ea6de324a3d3a46412ae1af72ab66511433b80e18b00938e2626a82bc70cc05e
     Y=0x693f46716eb6bc248876203756c9c7624bea73736ca3984087789c1e05a0c2d73ad3ff1ce67c39c4fdbd132c4ed7c8ad9808795bf230fa14
 
+if curve=="ED324" :
+    p=3*2**324-1
+    q=25631844431050920988740260474034625375232454268281054383331580605139599530928262299371217768307201
+    cof=2
+    A=1
+    prime_type=MONTY
+    curve_type=EDWARDS
+    B=-57609
+    X=11
+
 if curve=="ED500" :
     p=27*2**500-1
     q=0x6C00000000000000000000000000000000000000000000000000000000000002C8858DA0CB07C5ABCADABC1BEE86F8C9101174D8A115AD57E5F0228C2D0871
@@ -301,8 +311,17 @@ with open('point.h', 'w') as f:
         print("typedef struct xyz point;")
         f.close()
 
-order="00"+str(q) # mark as group order by prefixing with 00
 
+bts=q.bit_length()
+Gbytes=bts//8
+if (bts%8)!=0 :
+    Gbytes+=1
+prefix="00"
+if Nbytes>Gbytes :
+    prefix="000"
+
+order=prefix+str(q) # mark as group order by prefixing with 00, and extra 0 if extra byte required for import/export
+                    # This can happen if field size in bytes exceeds group size in bytes - EdDSA assumes they are the same
 if WL==64 and microsoft :
     subprocess.run("python3 montyms64.py "+order, shell=True)
 else :

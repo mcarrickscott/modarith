@@ -22,7 +22,7 @@
 //
 // make sure decoration and generic are both set to False
 //
-// gcc -O3 -march=native -mtune=native rfc7748.c -lcpucycles -o rfc7748
+// gcc -O3 -march=native -mtune=native rfc7748_simd.c -lcpucycles -o rfc7748
 
 /*** Insert automatically generated code for modulus field.c here ***/
 

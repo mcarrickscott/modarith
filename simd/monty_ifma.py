@@ -2308,6 +2308,7 @@ if prime=="MIKE_CONSERVATIVE_5" :
 
 ### End of user editable area
 
+extrabyte=0
 field=True
 noname=False
 if p==0 :
@@ -2317,6 +2318,8 @@ if p==0 :
     if prime[0]=='0' and prime[1]=='0' :
         field=False
         p=int(prime)
+        if prime[2]=='0' :
+            extrabyte=1
     else :
         p=eval(prime)
     noname=True    # unnamed prime
@@ -2373,6 +2376,7 @@ os.remove("inv.acc")
 Nbytes=n//8
 if (n%8)!=0 :
     Nbytes+=1
+Nbytes+=extrabyte
 
 #get a non-trivial root of unity
 qnr=0
