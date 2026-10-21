@@ -256,15 +256,15 @@ fn main() {
         for i in 0..NBYTES {
             rnd=5*rnd+1; bk[i]=rnd as u8;
         }
-	    let pre = std::arch::x86_64::_rdtsc();
-	    for _i in 0..5000 {
+        let pre = std::arch::x86_64::_rdtsc();
+        for _i in 0..5000 {
             rfc7748(&bk,&bu,&mut bv);
             rfc7748(&bk,&bv,&mut bu);
-	    }
-	    let post = std::arch::x86_64::_rdtsc();
-	    println!("Clock cycles= {}",((post-pre)/10_000));
+        }
+        let post = std::arch::x86_64::_rdtsc();
+        println!("Clock cycles= {}",((post-pre)/10_000));
         printhex(&bu);
-	}
+    }
 // D-H key exchange
     let mut alice:[u8;NBYTES]=[0;NBYTES];
     let mut bob:[u8;NBYTES]=[0;NBYTES];

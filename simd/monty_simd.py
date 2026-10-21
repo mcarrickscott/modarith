@@ -2145,7 +2145,8 @@ def header() :
     print("#define Nlimbs{} {}".format(DECOR,N))
     print("#define Radix{} {}".format(DECOR,base))
     print("#define Nbits{} {}".format(DECOR,n))
-    print("#define Nbytes{} {}\n".format(DECOR,Nbytes))
+    print("#define Nbytes{} {}".format(DECOR,Nbytes))
+    print("#define PMOD8{} {}\n".format(DECOR,p%8))
     print("#define MONTGOMERY")
     if prime[0].isalpha() :
         print("#define",prime.upper(),"\n")

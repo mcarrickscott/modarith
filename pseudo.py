@@ -1451,6 +1451,7 @@ def header() :
     print("#define Radix{} {}".format(DECOR,base))
     print("#define Nbits{} {}".format(DECOR,n))
     print("#define Nbytes{} {}\n".format(DECOR,Nbytes))
+    print("#define PMOD8{} {}\n".format(DECOR,p%8))
     print("#define MERSENNE")
     print("#define MULBYINT")
     if prime[0].isalpha() :

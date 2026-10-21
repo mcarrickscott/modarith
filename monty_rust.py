@@ -1259,7 +1259,7 @@ def modsqrt() :
     str="//Modular square root, provide progenitor h if available, NULL if not\n"
     if makepublic :
         str+="pub "
-    str+="fn modsqrt(x: &[SPINT],h: Option<&[SPINT]>,r: &mut[SPINT]) {\n"
+    str+="fn modsqrt(h: Option<&[SPINT]>,x: &mut[SPINT]) {\n"
     if PM1D2>1 :
         str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
         str+="\tlet mut b: [SPINT; {}] = [0; {}];\n".format(N,N)
@@ -1296,7 +1296,7 @@ def modsqrt() :
         str+="\t\tmodmul(&t,&mut v);\n"
         str+="\t\tmodcmv(d,&v,&mut t);\n"
         str+="\t}\n" 
-    str+="\tmodcpy(&s,r);\n"
+    str+="\tmodcpy(&s,x);\n"
     str+="\treturn;\n}\n"
     return str
 
@@ -2202,7 +2202,8 @@ with open(fname, 'w') as f:
             print("pub const NLIMBS: usize = {};".format(N))
             print("pub const RADIX: usize = {};".format(base))
             print("pub const NBITS: usize = {};".format(n))
-            print("pub const NBYTES: usize = {};\n".format(Nbytes))
+            print("pub const NBYTES: usize = {};".format(Nbytes))
+            print("pub const PMOD8: usize = {};\n".format(p%8))
             print("pub const MERSENNE: bool = false;")
             print("pub const MONTGOMERY: bool = true;\n")
             if trin>0 :
@@ -2213,8 +2214,9 @@ with open(fname, 'w') as f:
             print("const NLIMBS: usize = {};".format(N))
             print("const RADIX: usize = {};".format(base))
             print("const NBITS: usize = {};".format(n))
-            print("const NBYTES: usize = {};\n".format(Nbytes))
+            print("const NBYTES: usize = {};".format(Nbytes))
             print("const MERSENNE: bool = false;")
+            print("const PMOD8: usize = {};\n".format(p%8))
             print("const MONTGOMERY: bool = true;\n")
             if trin>0 :
                 print("const MULBYINT: bool = true;\n")
