@@ -1594,6 +1594,23 @@ def modis0(n) :
     #str+="\treturn ((spint)1 & ((d-(spint)1)>>{}u));\n}}\n".format(base)
     return str
 
+#test for lexically less than
+def modltn() :
+    str="//is lexically less than?\n"
+    if makestatic :
+        str+="static "
+    str+="spint modltn{}(const spint *a,const spint *b) {{\n".format(DECOR)
+    str+="\tint i;\n"
+    str+="\tspint c[{}],d[{}];\n".format(N,N)
+    str+="\tspint one=MR_SET_ALL_LANES_TO_CONSTANT(1);\n"
+    str+="\tredc{}(a,c);\n".format(DECOR)
+    str+="\tredc{}(b,d);\n".format(DECOR)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+    str+="\t\tc[i]=MR_SUB32U(c[i],d[i]);\n\t}\n"
+    str+="\treturn MR_AND(prop(c),one);\n"
+    str+="}\n"
+    return str
+
 #set to zero
 def modzer() :
     str="//set to zero\n"
@@ -2172,9 +2189,9 @@ def functions() :
     print(modinv())
     print(nres(n))
     print(redc(n))
-    #print(modred(n))
     print(modis1(n))
     print(modis0(n))
+    print(modltn())
     print(modzer())
     print(modone())
     print(modint())

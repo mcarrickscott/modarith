@@ -69,7 +69,7 @@ fn printhex(array: &[u8]) {
 
 // output a modulo number in hex
 #[allow(dead_code)]
-fn output(x: &[SPINT]) {
+fn output(x: &[SPINT;NLIMBS]) {
     let mut b:[u8;NBYTES]=[0;NBYTES];
     let mut c:[SPINT;NLIMBS]=[0;NLIMBS];
     modcpy(x,&mut c);

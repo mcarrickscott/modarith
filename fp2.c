@@ -27,7 +27,7 @@ void fp2_seti(const unsigned int r,const unsigned int i,fp2 *x)
 	modint(r,x->a); modint(i,x->b);
 }
 
-void fp2_set(spint *r,spint *i,fp2 *x)
+void fp2_set(fp r,fp i,fp2 *x)
 {
 	modcpy(r,x->a); modcpy(i,x->b);
 }
@@ -47,7 +47,7 @@ void fp2_sub(fp2 *x,fp2 *y,fp2 *z)
 // NOTE: faster "lazy" method may apply if prime modulus is not "shaped"
 void fp2_mul(fp2 *x,fp2 *y,fp2 *z)
 { 
-	spint c[Nlimbs],d[Nlimbs],f[Nlimbs];	
+	fp c,d,f;
 	modmul(x->a,y->a,c);  // c=xa*ya
 	modmul(x->b,y->b,d);  // d=xb*yb
 	modaddf(y->a,y->b,f); // f=ya+yb
@@ -60,7 +60,7 @@ void fp2_mul(fp2 *x,fp2 *y,fp2 *z)
 
 void fp2_sqr(fp2 *x,fp2 *z)
 {
-	spint c[Nlimbs],d[Nlimbs];
+	fp c,d;
 	modaddf(x->a,x->a,c);
 	modaddf(x->a,x->b,d);
 	modsubf(x->a,x->b,z->a);
@@ -92,7 +92,7 @@ void fp2_imul(fp2 *x,int n,fp2 *z)
 }
 
 // multiply by fp
-void fp2_pmul(fp2 *x,spint *n,fp2 *z)
+void fp2_pmul(fp2 *x,fp n,fp2 *z)
 {
 	modmul(x->a,n,z->a);
 	modmul(x->b,n,z->b);
@@ -101,7 +101,7 @@ void fp2_pmul(fp2 *x,spint *n,fp2 *z)
 // multiply by i
 void fp2_times_i(fp2 *x,fp2 *z)
 {
-	spint t[Nlimbs];
+	fp t;
 	modcpy(x->a,t);
 	modneg(x->b,z->a);
 	modcpy(t,z->b);
@@ -117,10 +117,23 @@ int fp2_is1(fp2 *x)
 	return (modis1(x->a) && modis0(x->b));
 }
 
-int fp2_split(fp2 *x,spint *r, spint *i)
+// test x less than y
+int fp2_ltn(fp2 *x,fp2 *y)
 {
-	if (r!=NULL) modcpy(x->a,r);
-	if (i!=NULL) modcpy(x->b,i);
+	int m=modltn(x->b,y->b);
+	int n=modcmp(x->b,y->b);
+	int w=modltn(x->a,y->a);
+	return (m|(n&w));
+}
+
+int fp2_real(fp2 *x,fp r)
+{
+	modcpy(x->a,r);
+}
+
+int fp2_imag(fp2 *x,fp i)
+{
+	modcpy(x->b,i);
 }
 
 int fp2_cmp(fp2 *x,fp2 *y)
@@ -128,9 +141,9 @@ int fp2_cmp(fp2 *x,fp2 *y)
 	return (modcmp(x->a,y->a) && modcmp(x->b,y->b));
 }
 
-void fp2_inv(fp2 *x,const spint *h,fp2 *z) 
+void fp2_inv(fp2 *x,const fp h,fp2 *z) 
 {
-	spint w1[Nlimbs],w2[Nlimbs];
+	fp w1,w2;
 	modsqr(x->a,w1);
 	modsqr(x->b,w2);
 	modadd(w1,w2,w1);
@@ -140,9 +153,9 @@ void fp2_inv(fp2 *x,const spint *h,fp2 *z)
 	modmul(x->b,w1,z->b);
 }
 
-int fp2_qr(const spint *h,fp2 *x) 
+int fp2_qr(const fp h,fp2 *x) 
 {
-	spint w1[Nlimbs],w2[Nlimbs];
+	fp w1,w2;
 	modsqr(x->a,w1);
 	modsqr(x->b,w2);
 	modadd(w1,w2,w1);
@@ -175,17 +188,17 @@ void fp2_csw(int d,fp2 *x,fp2 *z)
 }
 
 // z=|x|
-void fp2_size(fp2 *x,spint *z)
+void fp2_size(fp2 *x,fp z)
 {
-	spint w1[Nlimbs],w2[Nlimbs];
+	fp w1,w2;
 	modsqr(x->a,w1);
 	modsqr(x->b,w2);
 	modadd(w1,w2,z);
 }
 
-void fp2_sqrt(fp2 *x,const spint *h,fp2 *z)
+void fp2_sqrt(fp2 *x,const fp h,fp2 *z)
 {
-	spint w1[Nlimbs],w2[Nlimbs],w3[Nlimbs],w4[Nlimbs],hint[Nlimbs];
+	fp w1,w2,w3,w4,hint;
 	fp2 nz;
 	int sgn,qr;
 	if (fp2_is0(x) || fp2_is1(x)) return;
@@ -273,7 +286,7 @@ int main()
 	char buffr[Nbytes],buffi[Nbytes],hex[(Nbytes*2)+1];
 	int sgn1,sgn2;
 	fp2 x,y,z,w1,w2;
-	spint hint[Nlimbs],t[Nlimbs];
+	fp hint,t;
 
 #if PMOD8==1 || PMOD8==5
 	printf("The prime modulus must be 3 mod 4\n");

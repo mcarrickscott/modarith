@@ -350,7 +350,7 @@ def prop(n,base) :
     str="//propagate carries\n"
     str+="#[allow(unused_variables)]\n"
     str+="#[inline]\n"
-    str+="fn prop(n: &mut [SPINT]) -> SPINT{\n"
+    str+="fn prop(n: &mut [SPINT;{}]) -> SPINT{{\n".format(N)
     str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
     str+="\tlet mut carry=(n[0] as SSPINT)>>{};\n".format(base)
     str+="\tn[0]&=mask;\n"
@@ -369,7 +369,7 @@ def flat(n,base) :
     str="//propagate carries and add p if negative, propagate carries again\n"
     str+="#[allow(unused_variables)]\n"
     str+="#[inline]\n"
-    str+="fn flatten(n: &mut [SPINT]) -> SPINT {\n"
+    str+="fn flatten(n: &mut [SPINT;{}]) -> SPINT {{\n".format(N)
     str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
     str+="\tlet carry=prop(n);\n"
     str+=caddp(1)
@@ -385,7 +385,7 @@ def modfsb(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modfsb(n: &mut[SPINT]) -> SPINT {\n"
+    str+="fn modfsb(n: &mut[SPINT;{}]) -> SPINT {{\n".format(N)
     str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
     str+=subp(1)
     str+="\treturn flatten(n);\n}\n"
@@ -399,7 +399,7 @@ def modadd(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modadd(b: &[SPINT],n: &mut [SPINT]) {\n"
+    str+="fn modadd(b: &[SPINT;{}],n: &mut [SPINT;{}]) {{\n".format(N,N)
 
     if E:
         str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
@@ -421,7 +421,7 @@ def modaddf(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modaddf(b: &[SPINT],n: &mut [SPINT]) {\n"
+    str+="fn modaddf(b: &[SPINT;{}],n: &mut [SPINT;{}]) {{\n".format(N,N)
 
     if E:
         str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
@@ -441,7 +441,7 @@ def modsub(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modsub(b: &[SPINT],n: &mut [SPINT]) {\n"
+    str+="fn modsub(b: &[SPINT;{}],n: &mut [SPINT;{}]) {{\n".format(N,N)
  
     if E:
         str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
@@ -464,7 +464,7 @@ def modsubf(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modsubf(b: &[SPINT],n: &mut [SPINT]) {\n"
+    str+="fn modsubf(b: &[SPINT;{}],n: &mut [SPINT;{}]) {{\n".format(N,N)
  
     if E:
         str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
@@ -486,7 +486,7 @@ def modneg(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modneg(n: &mut [SPINT]) {\n"
+    str+="fn modneg(n: &mut [SPINT;{}]) {{\n".format(N)
 
     if E:
         str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
@@ -681,7 +681,7 @@ def modmli(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modmli(b: usize,c: &mut [SPINT]) {\n"
+    str+="fn modmli(b: usize,c: &mut [SPINT;{}]) {{\n".format(N)
     if trin>0 :
         str+="\tlet mut t=0 as DPINT;\n"
         str+="\tlet mask=((1 as SPINT)<<{})-1;\n".format(base)
@@ -780,7 +780,7 @@ def modmli(n,base) :
 #        str+="#[inline]\n"
 #    if makepublic :
 #        str+="pub "
-#    str+="fn modmli(_b: usize,_c: &mut [SPINT]) {\n"
+#    str+="fn modmli(_b: usize,_c: &mut [SPINT;{}]) {{\n".format(N)
 #    str+="\treturn;\n}\n"
 #    return str
 
@@ -796,7 +796,7 @@ def modmul(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modmul(b: &[SPINT],c: &mut [SPINT]) {\n"
+    str+="fn modmul(b: &[SPINT;{}],c: &mut [SPINT;{}]) {{\n".format(N,N)
 
     str+="\tlet mut t = 0 as DPINT;\n"
     str+="\tlet mut s:SPINT;\n"
@@ -990,7 +990,7 @@ def modsqr(n,base) :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modsqr(c: &mut [SPINT]) {\n"
+    str+="fn modsqr(c: &mut [SPINT;{}]) {{\n".format(N)
 
     str+="\tlet mut t:DPINT;\n"
     str+="\tlet mut tot:DPINT;\n"
@@ -1157,7 +1157,7 @@ def modcpy() :
         str+="#[inline]\n"
     if makepublic :
         str+="pub "
-    str+="fn modcpy(a: &[SPINT],c: &mut [SPINT]) {\n"
+    str+="fn modcpy(a: &[SPINT;{}],c: &mut [SPINT;{}]) {{\n".format(N,N)
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\tc[i]=a[i];\n"
     str+="\t}\n"
@@ -1168,7 +1168,7 @@ def modnsqr() :
     str="//square n times\n"
     if makepublic :
         str+="pub "
-    str+="fn modnsqr(a:&mut [SPINT],n: isize) {\n"
+    str+="fn modnsqr(a:&mut [SPINT;{}],n: isize) {{\n".format(N)
     str+="\tfor _i in 0..n {\n"
     str+="\t\tmodsqr(a);\n"
     str+="\t}\n"
@@ -1184,7 +1184,7 @@ def modpro() :
     str="//Calculate progenitor\n"
     if makepublic :
         str+="pub "
-    str+="fn modpro(w: &[SPINT],r: &mut [SPINT]) {\n"
+    str+="fn modpro(w: &[SPINT;{}],r: &mut [SPINT;{}]) {{\n".format(N,N)
     str+="\tlet mut x: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tlet mut z: [SPINT; {}] = [0; {}];\n".format(N,N)
     for i in range(0,ntmps) :
@@ -1217,7 +1217,7 @@ def modinv() :
     str="//calculate inverse, provide progenitor h if available\n"
     if makepublic :
         str+="pub "
-    str+="fn modinv(h: Option<&[SPINT]>,z: &mut[SPINT]) {\n"
+    str+="fn modinv(h: Option<&[SPINT;{}]>,z: &mut[SPINT;{}]) {{\n".format(N,N)
     str+="\tlet mut s: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tif let Some(hint) = h {\n"
@@ -1241,7 +1241,7 @@ def modqr() :
     str="//Test for quadratic residue \n"
     if makepublic :
         str+="pub "
-    str+="fn modqr(h: Option<&[SPINT]>,x: &[SPINT]) -> bool {\n"
+    str+="fn modqr(h: Option<&[SPINT;{}]>,x: &[SPINT;{}]) -> bool {{\n".format(N,N)
     str+="\tlet mut r: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tif let Some(hint) = h {\n"
     str+="\t\tmodcpy(&hint,&mut r);\n"
@@ -1259,7 +1259,7 @@ def modsqrt() :
     str="//Modular square root, provide progenitor h if available, NULL if not\n"
     if makepublic :
         str+="pub "
-    str+="fn modsqrt(h: Option<&[SPINT]>,x: &mut[SPINT]) {\n"
+    str+="fn modsqrt(h: Option<&[SPINT;{}]>,x: &mut[SPINT;{}]) {{\n".format(N,N)
     if PM1D2>1 :
         str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
         str+="\tlet mut b: [SPINT; {}] = [0; {}];\n".format(N,N)
@@ -1304,7 +1304,7 @@ def modis1(n,base) :
     str="//is unity?\n"
     if makepublic :
         str+="pub "
-    str+="fn modis1(a: &[SPINT]) -> bool {\n"
+    str+="fn modis1(a: &[SPINT;{}]) -> bool {{\n".format(N)
     str+="\tlet mut c: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tlet mut d=0 as SSPINT;\n"
     str+="\tmodcpy(a,&mut c);\n"
@@ -1319,7 +1319,7 @@ def modis0(n,base) :
     str="//is zero?\n"
     if makepublic :
         str+="pub "
-    str+="fn modis0(a: &[SPINT]) -> bool {\n"
+    str+="fn modis0(a: &[SPINT;{}]) -> bool {{\n".format(N)
     str+="\tlet mut c: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tlet mut d=0 as SSPINT;\n"
     str+="\tmodcpy(a,&mut c);\n"
@@ -1329,11 +1329,28 @@ def modis0(n,base) :
     str+="\treturn (1 & ((d-1)>>{})) != 0;\n}}\n".format(base)
     return str    
 
+def modltn() :
+    str="//is lexically less than?\n"
+    if makepublic :
+        str+="pub "
+    str+="fn modltn(a: &[SPINT;{}],b: &[SPINT;{}]) -> bool {{\n".format(N,N)
+    str+="\tlet mut c: [SPINT; {}] = [0; {}];\n".format(N,N)
+    str+="\tlet mut d: [SPINT; {}] = [0; {}];\n".format(N,N)
+    str+="\tmodcpy(a,&mut c);\n"
+    str+="\tredc(&mut c);\n"
+    str+="\tmodcpy(b,&mut d);\n"
+    str+="\tredc(&mut d);\n"
+    str+="\tfor i in 0..{} {{\n".format(N)
+    str+="\t\tc[i]-=d[i];\n\t}\n"
+    str+="\treturn (prop(&mut c)&1)!=0;\n"
+    str+="}\n"
+    return str
+
 def modzer() :
     str="//set to zero\n"
     if makepublic :
         str+="pub "
-    str+="fn modzer(a: &mut[SPINT]) {\n"
+    str+="fn modzer(a: &mut[SPINT;{}]) {{\n".format(N)
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\ta[i]=0;\n\t}\n"
     str+="\treturn;\n}\n"
@@ -1343,7 +1360,7 @@ def modone() :
     str="//set to one\n"
     if makepublic :
         str+="pub "
-    str+="fn modone(a: &mut[SPINT]) {\n"
+    str+="fn modone(a: &mut[SPINT;{}]) {{\n".format(N)
     str+="\ta[0]=1;\n"
     str+="\tfor i in 1..{} {{\n".format(N)
     str+="\t\ta[i]=0;\n\t}\n"
@@ -1355,7 +1372,7 @@ def modint() :
     str="//set to integer\n"
     if makepublic :
         str+="pub "
-    str+="fn modint(x: usize,a: &mut[SPINT]) {\n"
+    str+="fn modint(x: usize,a: &mut[SPINT;{}]) {{\n".format(N)
     str+="\ta[0]=x as SPINT;\n"
     str+="\tfor i in 1..{} {{\n".format(N)
     str+="\t\ta[i]=0;\n\t}\n"
@@ -1368,7 +1385,7 @@ def nres(n,base) :
     str="//Convert n to n-residue form, n=nres(m) \n"
     if makepublic :
         str+="pub "
-    str+="fn nres(n: &mut [SPINT]) {\n"
+    str+="fn nres(n: &mut [SPINT;{}]) {{\n".format(N)
     str+="\tlet c: [SPINT; {}] = [".format(N)
     for i in range(0,N-1) :
         str+=hex(cw[i])
@@ -1384,7 +1401,7 @@ def redc(n,base) :
     str="//Convert m back to normal form, m=redc(n) \n"
     if makepublic :
         str+="pub "
-    str+="fn redc(m: &mut [SPINT]) {\n"
+    str+="fn redc(m: &mut [SPINT;{}]) {{\n".format(N)
     str+="\tlet mut c:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tc[0]=1;\n"
     str+="\tmodmul(&c,m);\n"
@@ -1398,7 +1415,7 @@ def modcsw() :
     str+="#[inline(never)]\n"
     if makepublic :
         str+="pub "
-    str+="fn modcsw(b: usize,g: &mut [SPINT],f: &mut [SPINT]) {\n"
+    str+="fn modcsw(b: usize,g: &mut [SPINT;{}],f: &mut [SPINT;{}]) {{\n".format(N,N)
     if PSCR :
         str+="\tlet bb = b as SPINT;\n"
         str+="\tstatic mut R:SPINT=0;\n"
@@ -1438,7 +1455,7 @@ def modcmv() :
     str+="#[inline(never)]\n"
     if makepublic :
         str+="pub "
-    str+="fn modcmv(b: usize,g: &[SPINT],f: &mut [SPINT]) {\n"
+    str+="fn modcmv(b: usize,g: &[SPINT;{}],f: &mut [SPINT;{}]) {{\n".format(N,N)
     if PSCR :
         str+="\tstatic mut R:SPINT=0;\n"
         str+="\tlet w:SPINT;\n"
@@ -1475,7 +1492,7 @@ def modshl(n,base) :
     str="//shift left by less than a word\n"
     if makepublic :
         str+="pub "
-    str+="fn modshl(n: isize,a: &mut [SPINT]) {\n"
+    str+="fn modshl(n: isize,a: &mut [SPINT;{}]) {{\n".format(N)
     str+="\ta[{}-1]=((a[{}-1]<<n)) + (a[{}-2]>>({}-n));\n".format(N,N,N,base)
     str+="\tfor i in (1..{}-1).rev() {{\n".format(N)
     str+="\t\ta[i]=((a[i]<<n)&0x{:x}) + (a[i-1]>>({}-n));\n\t}}\n".format(mask,base)
@@ -1490,7 +1507,7 @@ def modshr(n,base) :
     str="//shift right by less than a word. Return shifted out part\n"
     if makepublic :
         str+="pub "
-    str+="fn modshr(n: isize,a: &mut [SPINT]) -> isize {\n"
+    str+="fn modshr(n: isize,a: &mut [SPINT;{}]) -> isize {{\n".format(N)
     str+="\tlet r=a[0]&((1<<n)-1);\n"
     str+="\tfor i in 0..{}-1 {{\n".format(N)
     str+="\t\ta[i]=(a[i]>>n) + ((a[i+1]<<({}-n))&0x{:x});\n\t}}\n".format(base,mask)
@@ -1505,7 +1522,7 @@ def modhaf(n,base) :
     str="//divide by 2. Shift right 1 bit (or add p and shift right one bit)\n"
     if makepublic :
         str+="pub "
-    str+="fn modhaf(n: &mut [SPINT]) {\n" 
+    str+="fn modhaf(n: &mut [SPINT;{}]) {{\n".format(N)
     str+="\tlet mut t: [SPINT; {}] = [0; {}];\n".format(N,N)
     if E:
         str+="\tlet q=(1 as SPINT)<<{};\n".format(base)
@@ -1524,7 +1541,7 @@ def mod2r() :
     str="//set a= 2^r\n"
     if makepublic :
         str+="pub "
-    str+="fn mod2r(r:usize, a: &mut [SPINT]) {\n"
+    str+="fn mod2r(r:usize, a: &mut [SPINT;{}]) {{\n".format(N)
     str+="\tlet n=r/{};\n".format(base)
     str+="\tlet m=r%{};\n".format(base)    
     str+="\tmodzer(a);\n"
@@ -1540,7 +1557,7 @@ def modexp() :
     str="//export to byte array\n"
     if makepublic :
         str+="pub "
-    str+="fn modexp(a: &[SPINT],b: &mut [u8]) {\n"
+    str+="fn modexp(a: &[SPINT;{}],b: &mut [u8]) {{\n".format(N)
     str+="\tlet mut c: [SPINT; {}] = [0; {}];\n".format(N,N)
     str+="\tmodcpy(a,&mut c);\n"
     str+="\tredc(&mut c);\n"
@@ -1555,7 +1572,7 @@ def modimp() :
     str="//import from byte array\n"
     if makepublic :
         str+="pub "
-    str+="fn modimp(b: &[u8], a: &mut [SPINT]) -> bool {\n"
+    str+="fn modimp(b: &[u8], a: &mut [SPINT;{}]) -> bool {{\n".format(N)
     str+="\tfor i in 0..{} {{\n".format(N)
     str+="\t\ta[i]=0;\n\t}\n"
     str+="\tfor i in 0..{} {{\n".format(Nbytes)
@@ -1571,7 +1588,7 @@ def modsign() :
     str="//determine sign\n"
     if makepublic :
         str+="pub "
-    str+="fn modsign(a: &[SPINT]) -> usize {\n"
+    str+="fn modsign(a: &[SPINT;{}]) -> usize {{\n".format(N)
     str+="\tlet mut c:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tmodcpy(a,&mut c);\n"
     str+="\tredc(&mut c);\n"
@@ -1583,7 +1600,7 @@ def modcmp() :
     str="//return true if equal\n"
     if makepublic :
         str+="pub "
-    str+="fn modcmp(a: &[SPINT],b: &[SPINT]) -> bool {\n"
+    str+="fn modcmp(a: &[SPINT;{}],b: &[SPINT;{}]) -> bool {{\n".format(N,N)
     str+="\tlet mut c:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tlet mut d:[SPINT;{}]=[0;{}];\n".format(N,N)
     str+="\tlet mut eq=1;\n"
@@ -2183,6 +2200,7 @@ with open(fname, 'w') as f:
         print(redc(n,base))
         print(modis1(n,base))
         print(modis0(n,base))
+        print(modltn())
         print(modzer())
         print(modone())
         print(modint())

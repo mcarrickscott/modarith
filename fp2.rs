@@ -15,10 +15,13 @@
 
 /*** End of automatically generated code ***/
 
+// finite field element modulo p
+type Fp = [SPINT; NLIMBS];
+
 #[derive(Copy, Clone)]
 pub struct Fp2 {
-    a: [SPINT; NLIMBS],
-    b: [SPINT; NLIMBS],
+    a: Fp,
+    b: Fp,
 }
 
 impl Fp2 {
@@ -42,28 +45,28 @@ impl Fp2 {
 	f
     }
 
-    pub fn new_fps(x: &[SPINT] ,y: &[SPINT]) -> Fp2 {
+    pub fn new_fps(x: &Fp ,y: &Fp) -> Fp2 {
 	let mut f = Fp2::new();
 	modcpy(x,&mut f.a);
 	modcpy(y,&mut f.b);
 	f
     }
 
-    pub fn new_bigs(x: &[SPINT] ,y: &[SPINT]) -> Fp2 {
+    pub fn new_bigs(x: &Fp ,y: &Fp) -> Fp2 {
 	let mut f = Fp2::new();
 	modcpy(x,&mut f.a); nres(&mut f.a);
 	modcpy(y,&mut f.b); nres(&mut f.b);
 	f
     }
 
-    pub fn new_fp(x: &[SPINT]) -> Fp2 {
+    pub fn new_fp(x: &Fp) -> Fp2 {
 	let mut f = Fp2::new();
 	modcpy(x,&mut f.a);
 	modzer(&mut f.b);
 	f
     }
 
-    pub fn new_big(x: &[SPINT]) -> Fp2 {
+    pub fn new_big(x: &Fp) -> Fp2 {
 	let mut f = Fp2::new();
 	modcpy(x,&mut f.a); nres(&mut f.a);
 	modzer(&mut f.b);
@@ -84,6 +87,14 @@ impl Fp2 {
 
     pub fn is1(&self) -> bool {
 	modis1(&self.a) && modis0(&self.b)
+    }
+// test self less than y
+    pub fn ltn(&self,y: Fp2) -> bool
+    {
+        let m=modltn(&self.b,&y.b);
+        let n=modcmp(&self.b,&y.b);
+        let w=modltn(&self.a,&y.a);
+        return m|(n&w);
     }
 
     pub fn export(&self,x: &mut [u8],y: &mut[u8]) {
@@ -110,8 +121,16 @@ impl Fp2 {
 	modcsw(d,&mut x.b,&mut self.b);
     }
 
-    pub fn split(&self,r: &mut [SPINT],i: &mut [SPINT]) {
-	modcpy(&self.a,r); modcpy(&self.b,i);
+    pub fn real(&self) -> Fp {
+        let mut r: Fp = [0; NLIMBS];
+        modcpy(&self.a,&mut r);
+        return r;
+    }
+
+    pub fn imag(&self) -> Fp {
+        let mut i: Fp = [0; NLIMBS];
+        modcpy(&self.b,&mut i);
+        return i;
     }
 
     pub fn copy(&mut self,x:&Fp2) {
@@ -141,16 +160,16 @@ impl Fp2 {
     }
 
     pub fn times_i(&mut self) {
-        let mut t: [SPINT; NLIMBS] = [0; NLIMBS];
+        let mut t: Fp = [0; NLIMBS];
 	modcpy(&self.b,&mut t);
 	modneg(&mut t);
 	modcpy(&self.a,&mut self.b);
 	modcpy(&t,&mut self.a);
     }
 
-    pub fn size(&self) -> [SPINT;NLIMBS] {
-        let mut w1: [SPINT; NLIMBS] = [0; NLIMBS];
-        let mut w2: [SPINT; NLIMBS] = [0; NLIMBS];	
+    pub fn size(&self) -> Fp {
+        let mut w1: Fp = [0; NLIMBS];
+        let mut w2: Fp = [0; NLIMBS];	
 
 	modcpy(&self.a,&mut w1); modsqr(&mut w1);
 	modcpy(&self.b,&mut w2); modsqr(&mut w2);
@@ -183,14 +202,14 @@ impl Fp2 {
 	modmli(x,&mut self.b);
     }
 
-    pub fn pmul(&mut self,x: &[SPINT]) {
+    pub fn pmul(&mut self,x: &Fp) {
 	modmul(x,&mut self.a);
 	modmul(x,&mut self.b);
     }
 
     pub fn sqr(&mut self) {
-	let mut c: [SPINT; NLIMBS] = [0; NLIMBS];	
-	let mut d: [SPINT; NLIMBS] = [0; NLIMBS];
+	let mut c: Fp = [0; NLIMBS];	
+	let mut d: Fp = [0; NLIMBS];
 	modcpy(&self.a,&mut c); modaddf(&self.a,&mut c);
 	modcpy(&self.a,&mut d); modaddf(&self.b,&mut d);
 	modsubf(&self.b,&mut self.a);
@@ -200,9 +219,9 @@ impl Fp2 {
 
 // NOTE: faster "lazy" method may apply if prime modulus is not "shaped"
     pub fn mul(&mut self,y: &Fp2) {
-	let mut c: [SPINT; NLIMBS] = [0; NLIMBS];	
-	let mut d: [SPINT; NLIMBS] = [0; NLIMBS];
-	let mut f: [SPINT; NLIMBS] = [0; NLIMBS];
+	let mut c: Fp = [0; NLIMBS];	
+	let mut d: Fp = [0; NLIMBS];
+	let mut f: Fp = [0; NLIMBS];
 	modcpy(&self.a,&mut c); modmul(&y.a,&mut c);
 	modcpy(&self.b,&mut d); modmul(&y.b,&mut d);
 	modcpy(&y.a,&mut f); modaddf(&y.b,&mut f);
@@ -213,9 +232,9 @@ impl Fp2 {
 	modsub(&c,&mut self.b);
     }
 
-    pub fn inv(&mut self,h:Option<&[SPINT]>) {
-	let mut w1: [SPINT; NLIMBS] = [0; NLIMBS];	
-	let mut w2: [SPINT; NLIMBS] = [0; NLIMBS];
+    pub fn inv(&mut self,h:Option<&Fp>) {
+	let mut w1: Fp = [0; NLIMBS];	
+	let mut w2: Fp = [0; NLIMBS];
 	modcpy(&self.a,&mut w1); modsqr(&mut w1);
 	modcpy(&self.b,&mut w2); modsqr(&mut w2);
 	modadd(&w2,&mut w1);
@@ -225,21 +244,21 @@ impl Fp2 {
 	modmul(&w1,&mut self.b);
     }
 
-    pub fn qr(&self,h:Option<&[SPINT]>) -> bool {
-	let mut w1: [SPINT; NLIMBS] = [0; NLIMBS];	
-	let mut w2: [SPINT; NLIMBS] = [0; NLIMBS];
+    pub fn qr(&self,h:Option<&Fp>) -> bool {
+	let mut w1: Fp = [0; NLIMBS];	
+	let mut w2: Fp = [0; NLIMBS];
 	modcpy(&self.a,&mut w1); modsqr(&mut w1);
 	modcpy(&self.b,&mut w2); modsqr(&mut w2);	
 	modadd(&w2,&mut w1);
 	return modqr(h,&w1);
     }
 
-    pub fn sqrt(&mut self,h:Option<&[SPINT]>) {
-	let mut w1: [SPINT; NLIMBS] = [0; NLIMBS];	
-	let mut w2: [SPINT; NLIMBS] = [0; NLIMBS];
-	let mut w3: [SPINT; NLIMBS] = [0; NLIMBS];	
-	let mut w4: [SPINT; NLIMBS] = [0; NLIMBS];
-	let mut hint: [SPINT; NLIMBS] = [0; NLIMBS];
+    pub fn sqrt(&mut self,h:Option<&Fp>) {
+	let mut w1: Fp = [0; NLIMBS];	
+	let mut w2: Fp = [0; NLIMBS];
+	let mut w3: Fp = [0; NLIMBS];	
+	let mut w4: Fp = [0; NLIMBS];
+	let mut hint: Fp = [0; NLIMBS];
 	if self.is0() || self.is1() {
 	    return;
 	}
@@ -303,7 +322,8 @@ fn main() {
     let mut w1 = Fp2::new();
     let mut w2 = Fp2::new();
 
-    let mut hint: [SPINT; NLIMBS] = [0; NLIMBS];
+    let mut hint: Fp = [0; NLIMBS];
+
     for _ in 0..10000 {
         w1.copy(&x); w1.add(&y);
         w2.copy(&x); w2.sub(&y);

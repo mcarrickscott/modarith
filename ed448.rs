@@ -44,7 +44,7 @@ type GEL = [SPINT; LIMBS];
 // reduce 912 bit array h to integer r modulo group order q, in constant time
 // Consider h as 2^440.(2^440x + y)  + z, where x,y and z < q (z is bottom 440 bits, y is next 440 bits, x is top 32 bits)
 // Important that x,y and z < q, q is 446 bits
-fn reduce(h:&[u8],r:&mut [SPINT]) {
+fn reduce(h:&[u8],r:&mut [SPINT;NLIMBS]) {
     let mut buff:[u8;BYTES]=[0;BYTES];    
     let mut x:GEL=[0;LIMBS];
     let mut y:GEL=[0;LIMBS];

@@ -76,6 +76,7 @@ Assume the modulus is $p$. The provided functions are
 *modsqrt()* -- Modular square root \
 *modis1()* --  Test for equal to unity  \
 *modis0()* --  Test for equal to zero  \
+*modltn()* --  Test for lexically less than \
 *modone()* --  Set equal to unity  \
 *modzer()* --  Set equal to zero  \
 *modint()* --  Convert an integer to internal format  \

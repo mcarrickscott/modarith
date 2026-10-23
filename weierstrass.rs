@@ -341,7 +341,7 @@ pub fn ecnget(P: &mut ECP,x: &mut [u8],y: Option<&mut [u8]>) -> usize {
 // if y!=NULL tries to set (x,y)
 // if y==NULL calculates y (decompresses x) and selects sign from s=0/1
 
-fn setxy(s: usize,x: &[SPINT],y: Option<&[SPINT]>,P: &mut ECP) {
+fn setxy(s: usize,x: &[SPINT;NLIMBS],y: Option<&[SPINT;NLIMBS]>,P: &mut ECP) {
     let mut t:[SPINT;NLIMBS]=[0;NLIMBS];     
     let mut v:[SPINT;NLIMBS]=[0;NLIMBS];   
     let mut h:[SPINT;NLIMBS]=[0;NLIMBS];    
@@ -380,7 +380,7 @@ fn setxy(s: usize,x: &[SPINT],y: Option<&[SPINT]>,P: &mut ECP) {
         ecninf(P);
         return;
     }
-    modsqrt(&v,Some(&h),&mut P.y);
+    modcpy(&v,&mut P.y); modsqrt(Some(&h),&mut P.y);
     let d=(modsign(&P.y)-s)&1;
     modcpy(&P.y,&mut t); modneg(&mut t);
     modcmv(d,&t,&mut P.y);

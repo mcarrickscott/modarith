@@ -1519,6 +1519,22 @@ def modis0(n) :
     str+="\treturn ((spint)1 & ((d-(spint)1)>>{}u));\n}}\n".format(base)
     return str
 
+#test for lexically less than
+def modltn() :
+    str="//is lexically less than?\n"
+    if makestatic :
+        str+="static "
+    str+="int modltn{}(const spint *a,const spint *b) {{\n".format(DECOR)
+    str+="\tint i;\n"
+    str+="\tspint c[{}],d[{}];\n".format(N,N)
+    str+="\tredc{}(a,c);\n".format(DECOR)
+    str+="\tredc{}(b,d);\n".format(DECOR)
+    str+="\tfor (i=0;i<{};i++) {{\n".format(N)
+    str+="\t\tc[i]-=d[i];\n\t}\n"
+    str+="\treturn prop(c)&1;\n"
+    str+="}\n"
+    return str
+
 #set to zero
 def modzer() :
     str="//set to zero\n"

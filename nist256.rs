@@ -45,7 +45,7 @@ const COMPRESS:bool = false;
 // reduce 40 byte array h to integer r modulo group order q, in constant time
 // Consider h as 2^248.x + y, where x and y < q (x is top 9 bytes, y is bottom 31 bytes)
 // Important that x and y < q
-fn reduce(h:&[u8],r:&mut [SPINT]) {
+fn reduce(h:&[u8],r:&mut [SPINT;LIMBS]) {
     let mut buff:[u8;BYTES]=[0;BYTES];    
     let mut x:GEL=[0;LIMBS];
     let mut y:GEL=[0;LIMBS];
